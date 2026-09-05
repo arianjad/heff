@@ -141,3 +141,36 @@ def test_terms_for_case_filters_and_is_sorted():
              real=True, cite="toy", registry=reg)(lambda bra, ket, ctx: 0.0)
     got = [t.name for t in terms_for_case("c", registry=reg)]
     assert got == ["both", "c_only"]
+
+
+def test_ctx_spins_defaults_to_empty_so_v1_ctx_is_unchanged():
+    c = ctx_from(thf_spec(), thf_v1())
+    assert c.spins == ()
+
+
+def test_rules_dF1_is_ignored_when_none_and_when_the_dtype_lacks_it(basis):
+    """v1 back-compat: dF1 = None (the default) and a KET_C basis (no F1 field)
+    must both leave Rules.allows unchanged."""
+    r_no_dF1 = Rules(dJ=(0,), dOm=(0.0,), dF=(0,), dmF=(0,))
+    r_with_dF1 = Rules(dJ=(0,), dOm=(0.0,), dF=(0,), dmF=(0,), dF1=(1,))
+    assert r_no_dF1.allows(basis[0], basis[0])
+    # basis is KET_C (v1, no F1 field); a declared dF1 must be ignored, not KeyError
+    assert r_with_dF1.allows(basis[0], basis[0])
+
+
+def test_rules_dF1_filters_when_declared():
+    """On a KET_C2 basis, two kets can share (J, Om, F, mF) while differing in
+    F1 (e.g. 229ThF+ J=1: F1=1.5 and F1=2.5 both reach F=2). dF1 must tell
+    them apart when declared."""
+    kets = enumerate_kets(thf_spec("229"))
+    groups = {}
+    for k in kets:
+        groups.setdefault((float(k["J"]), float(k["Om"]), float(k["F"]), float(k["mF"])),
+                          []).append(k)
+    pair = next(v for v in groups.values() if len(v) > 1)
+    a, b = pair[0], pair[1]
+    assert a["F1"] != b["F1"]
+    r_filtered = Rules(dJ=(0,), dOm=(0.0,), dF=(0,), dmF=(0,), dF1=(0,))
+    r_open = Rules(dJ=(0,), dOm=(0.0,), dF=(0,), dmF=(0,))
+    assert not r_filtered.allows(a, b)
+    assert r_open.allows(a, b)

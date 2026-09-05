@@ -9,8 +9,8 @@ which would invert every e/f label in ThF+
 import numpy as np
 import pytest
 
-from heff.conventions import (Conventions, ef_label, n_hat_sign, parity_operator,
-                              parity_phase, superposition_parity)
+from heff.conventions import (Conventions, a_par_th_sign, ef_label, n_hat_sign,
+                              parity_operator, parity_phase, superposition_parity)
 from heff.spec import enumerate_kets, thf_spec
 
 
@@ -83,3 +83,35 @@ def test_ef_rules_agree_at_S_one_half():
 def test_thesis_rule_without_S_raises():
     with pytest.raises(ValueError, match="S"):
         ef_label(1, +1, rule="thesis_S_half", ell=0.0)
+
+
+def test_v2_fields_have_the_agreed_defaults():
+    c = Conventions()
+    assert (c.a_par_th_sign, c.quadrupole_convention, c.eqq2_norm, c.two_photon_norm) == (
+        "negative", "bc_q0_is_negative_efg", "bc_9p52_q2", "bc_5p142_reduced")
+
+
+def test_a_par_th_sign_flips_with_the_convention():
+    assert a_par_th_sign(Conventions()) == -1.0
+    assert a_par_th_sign(Conventions(a_par_th_sign="positive")) == 1.0
+
+
+def test_unknown_v2_convention_value_raises():
+    with pytest.raises(ValueError, match="a_par_th_sign"):
+        Conventions(a_par_th_sign="sideways")
+
+
+def test_parity_operator_works_on_the_two_spin_dtype():
+    """[HAM]/spec-v2 S2.2: parity_operator must key on every dtype field (with
+    Om negated), not a four-literal (J, Om, F, mF) key -- otherwise two F1
+    branches that land on the same (J, Om, F, mF) collide and KeyError or
+    silently mismap."""
+    kets = enumerate_kets(thf_spec("229"))
+    P = parity_operator(kets, S=1.0, ell=0.0, s=0.0)
+    assert np.allclose(P @ P, np.eye(len(kets)))
+    assert np.allclose(P, P.T)
+    for i in range(len(kets)):
+        j = int(np.flatnonzero(np.abs(P[i]) > 0)[0])
+        assert kets["Om"][j] == -kets["Om"][i]
+        assert (kets["J"][j], kets["F1"][j], kets["F"][j], kets["mF"][j]) == (
+            kets["J"][i], kets["F1"][i], kets["F"][i], kets["mF"][i])

@@ -34,11 +34,12 @@ _TO_MHZ = {
     "MHz/(V/cm)": 1.0,
     "GV/cm": GV_PER_CM_TO_MHZ_PER_E_CM,
     "MHz/(e cm)": 1.0,
+    "(MHz/(V/cm))^2/MHz": 1.0,
     "": 1.0,
 }
 
 STATUSES = frozenset({"measured", "ab-initio", "derived", "estimate",
-                      "held-fixed", "stale", "unspecified"})
+                      "held-fixed", "stale", "unspecified", "placeholder"})
 
 
 @dataclass(frozen=True)
@@ -188,3 +189,145 @@ def thf_v1():
                   note="scalar-pseudoscalar coupling, dimensionless; 0 turns it off"),
     }
     return ParamSet(params, Conventions())
+
+
+_ISOTOPOLOGUES_V2 = ("232", "229", "227")
+
+
+def thf_v2(isotopologue):
+    """The 232/229/227 ThF+ X 3Delta1 parameter set (spec-v2 S5).
+
+    Every value, unit, uncertainty, status and source/note is copied
+    verbatim from docs/superpowers/specs/2026-09-05-heff-v2-isotopologues-
+    two-photon.md S5, except the 227Th A_par_Th/g_N_Th placeholders, which
+    are Arian's Schmidt-moment ruling ([HAM] S9.6, OPEN-20) superseding the
+    spec's mu(227Th) = mu(229Th) row.
+
+    `isotopologue` is one of '232' | '229' | '227'. Every isotopologue
+    carries thf_v1()'s shared 19F/rotational/Stark/EDM knobs unchanged (S5.1)
+    plus the two-photon alphas (S5.4); '232' is spin-0 so its Th knobs are
+    held at zero (a gate requires thf_v2('232') to agree with thf_v1() on
+    every v1 symbol); '229' and '227' add the isotope-specific Th hyperfine/
+    quadrupole knobs. eQq0_Th/eQq2_Th are STRUCTURALLY ABSENT for 227ThF+
+    (I_Th = 1/2 has no rank-2 nuclear matrix element), not zero-valued.
+    """
+    from .conventions import Conventions
+
+    if isotopologue not in _ISOTOPOLOGUES_V2:
+        raise ValueError(
+            f"isotopologue must be one of {_ISOTOPOLOGUES_V2}, got {isotopologue!r}")
+
+    P = Param
+    two_photon = {
+        "alpha_K0_dOm0": P(1.0, "(MHz/(V/cm))^2/MHz", status="placeholder",
+            source="[SPEC-v2] S5.4",
+            note="no ThF+ two-photon polarisability exists in any source read "
+                 "([2gamma] S3.0, S5 gap 1: no published Raman/two-photon rate "
+                 "or line strength for a transition within X 3Delta1, for "
+                 "either molecule, with a positive control confirming the "
+                 "query shape); the value 1.0 exists to make the geometry "
+                 "plottable"),
+        "alpha_K2_dOm0": P(1.0, "(MHz/(V/cm))^2/MHz", status="placeholder",
+            source="[SPEC-v2] S5.4",
+            note="no ThF+ two-photon polarisability exists in any source read "
+                 "([2gamma] S3.0, S5 gap 1); the value 1.0 exists to make the "
+                 "geometry plottable"),
+        "alpha_K2_dOm2": P(1.0, "(MHz/(V/cm))^2/MHz", status="placeholder",
+            source="[SPEC-v2] S5.4",
+            note="the Delta-Omega = +-2 channel, which requires an Omega = 0 "
+                 "intermediate ([2gamma] S3.3); no ThF+ two-photon "
+                 "polarisability exists in any source read"),
+    }
+
+    if isotopologue == "232":
+        th = {
+            "A_par_Th": P(0.0, "MHz", status="held-fixed",
+                source="[SPEC-v2] S5.1: 232Th is spin-0, no Th hyperfine term"),
+            "g_N_Th": P(0.0, "", status="held-fixed",
+                source="[SPEC-v2] S5.1: 232Th is spin-0"),
+            "eQq0_Th": P(0.0, "MHz", status="held-fixed",
+                source="[SPEC-v2] S5.1: 232Th is spin-0, no Th quadrupole term"),
+            "eQq2_Th": P(0.0, "MHz", status="held-fixed",
+                source="[SPEC-v2] S5.1: 232Th is spin-0"),
+            "c_I_Th": P(0.0, "kHz", status="held-fixed",
+                source="[SPEC-v2] S5.1: 232Th is spin-0"),
+        }
+    elif isotopologue == "229":
+        th = {
+            "A_par_Th": P(1510, "MHz", uncertainty=60, status="ab-initio",
+                source="Skripnikov & Titov 2015 Table II FINAL(ThF+) -4163 "
+                       "(mu/mu_N) MHz and Denis 2015 +1833 MHz, both rescaled "
+                       "to mu = 0.366(6) mu_N => -1524 / +1491 MHz; mean of "
+                       "the two rescalings with a spread-based uncertainty "
+                       "([TH] S2.2)",
+                note="sign UNVERIFIED, gap G4; add the authors' 7 % in "
+                     "quadrature for a hard bar. Magnitude only -- the sign "
+                     "is applied by conventions.a_par_th_sign, default "
+                     "'negative' per docs/lit/lookup-apar-th-sign-"
+                     "convention.md"),
+            "g_N_Th": P(0.1464, "", uncertainty=0.0024, status="derived",
+                source="mu(229Th)/I = 0.366(6)/(5/2) ([TH] S1.2, Porsev 2021 "
+                       "arXiv:2107.14723)",
+                note="the 1974 value 0.46(4) still in ENSDF is superseded and "
+                     "must never be used to rescale a published A_par"),
+            "eQq0_Th": P(-2600, "MHz", uncertainty=1000, status="estimate",
+                source="HfF+ anchor: eQq0(177HfF+) = -2100 MHz (Petrov 2018, "
+                       "CCSD(T)) x Q(229Th)/Q(177Hf) = 3.11/3.365 x R_el in "
+                       "[1, 1.65] => -2 to -3.3 GHz ([TH] S4.3)",
+                note="No ThF+ or ThO eQq0 is published, for any isotope or "
+                     "state -- gap G2"),
+            "eQq2_Th": P(300, "MHz", uncertainty=100, status="estimate",
+                source="Petrov 2018 Eqs. (24)-(25) route with w(ThF+) = "
+                       "G_par + 0.002319 = 0.0499 against w(HfF+) = 0.014 "
+                       "=> ~200-400 MHz ([TH] S4.4)",
+                note="Inherits the UNVERIFIED normalisation bridge of [TH] "
+                     "S4/S9.4 (OPEN-17): the value inherits an unresolved "
+                     "factor sqrt(2) AND a sign between the B&C (9.52) "
+                     "q = +-2 normalisation and Petrov 2018 Eq. (23)"),
+            "c_I_Th": P(0.0, "kHz", status="held-fixed",
+                source="No value anywhere -- gap G3",
+                note="[TH] S4.6 declines to pick one and brackets it at "
+                     "~1 kHz to ~1 MHz: g_N(Th)/g_N(F) = 0.0279 pushes down, "
+                     "the 2700x larger electronic hyperfine factor on Th "
+                     "pushes up. OPEN-19"),
+            "Q_Th": P(3.11, "e*b", uncertainty=0.02, status="measured",
+                source="Porsev 2021, weighted average over four Th3+ states "
+                       "([TH] S1.3)",
+                note="Carried for provenance; the Hamiltonian consumes "
+                     "eQq0_Th/eQq2_Th, not Q"),
+        }
+    else:  # '227'
+        schmidt_note = (
+            "PLACEHOLDER, Arian's ruling 2026-09-05 ([HAM] S9.6, OPEN-20): "
+            "the Schmidt single-particle moment for the tentative ENSDF "
+            "(1/2+) odd-neutron ground state, an s1/2 orbital (j = l + 1/2, "
+            "l = 0), gives g_s(n) = -3.826 and mu_Schmidt = 1/2 g_s(n) = "
+            "-1.913 mu_N, so g_N = mu/I = -3.826 and A_par = G_el x g_N = "
+            "(-10408 MHz) x (-3.826) = +39821 MHz. Schmidt values for "
+            "deformed actinides are typically wrong by a factor ~2 "
+            "(quenched g_s^eff ~ 0.6 g_s^free would move it to ~+24 GHz), "
+            "and the (1/2+) spin assignment is itself tentative (the 5/2+ "
+            "level sits only 9.3 keV away). Recorded for comparison: the "
+            "alternative mu(227Th) = mu(229Th) = 0.366 mu_N assumption gives "
+            "g_N = 0.732 and A_par = -7619 MHz (~-7.62 GHz) -- opposite "
+            "sign, 5x smaller. See docs/lit/lookup-227th-nuclear-moment.md: "
+            "no measured or estimated mu(227Th) exists in Stone's "
+            "compilations or the IAEA NDS moments database.")
+        th = {
+            "A_par_Th": P(39821, "MHz", status="placeholder",
+                source="[HAM] S9.6; docs/lit/lookup-227th-nuclear-moment.md",
+                note=schmidt_note),
+            "g_N_Th": P(-3.826, "", status="placeholder",
+                source="[HAM] S9.6; docs/lit/lookup-227th-nuclear-moment.md",
+                note=schmidt_note),
+            "c_I_Th": P(0.0, "kHz", status="held-fixed",
+                source="gap G3, as for 229Th ([TH] S4.6)",
+                note="[TH] S4.6 brackets it at ~1 kHz to ~1 MHz, as for "
+                     "229Th. OPEN-19"),
+            # eQq0_Th/eQq2_Th deliberately absent: a rank-2 nuclear operator
+            # has no matrix element for I_Th = 1/2 -- structurally absent,
+            # not zero-valued ([SPEC-v2] S5.3, [TH] S1.4).
+        }
+
+    params = {**thf_v1().params, **th, **two_photon}
+    return ParamSet(params, Conventions(version="thf-v2"))

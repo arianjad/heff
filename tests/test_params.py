@@ -10,7 +10,7 @@ import pytest
 
 from heff.conventions import Conventions
 from heff.params import (DEBYE_TO_MHZ_PER_V_CM, GV_PER_CM_TO_MHZ_PER_E_CM,
-                         MU_B, MU_N, Param, ParamSet, thf_v1)
+                         MU_B, MU_N, Param, ParamSet, STATUSES, thf_v1, thf_v2)
 
 
 def test_param_of_is_a_one_argument_constructor():
@@ -109,3 +109,66 @@ def test_table_names_every_symbol_with_its_status():
     for sym in ("B0", "D0", "omega_ef", "A_par", "d_mf", "G_par", "g_N", "c_I"):
         assert sym in text
     assert "estimate" in text and "measured" in text
+
+
+def test_placeholder_status_is_accepted_and_estimate_is_still_distinct():
+    p = Param(1.0, status="placeholder")
+    assert p.status == "placeholder"
+    assert p.status != "estimate"
+    assert {"placeholder", "estimate"} <= STATUSES
+
+
+def test_alpha_unit_is_registered_with_factor_one():
+    assert Param(1.0, "(MHz/(V/cm))^2/MHz").canonical == pytest.approx(1.0)
+
+
+def test_thf_v2_232_agrees_with_thf_v1_on_every_v1_symbol():
+    """The parameter half of the master reduction: thf_v2('232') must be
+    thf_v1() plus the Th knobs at zero plus the two-photon alphas -- never a
+    parallel re-typed table that can drift from it."""
+    v1 = thf_v1()
+    v2 = thf_v2("232")
+    for sym in v1.params:
+        assert v2.value(sym) == pytest.approx(v1.value(sym))
+        assert v2.params[sym].unit == v1.params[sym].unit
+        assert v2.params[sym].status == v1.params[sym].status
+
+
+def test_thf_v2_229_carries_the_documented_values_and_statuses():
+    ps = thf_v2("229")
+    expect = {
+        "A_par_Th": (1510, "MHz", "ab-initio"),
+        "g_N_Th": (0.1464, "", "derived"),
+        "eQq0_Th": (-2600, "MHz", "estimate"),
+        "eQq2_Th": (300, "MHz", "estimate"),
+        "c_I_Th": (0.0, "kHz", "held-fixed"),
+        "Q_Th": (3.11, "e*b", "measured"),
+    }
+    for sym, (value, unit, status) in expect.items():
+        p = ps.params[sym]
+        assert p.value == pytest.approx(value)
+        assert p.unit == unit
+        assert p.status == status
+        assert p.source
+    assert "sign UNVERIFIED, gap G4" in ps.params["A_par_Th"].note
+    assert "~1 kHz to ~1 MHz" in ps.params["c_I_Th"].note
+    assert "UNVERIFIED normalisation bridge" in ps.params["eQq2_Th"].note
+    assert "sqrt" in ps.params["eQq2_Th"].note.lower()
+
+
+def test_thf_v2_227_A_par_is_a_labelled_placeholder():
+    """R8: the placeholder is the Schmidt single-particle value, not the
+    mu(227Th) = mu(229Th) assumption -- the note must say so."""
+    ps = thf_v2("227")
+    a_par = ps.params["A_par_Th"]
+    assert a_par.status == "placeholder"
+    assert a_par.value == pytest.approx(39821, abs=1)
+    assert "Schmidt" in a_par.note
+    assert "docs/lit/lookup-227th-nuclear-moment.md" in a_par.note
+    g_n = ps.params["g_N_Th"]
+    assert g_n.status == "placeholder"
+    assert g_n.value == pytest.approx(-3.826)
+    assert "Schmidt" in g_n.note
+    # eQq0_Th/eQq2_Th are structurally absent for I_Th = 1/2, not zero-valued
+    assert "eQq0_Th" not in ps.params
+    assert "eQq2_Th" not in ps.params

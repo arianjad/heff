@@ -18,6 +18,10 @@ _ALLOWED = {
     "edm_factor": ("ng", "leanhardt_half"),
     "dipole_origin": ("center_of_mass", "heavy_nucleus"),
     "formalism": ("R2", "N2"),
+    "a_par_th_sign": ("negative", "positive"),
+    "quadrupole_convention": ("bc_q0_is_negative_efg",),
+    "eqq2_norm": ("bc_9p52_q2", "petrov2018_eq23"),
+    "two_photon_norm": ("bc_5p142_reduced",),
 }
 
 
@@ -44,6 +48,29 @@ class Conventions:
     dipole_origin 'center_of_mass' -- d_mf is origin-dependent for an ION; the
                  Th-nucleus origin differs by 0.72 D, a 20 % Stark error.
                  [HAM] S2.7.
+    a_par_th_sign 'negative' = Skripnikov & Titov 2015's A_par(229Th) < 0 is
+                 trusted (docs/lit/lookup-apar-th-sign-convention.md, committed
+                 0b3e5fa: both groups' axis conventions are opposite but A_par
+                 is invariant under a consistent axis reversal, and the groups
+                 AGREE in sign on the analogous HfF+ constant, so Denis 2015's
+                 +1833 MHz is the outlier). Unlike n_hat this flag records
+                 WHICH CALCULATION is trusted, not which convention the code
+                 works in -- the disagreement is real, not conventional.
+                 [HAM] S9.4, OPEN-16.
+    quadrupole_convention 'bc_q0_is_negative_efg' -- B&C state q0 is the
+                 negative of the electric field gradient; [HAM] S3.4/S9.4
+                 verified a uniform ratio of exactly -1 against the textbook
+                 Casimir function. Single-valued: a trap to record, not a
+                 fork to choose.
+    eqq2_norm    'bc_9p52_q2' = the package computes eQq2 in B&C (9.52)'s
+                 q = +-2 normalisation (the default). 'petrov2018_eq23' is the
+                 alternative Petrov-style normalisation; the bridge between the
+                 two is an UNVERIFIED factor (a sqrt(2) and a sign are both
+                 open) -- [HAM] S9.4, OPEN-17.
+    two_photon_norm 'bc_5p142_reduced' -- alpha^K_{dOmega} multiplies the
+                 dimensionless geometry of B&C (5.142) with unit one-photon
+                 reduced elements, so a strength comes out in units of
+                 alpha^2. Recorded, not chosen.
     """
     n_hat: str = "F_to_Th"
     ef_rule: str = "brown1975"
@@ -53,6 +80,10 @@ class Conventions:
     edm_factor: str = "ng"
     dipole_origin: str = "center_of_mass"
     formalism: str = "R2"
+    a_par_th_sign: str = "negative"
+    quadrupole_convention: str = "bc_q0_is_negative_efg"
+    eqq2_norm: str = "bc_9p52_q2"
+    two_photon_norm: str = "bc_5p142_reduced"
     version: str = "thf-v1"
 
     def __post_init__(self):
@@ -75,6 +106,19 @@ def n_hat_sign(conv):
     return 1.0 if conv.n_hat == "F_to_Th" else -1.0
 
 
+def a_par_th_sign(conv):
+    """-1 for the trusted 'negative' A_par(Th) calculation (Skripnikov &
+    Titov), +1 for 'positive' (Denis).
+
+    Multiplies the Param's magnitude, exactly like n_hat_sign -- but unlike
+    n_hat this flag records which CALCULATION is trusted, not a convention
+    fork: docs/lit/lookup-apar-th-sign-convention.md found the disagreement
+    real, not conventional. Governs the ab-initio 229Th value only; the 227Th
+    placeholder carries its sign in the Param itself ([HAM] S9.6). [HAM] OPEN-16.
+    """
+    return -1.0 if conv.a_par_th_sign == "negative" else 1.0
+
+
 def parity_phase(J, S, *, ell, s):
     """The composite case-(a) parity phase (-1)^(J - S - l + s).
 
@@ -91,18 +135,30 @@ def parity_phase(J, S, *, ell, s):
 def parity_operator(kets, S, *, ell, s):
     """The parity operator in the signed-Omega primitive basis.
 
-    P |J, Omega, F, m_F> = (-1)^(J-S-l+s) |J, -Omega, F, m_F>. Real symmetric,
-    P^2 = 1. Used by gate B2 / [HAM] V8 to check that a field-free term set is
-    parity-conserving and that the Stark and eEDM operators are parity-odd.
+    P |J, Omega, ..., m_F> = (-1)^(J-S-l+s) |J, -Omega, ..., m_F>. Real
+    symmetric, P^2 = 1. Used by gate B2 / [HAM] V8 to check that a field-free
+    term set is parity-conserving and that the Stark and eEDM operators are
+    parity-odd.
+
+    Keyed on EVERY dtype field (with Om negated), not a four-literal (J, Om,
+    F, mF) key -- identical on KET_C, and required on KET_C2 (spec-v2 S2.2):
+    two F1 branches can land on the same (J, Om, F, mF), so a four-literal
+    key collides across F1.
 
     ell and s are required keyword-only arguments -- no default, so a Sigma-
     or a bending state cannot silently inherit a linear-molecule parity.
     """
     n = len(kets)
     P = np.zeros((n, n))
-    key = {(kets["J"][i], kets["Om"][i], kets["F"][i], kets["mF"][i]): i for i in range(n)}
+    names = kets.dtype.names
+
+    def sig(i, flip_om):
+        return tuple(-kets["Om"][i] if f == "Om" else kets[f][i] for f in names) \
+            if flip_om else tuple(kets[f][i] for f in names)
+
+    key = {sig(i, False): i for i in range(n)}
     for i in range(n):
-        j = key[(kets["J"][i], -kets["Om"][i], kets["F"][i], kets["mF"][i])]
+        j = key[sig(i, True)]
         P[j, i] = parity_phase(kets["J"][i], S, ell=ell, s=s)
     return P
 

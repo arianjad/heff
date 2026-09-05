@@ -21,17 +21,26 @@ from typing import Callable
 
 @dataclass(frozen=True)
 class Rules:
-    """Declared selection rules, as DATA, separate from the formula."""
+    """Declared selection rules, as DATA, separate from the formula.
+
+    dF1 is v2-only (spec-v2 S2.2): it is ignored -- not enforced -- when it
+    is None (the default) or when the ket dtype has no F1 field, so a v1
+    Rules() and a v1 KET_C basis are both untouched.
+    """
     dJ: tuple = (0,)
     dOm: tuple = (0.0,)
     dF: tuple = (0,)
     dmF: tuple = (0,)
+    dF1: tuple | None = None
 
     def allows(self, bra, ket):
-        return (float(bra["J"] - ket["J"]) in tuple(float(x) for x in self.dJ)
-                and float(bra["Om"] - ket["Om"]) in tuple(float(x) for x in self.dOm)
-                and float(bra["F"] - ket["F"]) in tuple(float(x) for x in self.dF)
-                and float(bra["mF"] - ket["mF"]) in tuple(float(x) for x in self.dmF))
+        ok = (float(bra["J"] - ket["J"]) in tuple(float(x) for x in self.dJ)
+              and float(bra["Om"] - ket["Om"]) in tuple(float(x) for x in self.dOm)
+              and float(bra["F"] - ket["F"]) in tuple(float(x) for x in self.dF)
+              and float(bra["mF"] - ket["mF"]) in tuple(float(x) for x in self.dmF))
+        if ok and self.dF1 is not None and "F1" in bra.dtype.names:
+            ok = float(bra["F1"] - ket["F1"]) in tuple(float(x) for x in self.dF1)
+        return ok
 
 
 @dataclass(frozen=True)
@@ -45,6 +54,10 @@ class Ctx:
 
     `frame` is the StateSpec label carried through so the term-matrix manifest
     can record it; no element reads it (see StateSpec.frame).
+
+    `spins` is the v2 coupled-nuclear-spin chain, carried through from
+    StateSpec.spins (spec-v2 S2.2). Empty is the v1 default, so a v1 Ctx() is
+    unchanged.
     """
     S: float
     Lam: float
@@ -53,6 +66,7 @@ class Ctx:
     mu_N: float
     conventions: object
     frame: str
+    spins: tuple = ()
 
 
 def ctx_from(spec, pset):
@@ -61,7 +75,7 @@ def ctx_from(spec, pset):
 
     es = spec.electronic[0]
     return Ctx(S=es.S, Lam=es.Lam, I=spec.I, mu_B=MU_B, mu_N=MU_N,
-               conventions=pset.conventions, frame=spec.frame)
+               conventions=pset.conventions, frame=spec.frame, spins=spec.spins)
 
 
 @dataclass(frozen=True)
