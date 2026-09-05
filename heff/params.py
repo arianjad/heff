@@ -88,7 +88,14 @@ class ParamSet:
         # Checked here rather than in the Stark term because Ctx carries no
         # ParamSet, and this catches it before any assembly can happen.
         d = self.params.get("d_mf")
-        if d is not None and d.convention and d.convention != self.conventions.dipole_origin:
+        if d is not None and not d.convention:
+            from .conventions import _ALLOWED
+            raise ValueError(
+                f"d_mf has no origin tag (Param.convention); tag it with one of "
+                f"{_ALLOWED['dipole_origin']} matching the conventions block's "
+                "dipole_origin, e.g. Param(3.37, 'D', convention='center_of_mass') "
+                "-- an untagged d_mf silently skips the origin check ([HAM] S2.7)")
+        if d is not None and d.convention != self.conventions.dipole_origin:
             raise ValueError(
                 f"d_mf is tagged convention={d.convention!r} but the conventions "
                 f"block says dipole_origin={self.conventions.dipole_origin!r}; the "

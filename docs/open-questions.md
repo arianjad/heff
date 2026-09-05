@@ -72,3 +72,27 @@ unaffected by this question.
 
 A one-line question to K. B. Ng about the `|J, Ω = −1⟩` ket phase would settle the
 convention side of it, and is the same message that settles OPEN-3.
+
+## Erratum — [HAM] §2.8 g_F table
+
+Raised: Task 6 of `docs/superpowers/plans/2026-09-05-heff-v1-thf-tutorial.md`
+review, round 1. **Status: erratum in the document; the code is unaffected.**
+
+[HAM] §2.8's printed g_F table is headed `[derived, G_par = 0.04756]`, but its
+four rows reproduce only when the closed form
+`g_F = −G_par γ_F + g_N (μ_N/μ_B) κ_F` is evaluated at G_par = 0.048 (Ng's
+printed, rounded value), not at the header's own 0.04756.
+
+For J = 1, F = 3/2:
+
+- At **G_par = 0.04756**: g_F = −0.0148989 → 20.853 kHz/G. This matches
+  [HAM] §2.8's own numerical confirmation line, stated three paragraphs above
+  the table, and the measured |g_{F=3/2}| = 0.0149.
+- At **G_par = 0.048**: g_F = −0.0150455 → 21.058 kHz/G. This matches the
+  table's printed row (−0.015046, i.e. 21.06 kHz/G).
+
+The code uses G_par = 0.04756 (`heff/params.py`, `thf_v1()`), consistent with
+the document's own confirmation line, not with the printed table. The
+document's table should be regenerated at G_par = 0.04756 (or its header
+corrected to read 0.048, whichever Arian intends as the source value); the
+code and tests do not pin to the table's numbers either way.

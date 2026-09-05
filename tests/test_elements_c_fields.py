@@ -118,7 +118,7 @@ def test_V5_zeeman_Gpar_diagonal_gives_minus_Gpar_gamma_F(basis, ctx):
         -_elem("zeeman_Gpar", basis, ctx, i, i), abs=1e-12)
 
 
-def test_V5_total_g_factor_closed_form_and_the_document_table(basis, ctx):
+def test_V5_total_g_factor_closed_form(basis, ctx):
     """[HAM] V5 in full: both Zeeman terms together give
     g_F = -G_par gamma_F + g_N (mu_N/mu_B) kappa_F.
 
@@ -130,31 +130,25 @@ def test_V5_total_g_factor_closed_form_and_the_document_table(basis, ctx):
     flipping the relative sign of the two terms moves the ratio to 1.830, and
     dropping the nuclear term moves it to exactly 2.
 
-    NOTE on the second block. [HAM] S2.8's printed g_F table is headed
-    "[derived, G_par = 0.04756]" but was in fact evaluated at Ng's printed
-    G_par = 0.048: at 0.04756 the closed form gives g(1,3/2) = -0.0148989
-    (-20.853 kHz/G), which is [HAM] S2.8's OWN numerical confirmation three
-    paragraphs earlier and the measured |g| = 0.0149, while the table row reads
-    -0.015046 (-21.06 kHz/G). This code reproduces the table exactly when fed
-    0.048, so the discrepancy is in the document's table, not here.
+    Gated against the closed form at the parameter set's own G_par (0.04756),
+    NOT against [HAM] S2.8's printed g_F table -- that table is a known
+    erratum (it reproduces only at G_par = 0.048, not its own printed header
+    value); see docs/open-questions.md "Erratum -- [HAM] S2.8 g_F table".
     """
     ps = thf_v1()
     G, gN, B = ps.value("G_par"), ps.value("g_N"), 1.0
 
-    def g_of(J, F, G_par):
+    def g_of(J, F):
         i = _find(basis, J, 1.0, F, F)
-        shift = B * (G_par * _elem("zeeman_Gpar", basis, ctx, i, i)
+        shift = B * (G * _elem("zeeman_Gpar", basis, ctx, i, i)
                      + gN * _elem("zeeman_nuclear", basis, ctx, i, i))
         return -shift / (MU_B * B * F)
 
-    rows = ((1, 1.5, -0.015046), (1, 0.5, -0.032954),
-            (2, 2.5, -0.005827), (4, 4.5, -0.001815))
-    for J, F, table in rows:
+    for J, F in ((1, 1.5), (1, 0.5), (2, 2.5), (4, 4.5)):
         closed = -G * _gamma(J, F, I=0.5) + gN * (MU_N / MU_B) * _kappa(J, F, I=0.5)
-        assert g_of(J, F, G) == pytest.approx(closed, abs=1e-12)
-        assert g_of(J, F, 0.048) == pytest.approx(table, abs=1e-6)
-    assert g_of(1, 1.5, G) * MU_B * 1e3 == pytest.approx(-20.853, abs=1e-3)
-    assert g_of(1, 0.5, G) / g_of(1, 1.5, G) == pytest.approx(2.19, abs=5e-3)
+        assert g_of(J, F) == pytest.approx(closed, abs=1e-12)
+    assert g_of(1, 1.5) * MU_B * 1e3 == pytest.approx(-20.853, abs=1e-3)
+    assert g_of(1, 0.5) / g_of(1, 1.5) == pytest.approx(2.19, abs=5e-3)
 
 
 def test_zeeman_nuclear_diagonal_gives_plus_gN_kappa_F(basis, ctx):

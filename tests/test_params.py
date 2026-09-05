@@ -52,6 +52,14 @@ def test_conflicting_conventions_between_params_raise():
         ParamSet(ps, Conventions())
 
 
+def test_untagged_d_mf_raises():
+    """[HAM] S2.7: an untagged d_mf would silently skip the origin check that
+    catches a 20 % Stark error, whatever conventions.dipole_origin says."""
+    with pytest.raises(ValueError, match="origin tag"):
+        ParamSet({"d_mf": Param(3.37, "D")}, Conventions())
+    assert thf_v1().value("d_mf") == pytest.approx(1.6964978, abs=1e-7)
+
+
 def test_thf_v1_carries_the_documented_values_and_statuses():
     ps = thf_v1()
     assert ps.value("B0") == pytest.approx(7274.3325)
