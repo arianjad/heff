@@ -107,8 +107,35 @@ def test_B1_every_assembled_block_is_hermitian_and_real(block):
     for label, idx in block_by_mF(kets).index.items():
         tm = build_term_matrices(kets[idx], ctx)
         H = hamiltonian(tm, pset, {"E_z": 12.0, "B_z": 3.0})
-        assert np.allclose(H, H.conj().T, atol=1e-12), f"block {label}"
+        assert np.allclose(H, H.conj().T, atol=1e-12, rtol=0), f"block {label}"
         assert not np.iscomplexobj(H) or np.max(np.abs(H.imag)) == 0.0
+
+
+def test_B1_check_is_not_loose_against_diagonals_at_the_1e5_MHz_scale():
+    """Companion FAIL demo for B1 (fix round 1, finding 2): with numpy's
+    DEFAULT rtol=1e-5, a block whose diagonals run to ~1e5 MHz (J up to 4)
+    gets an effective tolerance of ~1 MHz, which swallows a real antisymmetric
+    perturbation of only 1e-6 MHz on the largest off-diagonal pair. B1's own
+    check must use rtol=0 so it actually FAILS on that perturbation.
+    """
+    spec = thf_spec()
+    kets = enumerate_kets(spec)
+    ctx = ctx_from(spec, thf_v1())
+    idx = block_by_mF(kets).index[3.5]
+    tm = build_term_matrices(kets[idx], ctx)
+    H = hamiltonian(tm, thf_v1(), {"E_z": 12.0, "B_z": 3.0})
+    assert np.allclose(H, H.conj().T, atol=1e-12, rtol=0)
+
+    off = np.abs(np.triu(H, k=1))
+    i, j = np.unravel_index(np.argmax(off), off.shape)
+    assert off[i, j] > 0.0, "need a genuinely nonzero off-diagonal pair to perturb"
+    H_pert = H.copy()
+    H_pert[i, j] += 1e-6  # MHz, antisymmetric: only one side of the pair moves
+
+    # The bug: default rtol=1e-5 is loose enough to hide this at ~1e5 MHz diagonals.
+    assert np.allclose(H_pert, H_pert.conj().T, atol=1e-12)
+    # The fix: rtol=0 makes B1's own check correctly reject the perturbed matrix.
+    assert not np.allclose(H_pert, H_pert.conj().T, atol=1e-12, rtol=0)
 
 
 def test_a_term_declared_hermitian_that_is_not_raises(block):
@@ -226,8 +253,130 @@ def test_manifest_records_terms_conventions_and_citations(block):
     assert set(m["cites"]) == set(tm.names)
     assert m["conventions"]["n_hat"] == "F_to_Th"
     assert m["wigner_backend"] == "sympy+lru_cache"
+    assert isinstance(m["wigner_version"], str) and m["wigner_version"]
+    assert isinstance(m["spec_hash"], str) and len(m["spec_hash"]) == 64  # sha256 hex
     # the cache key is a record, designed now, gating nothing
     import json
     key = json.loads(m["key"])
     assert key["dimension"] == len(kets) and "rotation" in key["terms"]
-    assert build_term_matrices(kets, ctx).manifest["key"] == m["key"]
+    rebuilt = build_term_matrices(kets, ctx).manifest
+    assert rebuilt["key"] == m["key"]
+    assert rebuilt["spec_hash"] == m["spec_hash"]
+
+
+def test_cache_key_is_block_aware_not_just_case_dimension_terms_conventions():
+    """Fix round 1, finding 1: the +m_F = 3/2 and -m_F = 3/2 blocks share case,
+    dimension, term names and conventions, so the OLD key collided even though
+    the two blocks' matrices differ (opposite-sign m_F-odd terms). The key
+    must fold in a canonicalised description of the block's own kets."""
+    spec = thf_spec()
+    kets = enumerate_kets(spec)
+    ctx = ctx_from(spec, thf_v1())
+    blocks = block_by_mF(kets)
+    up = build_term_matrices(kets[blocks.index[1.5]], ctx)
+    dn = build_term_matrices(kets[blocks.index[-1.5]], ctx)
+    # same case/dimension/terms/conventions -- the OLD key's entire input
+    assert up.manifest["dimension"] == dn.manifest["dimension"]
+    assert up.manifest["terms"] == dn.manifest["terms"]
+    assert up.manifest["conventions"] == dn.manifest["conventions"]
+    # ... but the matrices differ (an m_F-odd term, e.g. Zeeman, flips sign)
+    assert not np.allclose(up.mats[up.names.index("zeeman_Gpar")],
+                           dn.mats[dn.names.index("zeeman_Gpar")])
+    # so the key (and the dedicated spec_hash) must differ too
+    assert up.manifest["key"] != dn.manifest["key"]
+    assert up.manifest["spec_hash"] != dn.manifest["spec_hash"]
+
+
+def test_unknown_knob_symbol_raises_naming_it_and_the_known_ones(block):
+    """Fix round 1, finding 3: a typo'd knob symbol used to be silently
+    dropped (`pset.value` / `_knob` fall through to a default), so
+    `sweep_coefficients(tm, pset, {"NOPE": ...})` returned a valid-looking
+    array with no warning. It must raise, naming the bad symbol and listing
+    the known ones, in every entry point that accepts a knobs mapping."""
+    kets, ctx = block
+    tm = build_term_matrices(kets, ctx)
+    pset = thf_v1()
+
+    with pytest.raises(ValueError, match="NOPE") as exc:
+        sweep_coefficients(tm, pset, {"E_z": np.linspace(0.0, 60.0, 4),
+                                      "NOPE": np.zeros(4)})
+    assert "B0" in str(exc.value) or "E_z" in str(exc.value)  # known symbols listed
+
+    with pytest.raises(ValueError, match="NOPE"):
+        hamiltonian(tm, pset, {"E_z": 10.0, "NOPE": 1.0})
+
+    with pytest.raises(ValueError, match="NOPE"):
+        active(tm, pset, {"NOPE": 1.0})
+
+    with pytest.raises(ValueError, match="NOPE"):
+        vertex(tm, pset, {"NOPE": 1.0}, "B_z")
+
+    with pytest.raises(ValueError, match="unknown knob symbol"):
+        vertex(tm, pset, {}, "NOPE")
+
+
+def test_sweep_coefficients_wrong_length_array_raises_a_clear_error(block):
+    """Fix round 1, finding 3: two knob arrays with incompatible (non-
+    broadcastable) lengths must raise a clear error naming the symbols and
+    shapes involved, not an opaque bare numpy broadcast message."""
+    kets, ctx = block
+    tm = build_term_matrices(kets, ctx)
+    pset = thf_v1()
+    with pytest.raises(ValueError) as exc:
+        sweep_coefficients(tm, pset, {"E_z": np.zeros(5), "B_z": np.zeros(3)})
+    msg = str(exc.value)
+    assert "E_z" in msg and "B_z" in msg
+    assert "(5,)" in msg and "(3,)" in msg
+
+
+def test_complex_term_promotes_H_only_when_its_coefficient_is_nonzero():
+    """Fix round 1, finding 4: build_term_matrices used to compute one
+    np.result_type across ALL terms and cast the whole stack, so a single
+    complex term promoted every assembled H regardless of whether that term
+    was even active. Each term now keeps its own dtype at build; hamiltonian
+    (and hamiltonian_batch) promote only when an ACTIVE term is complex."""
+    from heff.terms import Rules, term
+
+    reg = {}
+    d = 3
+
+    @term(name="real_diag", param=("A",), cases=("c",), rules=Rules(),
+          hermitian=True, real=True, cite="toy", registry=reg)
+    def _real(bra, ket, ctx):
+        return 0.0
+
+    @term(name="fake_complex_hermitian", param=("C",), cases=("c",), rules=Rules(),
+          hermitian=True, real=False, cite="toy", registry=reg)
+    def _cplx(bra, ket, ctx):
+        return 0.0
+
+    # Build TermMatrices by hand (spec/rules plumbing isn't needed for this
+    # dtype check): a real diagonal term and a complex Hermitian term.
+    from heff.spec import KET_C
+    kets_arr = np.zeros(d, dtype=KET_C)
+    ctx = ctx_from(thf_spec(), thf_v1())
+    tm = build_term_matrices(kets_arr, ctx, registry=reg)
+    assert tm.mats[tm.names.index("real_diag")].dtype == np.float64
+    assert tm.mats[tm.names.index("fake_complex_hermitian")].dtype == np.complex128
+
+    pset = ParamSet({"A": Param.of(2.0), "C": Param.of(0.0)}, thf_v1().conventions)
+    H_off = hamiltonian(tm, pset, {})
+    assert not np.iscomplexobj(H_off)
+    assert H_off.dtype == np.float64
+
+    pset_on = pset.with_(C=Param.of(3.0))
+    H_on = hamiltonian(tm, pset_on, {})
+    assert np.iscomplexobj(H_on)
+    assert H_on.dtype == np.complex128
+
+    # Column order follows tm.names (sorted term names), not declaration order.
+    i_A, i_C = tm.names.index("real_diag"), tm.names.index("fake_complex_hermitian")
+    c_batch = np.zeros((2, len(tm.names)))
+    c_batch[:, i_A] = 2.0  # A active in both sets, C inactive in both
+    Hb_off = hamiltonian_batch(tm, c_batch)
+    assert Hb_off.dtype == np.float64
+
+    c_batch_on = c_batch.copy()
+    c_batch_on[1, i_C] = 3.0  # second set turns C on
+    Hb_on = hamiltonian_batch(tm, c_batch_on)
+    assert Hb_on.dtype == np.complex128
