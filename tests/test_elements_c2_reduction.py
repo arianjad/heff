@@ -45,6 +45,14 @@ V2_TO_V1 = {
     "pt_odd_scalar_pseudoscalar": "pt_odd_scalar_pseudoscalar",
 }
 
+# The v2 terms that have NO v1 counterpart, stated EXPLICITLY so that a term
+# added to REGISTRY_C2 without a line in V2_TO_V1 fails this file instead of
+# slipping through a subset check. Task 5's six Th terms are the members; every
+# one of them is identically zero at I_Th = 0 (asserted in
+# tests/test_elements_c2_th.py::test_every_th_term_vanishes_at_I_Th_zero),
+# which is why V16 is unaffected by their arrival.
+EXPECTED_NO_V1_COUNTERPART = set()
+
 
 def spec_with_I_Th_zero(J_max=4):
     """The v2 two-spin spec at I_Th = 0 -- the master gate's subject.
@@ -111,12 +119,24 @@ def test_the_two_param_sets_share_one_convention_stamp():
 
 
 def test_V16_every_v2_term_reduces_to_its_v1_counterpart(v1_setup, v2_setup):
-    """The master gate, term by term, on every signed-m_F block."""
+    """The master gate, term by term, on every signed-m_F block.
+
+    It is also the gate that discriminates the B&C (5.173) ket-F1 vs bra-F1
+    phase, which V19 cannot see: at I_Th = 0 the F1 column is J, so the two
+    readings differ exactly on Delta J = +-1, and hyperfine_A_par_F_dJ1 is the
+    only term here that has such elements -- the bra-F1 variant deviates from
+    v1 hyperfine_A_par_dJ1 by 0.9682 in units of A_par^F (measured; [HAM] S9.3
+    settles the phase by a decoupled-basis rebuild).
+    """
     k1, c1 = v1_setup
     k2, c2 = v2_setup
     v2_names = {t.name for t in terms_for_case("c2", registry=REGISTRY_C2)}
     v1_names = {t.name for t in terms_for_case("c")}
     assert set(V2_TO_V1) <= v2_names, sorted(set(V2_TO_V1) - v2_names)
+    assert v2_names - set(V2_TO_V1) == EXPECTED_NO_V1_COUNTERPART, (
+        "a v2 term appeared with no v1 counterpart and no entry in "
+        "EXPECTED_NO_V1_COUNTERPART; add it to one or the other so the master "
+        f"gate's coverage stays explicit: {sorted(v2_names - set(V2_TO_V1))}")
     assert set(V2_TO_V1.values()) == v1_names, (
         "every v1 case-(c) term needs a v2 counterpart in this gate; missing "
         f"{sorted(v1_names - set(V2_TO_V1.values()))}")
@@ -186,9 +206,20 @@ def test_V19_the_19F_doublet_ordering_flips_between_F1_manifolds():
 
     THIS IS A SIGN TEST. The F1 = 3/2 entry INVERTS relative to the one-spin
     answer because [HAM] S9.3's closed-form bracket J(J+1)+F1(F1+1)-I_Th(I_Th+1)
-    = 2 + 3.75 - 8.75 = -3 there, i.e. J is anti-aligned with F1. A dropped
-    phase in the B&C (5.173)/(5.174) recoupler leaves all three MAGNITUDES
-    plausible, so only the sign catches it.
+    = 2 + 3.75 - 8.75 = -3 there, i.e. J is anti-aligned with F1.
+
+    What it catches, per [HAM] S9.3's falsification block: a TRANSPOSED 6j
+    COLUMN ORDER in either recoupler. Transposing the I_F 6j sends the three
+    numbers to -0.1581, 0, 0; transposing the I_Th 6j sends them to 0, 0, 0 --
+    and the I_Th one is the corruption the S9.1 I_Th = 0 collapse check is
+    blind to by construction.
+
+    What it does NOT catch: the B&C (5.173) ket-F1 vs bra-F1 phase. The same
+    falsification block prints -0.4000, +0.1714, +0.5714 for the bra-F1 variant
+    -- Table 2 reproduced identically, because every entry here is Delta F1 = 0
+    and the two readings differ only on Delta F1 = +-1. That phase is pinned by
+    [HAM] S9.3's decoupled-basis rebuild and, inside this file, by V16 through
+    hyperfine_A_par_F_dJ1.
     """
     got = _19F_doublet_splittings(thf_spec("229", J_max=1), J=1)
     assert sorted(got) == [1.5, 2.5, 3.5]

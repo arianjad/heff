@@ -312,7 +312,7 @@ def spin_rotation_cI_F(bra, ket, ctx):
 
 
 @_term_c2(name="zeeman_nuclear_F", param=("g_N", "B_z"),
-          rules=Rules(dJ=(0,), dOm=(0.0,), dF1=(-1, 0, 1), dF=(-1, 0, 1),
+          rules=Rules(dJ=(0,), dOm=(0.0,), dF1=(0,), dF=(-1, 0, 1),
                       dmF=(0,)),
           hermitian=True, real=True,
           cite="H = -g_N mu_N T1(I_F).T1(B) (Ng thesis Eq. C.6 p.321), the v1 "
@@ -327,11 +327,9 @@ def spin_rotation_cI_F(bra, ket, ctx):
                "(-1)^(F'+F1+I_F+1) sqrt(I_F(I_F+1)(2I_F+1)) {I_F F' F1; F I_F 1} "
                "x (-1)^(F'-m') sqrt((2F+1)(2F'+1)) (F' 1 F; -m' 0 m), with "
                "<I||T1(I)||I> from B&C (5.179) PDF p.206 / book p.174. "
-               "(5.175)'s delta_{j1 j1'} makes the FORMULA diagonal in F1; the "
-               "declared Delta F1 = 0, +-1 is deliberately WIDER than that "
-               "(brief Step 3: declare wider where the reach is not pinned by "
-               "S9), which costs gate A5 only its outside-the-rules half. "
-               "g_N mu_N = 4.008 kHz/G. [HAM] S2.8")
+               "(5.175)'s delta_{j1 j1'} is exact with j1 = F1 here, so the "
+               "declared rule is Delta F1 = 0. g_N mu_N = 4.008 kHz/G. "
+               "[HAM] S2.8")
 def zeeman_nuclear_F(bra, ket, ctx):
     if not _same(bra, ket, "J", "Om", "F1", "mF"):
         return 0.0
