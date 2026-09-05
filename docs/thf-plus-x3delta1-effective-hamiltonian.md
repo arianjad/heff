@@ -806,3 +806,172 @@ S9.1  reduction of the two-spectator element
 Row (a) is the check the brief asks for: all 1720 elements over `J ≤ 4`, `J′ ≤ 4`, `Ω = ±1`, every `F = J ± ½`, every `m_F`, every `p ∈ {0, ±1}`, **max deviation 2.220 × 10⁻¹⁶** — machine epsilon, i.e. exact.
 
 **The check's blind spot, stated because a reviewer must know it.** Transposing the *I_F* 6j's upper pair is caught loudly (0.65). Transposing the *I_Th* 6j's upper pair is **not** caught at I_Th = 0, because there `F₁ = J` makes the corrupted symbol identical to the correct one. Two further checks close that hole and both are reported below: row (b) here (`I_F = 0`, `I_Th = 5/2`, `F₁ ≠ J`, max deviation 2.220 × 10⁻¹⁶), and the §9.3 Table 2 falsification, where the same corruption collapses the whole table to zero. Do not treat row (a) alone as validating line 3.
+
+---
+
+### 9.2 The Th operators are the v1 formulas with F → F₁, exactly
+
+**The structural theorem — B&C Eq. (5.176), PDF p. 205 / book p. 173, verbatim:**
+
+```
+(viii) Tensor operators acting on the same inner part of a coupled system
+
+If the scalar product is formed from spherical tensor operators which both act on the
+same inner part of a coupled scheme, it is intuitively obvious that
+
+  ⟨j₁, j₂, j₁₂, m₁₂| T^k(A₁) · T^k(B₁) |j₁′, j₂′, j₁₂′, m′₁₂⟩
+     = δ_{j₁₂ j₁₂′} δ_{m₁₂ m′₁₂} δ_{j₂ j₂′} ⟨j₁| T^k(A₁) · T^k(B₁) |j₁′⟩.        (5.176)
+
+This result can be proved formally by application of the Wigner–Eckart theorem,
+equation (5.172), followed by equation (5.174).
+```
+
+**Application.** In `|((J I_Th) F₁, I_F) F, m_F⟩` take `j₁ = F₁` (which already contains J and I_Th), `j₂ = I_F`, `j₁₂ = F`. Every Th interaction — the Th magnetic hyperfine, the Th electric quadrupole, the Th nuclear spin–rotation — is a scalar built from the rotational/electronic degrees of freedom and I_Th alone, i.e. from the **inner** part. B&C (5.176) then says its matrix element is diagonal in F and m_F, **independent of them and of I_F**, and equal to the matrix element evaluated inside `|J, Ω, I_Th, F₁⟩`. `[derived from B&C (5.176)]`
+
+**Consequence, stated as the substitution rule Tasks 4 and 5 implement.** With `I → I_Th`, `F → F₁` and no other change, the following v1 expressions are the **exact** Th matrix elements in the two-spin basis, times `δ_{FF′} δ_{m_F m′_F}`:
+
+| v1 formula | B&C source | becomes |
+|---|---|---|
+| §2.4 axial hyperfine, ΔJ = 0 | (9.50), PDF p. 636 / book p. 604 | `A∥^Th [F₁(F₁+1) − J(J+1) − I_Th(I_Th+1)] / [2J(J+1)]` |
+| §2.5 axial hyperfine, ΔJ = ±1 | (9.51), PDF p. 636 / book p. 604 | same expression with `F → F₁`, `I → I_Th`, J the larger of the two |
+| §2.6 nuclear spin–rotation | (8.7) PDF p. 410 / book p. 378, element (8.20) PDF p. 414 / book p. 382 | `c_I^Th [F₁(F₁+1) − I_Th(I_Th+1) − J(J+1)] / 2` |
+| §9.4 electric quadrupole | (9.52)/(9.53), PDF pp. 636–637 / book pp. 604–605 | same, `I → I_Th`, `F → F₁` |
+
+Selection rules for all four: `ΔF₁ = 0`, `ΔF = 0`, `Δm_F = 0`, and the v1 ΔJ/ΔΩ rules unchanged.
+
+**What this means for the code, so no new algebra is written for the Th terms.** `heff`'s existing `hyperfine_A_par`, `hyperfine_A_par_dJ1` and `spin_rotation_cI` are already the bare Casimir/(9.51) kernels — none of them reads Ω except `hyperfine_A_par_dJ1`, which divides by the signed Ω because B&C's brace is `A∥/Ω`. The Th versions are **those same functions read through a field adapter** that hands them `(I_Th, F₁)` where the v1 call hands them `(I_F, F)`. That is a one-line indirection, not a new matrix element, and it is the reason §9.3 — not §9.2 — is where the work is.
+
+**Cross-check run** `[derived]`: at `I_Th = 5/2` the diagonal (9.50) coefficients over F₁ at J = 1 are `−1.7500, −0.5000, +1.2500`, reproducing [TH] §4.1 exactly.
+
+---
+
+### 9.3 The ¹⁹F operators, recoupled
+
+These are the terms that genuinely change shape: `T¹(I_F)` acts on the **outer** spin, the rotational factor acts inside F₁, so B&C (5.176) does not apply and F₁ becomes off-diagonal.
+
+**(a) Scalar product across the coupled pair — B&C Eq. (5.173), PDF p. 205 / book p. 173, verbatim:**
+
+```
+⟨j₁, j₂, j₁₂, m| T^k(A₁) · T^k(A₂) |j₁′, j₂′, j₁₂′, m′⟩
+  = (−1)^{j₁′ + j₁₂ + j₂} δ_{j₁₂, j₁₂′} δ_{m, m′}
+    { j₂′  j₁′  j₁₂ ;  j₁  j₂  k } ⟨j₁‖T^k(A₁)‖j₁′⟩ ⟨j₂‖T^k(A₂)‖j₂′⟩
+```
+
+Applied with `j₁ = F₁, j₂ = I_F, j₁₂ = F, k = 1`, and with primes moved onto the bra:
+
+```
+s1 = (−1)^{F₁ + F + I_F} { I_F  F₁  F ;  F₁′  I_F  1 }
+     × ⟨J′,F₁′‖T¹(A₁)‖J,F₁⟩ × √(I_F(I_F+1)(2I_F+1))
+```
+
+**The phase carries the KET's F₁, not the bra's.** This matters only for the `ΔF₁ = ±1` elements, where the two readings differ by a factor −1 — and **Hermiticity does not discriminate between them**, because the reduced element `⟨J′,F₁′‖T¹(A₁)‖J,F₁⟩` itself changes sign under bra↔ket exchange when `ΔF₁ = ±1`, so both readings give a symmetric matrix. The discriminating check is the independent decoupled-basis rebuild reported below.
+
+`⟨I_F‖T¹(I_F)‖I_F⟩ = [I_F(I_F+1)(2I_F+1)]^{1/2}` is B&C Eq. (5.179), PDF p. 206 / book p. 174 (note: [HAM] §2 cites this equation as PDF p. 205; the correct PDF page is 206).
+
+**(b) I_Th spectator — B&C Eq. (5.174)** as in §9.1 step (iii), `j₁ = J, j₂ = I_Th, j₁₂ = F₁, k₁ = 1`:
+
+```
+⟨J′,F₁′‖T¹(A₁)‖J,F₁⟩ = (−1)^{F₁ + J′ + 1 + I_Th} √((2F₁′+1)(2F₁+1)) { J  F₁  I_Th ;  F₁′  J′  1 }
+                        × ⟨J′,Ω′‖T¹(A₁)‖J,Ω⟩
+```
+
+with two choices of the innermost reduced element:
+
+- `A₁ = J`: `⟨J′‖T¹(J)‖J⟩ = δ_{JJ′}[J(J+1)(2J+1)]^{1/2}` — **B&C (5.179), PDF p. 206 / book p. 174**.
+- `A₁ = n̂`: `⟨J′,Ω′‖T¹(n̂)‖J,Ω⟩ = (−1)^{J′−Ω′}√((2J′+1)(2J+1)) (J′ 1 J; −Ω′ 0 Ω)` — **B&C (5.186), PDF p. 207 / book p. 175**, i.e. exactly the `m4` line of §9.1 at `k = 1`, `q = 0`, with `J′ ≠ J` allowed.
+
+**The three ¹⁹F terms.**
+
+1. **ΔJ = 0 axial hyperfine.** B&C (9.50)'s ΔJ = 0 block is `A∥^F T¹(J)·T¹(I_F)/[J(J+1)]` — the projection-theorem form Ng thesis Eq. C.2 uses. Substituting `A₁ = J` above gives the complete two-spin element. Selection rules: `ΔJ = 0`, `ΔΩ = 0`, **`ΔF₁ = 0, ±1`**, `ΔF = 0`, `Δm_F = 0`.
+2. **Nuclear spin–rotation.** `H_nsr^F = c_I^F T¹(J)·T¹(I_F)` — B&C (8.7), PDF p. 410 / book p. 378. Identical skeleton with `A₁ = J` and no `1/[J(J+1)]`. Same selection rules.
+3. **ΔJ = ±1 axial hyperfine** — the term [TH] §3.3 leaves "derivable-not-derived". It is the **same scalar product with `A₁ = n̂`**:
+
+   ```
+   H_hf^F(axial) = (A∥^F / Ω) T¹(n̂) · T¹(I_F)
+   ```
+
+   `[derived]` The normalisation is fixed, not fitted: within a fixed J the projection theorem gives `⟨J,Ω‖T¹(n̂)‖J,Ω⟩ = Ω ⟨J‖T¹(J)‖J⟩ / [J(J+1)]` exactly, because `(J 1 J; −Ω 0 Ω) = (−1)^{J−Ω} Ω / √(J(J+1)(2J+1))`, so `(A∥^F/Ω) T¹(n̂)` and `A∥^F T¹(J)/[J(J+1)]` have **identical** reduced elements on the ΔJ = 0 block and therefore identical matrix elements at every F₁ and F. The two forms differ only off-diagonal in J, which is precisely where (9.51) lives. Selection rules: `ΔJ = 0, ±1`, `ΔΩ = 0`, `ΔF₁ = 0, ±1`, `ΔF = 0`, `Δm_F = 0`.
+
+**Closed form used as an independent cross-check** `[derived]`. Applying the projection theorem twice — `T¹(J)·T¹(I_F)` projected onto F₁, then `F₁·I_F` projected onto F — the `F = F₁+½` minus `F = F₁−½` splitting of term 1, in units of `A∥^F`, is
+
+```
+Δ(J, F₁) = [J(J+1) + F₁(F₁+1) − I_Th(I_Th+1)] (2F₁+1) / [4 F₁(F₁+1) J(J+1)]
+```
+
+which at `I_Th = 0` (so `F₁ = J`) reduces to `(2J+1)/[2J(J+1)]`, the §2.4 result. This closed form uses **no 6j at all**, so agreement between it and the full recoupling is a genuine test of the phases and column orders, not a restatement.
+
+#### Self-checks as run
+
+Scratch script `verify_s9.py`, `conda run -n heff python`. Printed verbatim:
+
+```
+S9.3  the 19F operators, recoupled
+  (5.173) phase uses KET F1: max |M - M^T| = 0.000e+00
+  (5.173) phase uses BRA F1: max |M - M^T| = 0.000e+00
+  dJ=0: (A/[J(J+1)]) T1(J).T1(I_F) vs (A/Om) T1(n).T1(I_F): max |diff| = 2.776e-17
+
+  TABLE 1  I_Th = 0, splitting E(F=J+1/2)-E(F=J-1/2) in units of A_par^F
+     J | recoupled | (2J+1)/[2J(J+1)] | projection thm
+     1 |  +0.75000  |     +0.75000      |   +0.75000
+     2 |  +0.41667  |     +0.41667      |   +0.41667
+     3 |  +0.29167  |     +0.29167      |   +0.29167
+     4 |  +0.22500  |     +0.22500      |   +0.22500
+
+  TABLE 2  I_Th = 5/2, J = 1, splitting E(F=F1+1/2)-E(F=F1-1/2), units A_par^F
+      F1 | recoupled | projection thm | [TH] S4.5
+     1.5 |  -0.40000  |    -0.40000     |   -0.4000
+     2.5 |  +0.17143  |    +0.17143     |   +0.1714
+     3.5 |  +0.57143  |    +0.57143     |   +0.5714
+
+  falsification of TABLE 2 (must NOT reproduce -0.4000/+0.1714/+0.5714):
+    transpose I_F 6j           -> -0.1581, +0.0000, +0.0000
+    transpose I_Th 6j          -> +0.0000, -0.0000, +0.0000
+    (5.173) phase on BRA F1    -> -0.4000, +0.1714, +0.5714
+
+  dJ = +-1 axial hyperfine at I_Th = 0 vs B&C (9.51), units A_par^F:
+     J=2<-1, F=1.5: recoupled -0.433013 | B&C(9.51) -0.433013
+     J=3<-2, F=2.5: recoupled -0.471405 | B&C(9.51) -0.471405
+     J=4<-3, F=3.5: recoupled -0.484123 | B&C(9.51) -0.484123
+     max |dev| over J=2..4, Om=+-1, all F : 5.551e-17
+
+  dJ = +-1 at I_Th = 5/2 (J=2<-1), units A_par^F, F1 diagonal:
+     F1=1.5 F=1.0: +0.295804
+     F1=1.5 F=2.0: -0.177482
+     F1=2.5 F=2.0: +0.252982
+     F1=2.5 F=3.0: -0.180702
+     F1=3.5 F=3.0: +0.185577
+     F1=3.5 F=4.0: -0.144338
+
+  c_I^F at I_Th = 0 vs B&C (8.20) closed form [F(F+1)-I(I+1)-J(J+1)]/2:
+     max |dev| = 2.220e-16
+```
+
+**Table 1 agrees with [TH] §3.4 to all five digits** (+0.75000, +0.41667, +0.29167, +0.22500), and independently with the §2.4 closed form and with the projection theorem.
+
+**Table 2 agrees with [TH] §4.5 to all four digits** (−0.4000, +0.1714, +0.5714). The **sign inversion at F₁ = 3/2** relative to the I_Th = 0 value of +0.7500 survives three independent routes — the full 6j recoupling, the projection-theorem closed form above, and [TH]'s earlier independent implementation. Its mechanism is visible in the closed form: the bracket `J(J+1) + F₁(F₁+1) − I_Th(I_Th+1)` is `2 + 3.75 − 8.75 = −3` at (J, F₁) = (1, 3/2), i.e. **J is anti-aligned with F₁ there**, so the ¹⁹F doublet ordering flips inside that F₁ manifold. At `A∥^F = −20.1 MHz` the three splittings are +8.0, −3.4 and −11.5 MHz. This is the sharpest falsifiable ²²⁹ThF⁺ prediction in this document.
+
+**The falsification block shows the tables can fail.** Corrupting either 6j's column order sends Table 2 to `−0.1581, 0, 0` or to `0, 0, 0`. In particular the I_Th 6j corruption — the one the §9.1 `I_Th = 0` check is blind to — is caught here, loudly.
+
+**ΔJ = ±1 reproduces B&C (9.51) exactly at I_Th = 0**, max deviation 5.551 × 10⁻¹⁷ over J = 2–4, Ω = ±1, all F. So the axial `T¹(n̂)·T¹(I_F)` form is the operator (9.51) is the matrix element of, and `heff`'s existing `hyperfine_A_par_dJ1` sits inside the master gate.
+
+**The (5.173) phase, settled by an independent route.** Because Hermiticity is blind to it (both readings give `max |M − Mᵀ| = 0`), the element was rebuilt from scratch in the fully **decoupled** product basis `|J,m_J⟩|I_Th,m₁⟩|I_F,m₂⟩`, with the coupled states assembled from Clebsch–Gordan coefficients and `T¹(J)·T¹(I_F) = J_z I_z + ½(J₊I₋ + J₋I₊)` written out as an explicit matrix — a route that uses **neither (5.173) nor (5.174)**. Printed verbatim:
+
+```
+S9.3 (independent) decoupled-basis rebuild of the (5.173)+(5.174) chain
+  J = 1, A = T1(J), I_Th = 5/2:  <F1'|O|F1> / [J(J+1)]
+     F1'   F1    F  | decoupled  | (5.173) ket-phase | bra-phase
+      1.5  1.5  1.0 | +0.250000  |    +0.250000      | +0.250000
+      1.5  1.5  2.0 | -0.150000  |    -0.150000      | -0.150000
+      1.5  2.5  2.0 | -0.374166  |    -0.374166      | +0.374166
+      2.5  1.5  2.0 | -0.374166  |    -0.374166      | +0.374166
+      2.5  2.5  2.0 | -0.100000  |    -0.100000      | -0.100000
+      2.5  2.5  3.0 | +0.071429  |    +0.071429      | +0.071429
+      2.5  3.5  3.0 | -0.319438  |    -0.319438      | +0.319438
+      3.5  2.5  3.0 | -0.319438  |    -0.319438      | +0.319438
+      3.5  3.5  3.0 | -0.321429  |    -0.321429      | -0.321429
+      3.5  3.5  4.0 | +0.250000  |    +0.250000      | +0.250000
+```
+
+**The ket-F₁ phase — B&C's literal reading — is right; the bra-F₁ variant is wrong on every `ΔF₁ = ±1` element.** Code the phase as `(−1)^{F₁(ket) + F + I_F}`.
+
+**Sizes.** The `ΔF₁ = ±1` ¹⁹F elements at I_Th = 5/2, J = 1 are 0.32–0.37 × `A∥^F` ≈ 6.4–7.5 MHz against F₁ spacings of 190–2670 MHz ([TH] §4.1), so F₁ remains a good quantum number and this sign moves levels only at the ≲ 25 kHz level. It is nonetheless a sign in a matrix element that check V1 cannot see, which is why it is pinned here rather than left to the implementer.
