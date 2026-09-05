@@ -32,12 +32,12 @@ def test_n_hat_sign_flips_for_the_petrov_convention():
 
 def test_parity_phase_for_3delta_is_minus_one_to_the_J_minus_one():
     for J in (1, 2, 3, 4):
-        assert parity_phase(J, S=1.0) == pytest.approx((-1.0) ** (J - 1))
+        assert parity_phase(J, S=1.0, ell=0.0, s=0.0) == pytest.approx((-1.0) ** (J - 1))
 
 
 def test_parity_operator_squares_to_identity_and_flips_omega():
     kets = enumerate_kets(thf_spec())
-    P = parity_operator(kets, S=1.0)
+    P = parity_operator(kets, S=1.0, ell=0.0, s=0.0)
     assert np.allclose(P @ P, np.eye(len(kets)))
     assert np.allclose(P, P.T)
     ev = np.linalg.eigvalsh(P)
@@ -53,21 +53,22 @@ def test_parity_operator_squares_to_identity_and_flips_omega():
 
 def test_superposition_parity_matches_the_operator():
     kets = enumerate_kets(thf_spec())
-    P = parity_operator(kets, S=1.0)
+    P = parity_operator(kets, S=1.0, ell=0.0, s=0.0)
     for i in range(0, len(kets), 2):
         J = kets["J"][i]
         for sym in (+1, -1):
             vec = np.zeros(len(kets))
             vec[i], vec[i + 1] = 1.0 / np.sqrt(2), sym / np.sqrt(2)
-            assert np.allclose(P @ vec, superposition_parity(J, sym, S=1.0) * vec)
+            assert np.allclose(
+                P @ vec, superposition_parity(J, sym, S=1.0, ell=0.0, s=0.0) * vec)
 
 
 def test_ef_rules_disagree_at_S_one():
     """OPEN-2: applying the thesis rule to a 3Delta inverts every e/f label."""
     for J in (1, 2, 3, 4):
         for parity in (+1, -1):
-            bc = ef_label(J, parity, rule="brown1975")
-            th = ef_label(J, parity, rule="thesis_S_half", S=1.0)
+            bc = ef_label(J, parity, rule="brown1975", ell=0.0)
+            th = ef_label(J, parity, rule="thesis_S_half", S=1.0, ell=0.0)
             assert bc != th
 
 
@@ -75,10 +76,10 @@ def test_ef_rules_agree_at_S_one_half():
     for twoJ in (1, 3, 5, 7):
         J = twoJ / 2.0
         for parity in (+1, -1):
-            assert ef_label(J, parity, rule="brown1975") == ef_label(
-                J, parity, rule="thesis_S_half", S=0.5)
+            assert ef_label(J, parity, rule="brown1975", ell=0.0) == ef_label(
+                J, parity, rule="thesis_S_half", S=0.5, ell=0.0)
 
 
 def test_thesis_rule_without_S_raises():
     with pytest.raises(ValueError, match="S"):
-        ef_label(1, +1, rule="thesis_S_half")
+        ef_label(1, +1, rule="thesis_S_half", ell=0.0)

@@ -75,39 +75,53 @@ def n_hat_sign(conv):
     return 1.0 if conv.n_hat == "F_to_Th" else -1.0
 
 
-def parity_phase(J, S, ell=0.0, s=0.0):
+def parity_phase(J, S, *, ell, s):
     """The composite case-(a) parity phase (-1)^(J - S - l + s).
 
     E* = sigma_xz R_y(pi); thesis Eq. A.15 = B&C Eq. (6.234) (PDF p.283) in the
     form (-1)^(J-S+s). For 3Delta (S = 1, l = 0, s = 0) it is (-1)^(J-1).
     [HAM] S2 convention contract.
+
+    ell and s are required keyword-only arguments -- no default, so a Sigma-
+    or a bending state cannot silently inherit a linear-molecule parity.
     """
     return float((-1.0) ** (J - S - ell + s))
 
 
-def parity_operator(kets, S, ell=0.0, s=0.0):
+def parity_operator(kets, S, *, ell, s):
     """The parity operator in the signed-Omega primitive basis.
 
     P |J, Omega, F, m_F> = (-1)^(J-S-l+s) |J, -Omega, F, m_F>. Real symmetric,
     P^2 = 1. Used by gate B2 / [HAM] V8 to check that a field-free term set is
     parity-conserving and that the Stark and eEDM operators are parity-odd.
+
+    ell and s are required keyword-only arguments -- no default, so a Sigma-
+    or a bending state cannot silently inherit a linear-molecule parity.
     """
     n = len(kets)
     P = np.zeros((n, n))
     key = {(kets["J"][i], kets["Om"][i], kets["F"][i], kets["mF"][i]): i for i in range(n)}
     for i in range(n):
         j = key[(kets["J"][i], -kets["Om"][i], kets["F"][i], kets["mF"][i])]
-        P[j, i] = parity_phase(kets["J"][i], S, ell, s)
+        P[j, i] = parity_phase(kets["J"][i], S, ell=ell, s=s)
     return P
 
 
-def superposition_parity(J, sym, S, ell=0.0, s=0.0):
-    """Parity of (|+Omega> + sym |-Omega>)/sqrt(2), sym = +1 or -1."""
-    return int(round(sym * parity_phase(J, S, ell, s)))
+def superposition_parity(J, sym, S, *, ell, s):
+    """Parity of (|+Omega> + sym |-Omega>)/sqrt(2), sym = +1 or -1.
+
+    ell and s are required keyword-only arguments -- no default, so a Sigma-
+    or a bending state cannot silently inherit a linear-molecule parity.
+    """
+    return int(round(sym * parity_phase(J, S, ell=ell, s=s)))
 
 
-def ef_label(J, parity, *, rule, S=None, ell=0.0):
-    """'e' or 'f' for a level of total angular momentum J and parity +-1."""
+def ef_label(J, parity, *, rule, S=None, ell):
+    """'e' or 'f' for a level of total angular momentum J and parity +-1.
+
+    ell is a required keyword-only argument -- no default, so a Sigma- or a
+    bending state cannot silently inherit a linear-molecule parity.
+    """
     if rule == "brown1975":
         integral = abs(J - round(J)) < 1e-9
         ref = (-1.0) ** J if integral else (-1.0) ** (J - 0.5)

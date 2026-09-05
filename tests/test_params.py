@@ -78,7 +78,8 @@ def test_constants_match_the_document():
 
 def test_with_overrides_does_not_mutate_the_original():
     ps = thf_v1()
-    ps2 = ps.with_(A_par=-21.5)
+    with pytest.warns(UserWarning):
+        ps2 = ps.with_(A_par=-21.5)
     assert ps.value("A_par") == pytest.approx(-20.1)
     assert ps2.value("A_par") == pytest.approx(-21.5)
     assert ps2.params["A_par"].unit == "MHz"

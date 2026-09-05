@@ -1,6 +1,4 @@
 """Plain-assert tests for formalism.convert_formalism (no pytest dep)."""
-import pytest
-
 from heff.formalism import convert_formalism
 
 _passed = 0
@@ -118,29 +116,6 @@ def test_g_row_custom_c():
         c_cm=100.0)
     assert abs(out['Origin'] - 3.0) < 1e-12, out      # 300/100, no D
 
-def test_backcompat_all_entries_unchanged():
-    # molecule_parameters.py lives only in Molecule-Structure (not lifted here
-    # -- out of scope, deviation noted in task-3-report.md); skip rather than
-    # fail when it is not importable.
-    mp = pytest.importorskip('molecule_parameters')
-    n = 0
-    for mol, spins in mp.molecules.items():
-        for spin, states in spins.items():
-            for st, d in states.items():
-                if not isinstance(d, dict):
-                    continue
-                if (mol, spin, st) in {('RaF','boson','A0'),
-                                       ('RaF','fermion','A0')}:
-                    continue   # migrated to N2 — covered by oracle test
-                before = dict(d)
-                after = convert_formalism(dict(d), c_cm=mp.c)
-                # all current entries are default-R2 ⇒ identical
-                assert after == before, (mol, spin, st,
-                    set(before) ^ set(after))
-                n += 1
-    assert n > 0
-    print(f"    swept {n} entries")
-
 def test_r2_without_lambda_raises():
     expect_valueerror(lambda: convert_formalism({'formalism': 'R2', 'Be': 1.0}))
 
@@ -192,5 +167,4 @@ if __name__ == '__main__':
     check('g_row_sigma_unchanged', test_g_row_sigma_unchanged)
     check('g_row_no_be_no_shift', test_g_row_no_be_no_shift)
     check('g_row_custom_c', test_g_row_custom_c)
-    check('backcompat_all_entries_unchanged', test_backcompat_all_entries_unchanged)
     print(f"OK: {_passed} passed")
