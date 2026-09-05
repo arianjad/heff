@@ -35,6 +35,7 @@ one polarisation ever connects a given bra/ket pair anyway).
 """
 import numpy as np
 
+from .conventions import ef_label, parity_operator
 from .elements_c import dipole_geometry
 
 
@@ -54,18 +55,25 @@ def _strengths_from_matrices(evals_a, evecs_a, evals_b, evecs_b, mats, *, weight
     """Sum the amplitudes over polarisation, THEN square (gate B8).
 
     evecs_a: (d_a, n_a) with eigenvector k in column k; mats: {p: (d_a, d_b)}.
+    weights are cast with `complex(...)` (a real weight, e.g. from the
+    `weights=None` default, is just a zero-imaginary complex) and a channel is
+    skipped when `abs(weight) == 0`, not merely `weight == 0.0`, so a weight
+    given as `0j` is dropped too. A strength is |amplitude|^2, which is real by
+    construction no matter how complex the weights or eigenvectors are; the
+    explicit `.astype(float)` below only documents that, it changes no value.
     """
     amp = None
     for p, D in mats.items():
-        c = 1.0 if weights is None else float(weights.get(p, 0.0))
-        if c == 0.0:
+        c = 1.0 if weights is None else complex(weights.get(p, 0.0))
+        if abs(c) == 0.0:
             continue
         term = c * (np.conj(evecs_a).T @ D @ evecs_b)
         amp = term if amp is None else amp + term
     if amp is None:
         amp = np.zeros((np.shape(evecs_a)[1], np.shape(evecs_b)[1]))
     freqs = np.asarray(evals_b)[None, :] - np.asarray(evals_a)[:, None]
-    return freqs, np.abs(amp) ** 2
+    strengths = (np.abs(amp) ** 2).astype(float)
+    return freqs, strengths
 
 
 def line_strengths(evals_a, evecs_a, kets_a, evals_b, evecs_b, kets_b, ctx, *,
@@ -76,9 +84,64 @@ def line_strengths(evals_a, evecs_a, kets_a, evals_b, evecs_b, kets_b, ctx, *,
     weights: {p: complex} polarisation amplitudes (default 1 for each p in
     `polarizations`). Because amplitudes are summed before squaring, a coherent
     superposition of polarisations interferes -- which is the point.
+
+    CAVEAT on the default: `polarizations=(-1, 0, 1)` with unit real weights
+    adds all three channels COHERENTLY before squaring. That default is only
+    physically meaningful when both `kets_a`/`kets_b` blocks have definite m_F
+    (e.g. one output of `block_by_mF` on each side) -- then the 3j selection
+    rule `m_bra = m_ket + p` already forces exactly one p to be non-zero for
+    any given pair of states, so the "coherent sum" is really a sum of one
+    non-zero term and two exact zeros, and no cross-polarisation interference
+    actually happens. Feeding two blocks that mix multiple m_F (e.g. the full
+    basis on both sides) with the default weights would coherently add
+    physically distinct polarisation channels that do not interfere in
+    reality; pass explicit `weights` (and generally a single `polarizations`
+    value per physical channel) in that case.
     """
     if weights is None:
         weights = {p: 1.0 for p in polarizations}
     mats = {p: dipole_matrix(kets_a, kets_b, ctx, p) for p in polarizations}
     return _strengths_from_matrices(evals_a, evecs_a, evals_b, evecs_b, mats,
                                     weights=weights)
+
+
+def label_lines(kets, evecs, S, *, rule, ell, s):
+    """One label per eigenvector column: its dominant (J, F) and the parity of
+    the +-Omega superposition it sits in, as an 'e'/'f' name under `rule`.
+
+    Returns a list of dicts, one per column of `evecs` (same order):
+    `{"J": float, "F": float, "parity": +-1, "ef": "e" or "f"}`. A line can
+    then be reported as e.g. "(J=1, F=3/2, +) -> (J=2, F=5/2, -)" by pairing a
+    row of `label_lines(kets_a, evecs_a, ...)` with a column of
+    `label_lines(kets_b, evecs_b, ...)`.
+
+    Labels are recorded on the output for a caller to report; `line_strengths`
+    itself never calls this and a line's strength/frequency never depends on
+    it -- labelling does not decide which transitions get computed (controller
+    ruling on task 10 finding 3), it only names states after the fact.
+
+    The superposition parity comes from `heff.conventions.parity_operator`,
+    which is built from the same +-Omega ket pairing used by
+    `heff.conventions.superposition_parity`: `P` is applied to each
+    eigenvector and its parity is read off as the (rounded) expectation value
+    `<v|P|v>`, which is the exact eigenvalue (+1 or -1) whenever `v` really is
+    a parity eigenstate (guaranteed at zero field, spec [HAM] V8) and a
+    nearest-parity label otherwise. `S`, `ell`, `s` have no default here, same
+    as in `heff.conventions` -- for ThF+ X 3Delta1 pass `S=ctx.S` (Ctx already
+    carries the electronic S, spec S3.2), `ell=0.0`, `s=0.0`.
+
+    Each eigenvector is labelled by the (J, F) of its largest-|amplitude|
+    basis component; a state that is not dominated by one (J, F) still gets a
+    label, just a less meaningful one -- this is a display convenience, not a
+    physics claim.
+    """
+    P = parity_operator(kets, S, ell=ell, s=s)
+    out = []
+    for k in range(evecs.shape[1]):
+        v = evecs[:, k]
+        dom = int(np.argmax(np.abs(v)))
+        J, F = float(kets["J"][dom]), float(kets["F"][dom])
+        parity = int(round(float(np.real(np.vdot(v, P @ v)))))
+        out.append({"J": J, "F": F, "parity": parity,
+                   "ef": ef_label(J, parity, rule=rule, S=S, ell=ell)})
+    return out
