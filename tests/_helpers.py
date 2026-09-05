@@ -22,11 +22,18 @@ def _find(basis, J, Om, F, mF):
     return int(hit[0])
 
 
-def _gamma(J, F, I=0.5):
-    """[J(J+1)+F(F+1)-I(I+1)] / [2F(F+1)J(J+1)] -- Leanhardt Eqs. 20-21."""
+def _gamma(J, F, *, I):
+    """[J(J+1)+F(F+1)-I(I+1)] / [2F(F+1)J(J+1)] -- Leanhardt Eqs. 20-21.
+
+    I is keyword-only with no default: a nuclear spin is a physical quantity,
+    and the whole point of these closed forms is their I dependence.
+    """
     return (J * (J + 1) + F * (F + 1) - I * (I + 1)) / (2 * F * (F + 1) * J * (J + 1))
 
 
-def _kappa(J, F, I=0.5):
-    """[F(F+1)-J(J+1)+I(I+1)] / [2F(F+1)] -- the I-on-F projection factor."""
+def _kappa(J, F, *, I):
+    """[F(F+1)-J(J+1)+I(I+1)] / [2F(F+1)] -- the I-on-F projection factor.
+
+    I is keyword-only with no default, as for _gamma.
+    """
     return (F * (F + 1) - J * (J + 1) + I * (I + 1)) / (2 * F * (F + 1))

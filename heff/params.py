@@ -82,6 +82,17 @@ class ParamSet:
         seen = {p.convention for p in self.params.values() if p.convention}
         if len(seen) > 1:
             raise ValueError(f"conflicting convention tags in one ParamSet: {sorted(seen)}")
+        # d_mf is ORIGIN-DEPENDENT because ThF+ is an ion: 3.37 D about the
+        # centre of nuclear mass is 2.74 D about the Th nucleus, so a mistagged
+        # dipole is a silent 20 % error on every Stark element ([HAM] S2.7).
+        # Checked here rather than in the Stark term because Ctx carries no
+        # ParamSet, and this catches it before any assembly can happen.
+        d = self.params.get("d_mf")
+        if d is not None and d.convention and d.convention != self.conventions.dipole_origin:
+            raise ValueError(
+                f"d_mf is tagged convention={d.convention!r} but the conventions "
+                f"block says dipole_origin={self.conventions.dipole_origin!r}; the "
+                "two origins differ by e.r(Th->c.m.) = 0.72 D ([HAM] S2.7)")
 
     def value(self, symbol, default=None):
         if symbol not in self.params:
