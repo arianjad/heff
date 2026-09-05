@@ -655,6 +655,9 @@ Explicitly **not** a check: any comparison to a stored spectrum for one paramete
 
 **OPEN-15 — Petrov's printed `D = −0.133 a.u.`** (arXiv:2503.02840 p. 3). −0.133 a.u. = −0.338 D, eight times smaller than the d_mf = 3.37 D they cite from the same reference in the same sentence; −1.33 a.u. = −3.381 D matches exactly, and matches the companion HfF⁺ paper's format (D∥ = −1.53(2) a.u.). Almost certainly a typo. Not load-bearing for us — we use Ng's measured 3.37(9) D — but worth knowing if their Δg table is ever re-derived.
 
+
+**v2 open items.** OPEN-16 through OPEN-23 are defined in the v2 spec (`docs/superpowers/specs/2026-09-05-heff-v2-isotopologues-two-photon.md` §7) and collected in `docs/open-questions.md`. Task 1's rulings on four of them are written into §9 and are the citable source for the code: **OPEN-16** (A∥(Th) sign) → §9.4.3, resolved, default `a_par_th_sign = 'negative'`; **OPEN-17** (eQq₂ normalisation bridge) → §9.4.4, **not** resolved, escalated with two candidate factors and the one pinned ratio; **OPEN-21** (does K = 1 survive) → §9.5.3, resolved: no, not in exact closure; **OPEN-20** (²²⁷Th spin and moment) → §9.6, still open, with a labelled Schmidt placeholder.
+
 ---
 
 ## 8. Method log
@@ -703,6 +706,47 @@ Explicitly **not** a check: any comparison to a stored spectrum for one paramete
 6. **A 96-state Ω = ±1 Hamiltonian (J = 1–4) built from the §2 operators and diagonalised**, used to: confirm Hermiticity; confirm the zero-field level pattern (0, ω_ef, 3A∥/4, 3A∥/4 + ω_ef); settle the Eq. C.6 Zeeman sign (20.85 vs 23.52 kHz/G); measure the hyperfine ΔJ mixing (max 2.603 kHz); measure the c_I effect (50 kHz at c_I = 20 kHz); and extract `g^u`, `g^ℓ` from the m_F = ±3/2 splittings of the two Stark doublets at E = 40, 60, 100 V/cm, giving **δg/g = −0.00223 at 60 V/cm**, identical to Ng's own 32-level value, with convergence already reached at J_max = 2.
 
 **What was not available.** `pdf-mcp` and the `zotero` MCP server both failed to connect (HTTP 401); B&C and all PDFs were read with PyMuPDF instead. Brown & Merer 1979 (the ³Δ effective-Hamiltonian paper Leanhardt cites as [118]) and Nelis et al. [120] are not in `notes/lit/` and were not obtained — so the `o_Δ, p_Δ, q_Δ` and `g_rS, g′_rS` operator definitions in §2.3 and §2.9 rest on Leanhardt's transcription of them, not on the originals. Loh et al., Science 342, 1220 (2013) supplement was likewise not obtained. Petrov, PRA 108, 062804 (2023) (the source of the S₂, S₃ formulas) and Caldwell et al., PRA 108, 012804 (2023) were not obtained; neither affects any parameter used here.
+
+
+### 8.1 Addendum for §9 (v2 derivations, 2026-09-05)
+
+**Read at source for §9, beyond what §8 lists.** Brown & Carrington via PyMuPDF from the same Zotero copy (`pdf-mcp` and the `zotero` MCP server were down again this session — the same HTTP 401 / ConnectionRefused as before, so no PDF-native search was available):
+
+| PDF pp. | book pp. | what was used for §9 |
+|---|---|---|
+| 164 | 132 | **Eqs. (4.29)–(4.32)**: `H_Q = −e T²(∇E)·T²(Q)`, the definition of `T²(∇E)` and of `eT²(Q)` — the inputs to the §9.4.4 normalisation bridge |
+| 198 | 166 | **Eqs. (5.141), (5.142)**: the coupled tensor `T^K(A₁,B₁)` and its reduced element, i.e. the two-photon operator of §9.5 |
+| 205 | 173 | **Eqs. (5.172), (5.173), (5.174), (5.175), (5.176)** — Wigner–Eckart, the coupled scalar product, the two spectator forms, and the same-inner-part theorem |
+| 206 | 174 | **Eq. (5.179)** `⟨j‖T¹(j)‖j′⟩` — note [HAM] §2 cites this as PDF p. 205; **the correct PDF page is 206** |
+| 207 | 175 | **Eqs. (5.185), (5.186)** — the D-matrix reduced element |
+| 410, 414 | 378, 382 | **Eqs. (8.7), (8.19), (8.20)** re-read; (8.19) is the (5.174) skeleton `heff`'s `dipole_geometry` implements, and it confirms the phase and 6j column order term for term |
+| 636–637 | 604–605 | **Eqs. (9.50)–(9.53)** re-read in full, including B&C's sentence that "q₀ is the negative of the electric field gradient" |
+
+**Other sources read at source for §9:**
+
+| source | what was read |
+|---|---|
+| `petrov2018-CP-violation-HfFplus.pdf` | **p. 2 rendered and read as an image** to recover Eq. (19) (the text layer mangles it); pp. 2–3 text for Eqs. (15)–(25), the `Q = 2⟨Q̂²₀⟩` definition, the HfF⁺ constants, and §IV's |5s5dπ| spin–orbit-admixture model |
+| `docs/lit/lookup-apar-th-sign-convention.md` (commit `0b3e5fa`) | headline, §1.1 and the conclusion — recorded in §9.4.3, not re-derived |
+| `docs/lit/lookup-227th-nuclear-moment.md` | all three compilations' Z = 90 rows and the conclusion — the input to §9.6 |
+| `docs/digest-literature-th-hyperfine.md` §§1.4, 2.2, 3, 4 | coupling scheme, the two ab initio A∥ values, `G_el = −10 408 MHz`, and both target tables |
+| `docs/digest-literature-two-photon.md` §3 | Cossel Eqs. (6.29)/(6.34)/(6.37), the ΔΩ and Δm_F probes, the detuning caveat |
+| arXiv:2201.13247 §1 (fetched 2026-09-05) | the Schmidt-moment statement quoted verbatim in §9.6 |
+
+**Page renders read as images for §9: 1** (Petrov 2018 p. 2, Eq. 19).
+
+**Numerics run for §9** (scratch script `verify_s9.py` under the session scratchpad, conda env `heff`, `heff.wigner` + `heff.elements_c.dipole_geometry` + NumPy; **nothing written into the package**):
+
+1. §9.1 reduction of the two-spectator element to `dipole_geometry` at `I_Th = 0` (1720 elements, max dev 2.220 × 10⁻¹⁶) and at `I_F = 0` (same), plus two 6j-corruption falsification probes.
+2. §9.3 Tables 1 and 2, each against two independent routes (the full 6j recoupling and a 6j-free projection-theorem closed form), plus three falsification probes on Table 2.
+3. §9.3 ΔJ = ±1 axial hyperfine against B&C (9.51) at `I_Th = 0` (max dev 5.551 × 10⁻¹⁷), and `c_I^F` against the (8.20) closed form.
+4. §9.3 independent rebuild of the whole recoupling in the **decoupled** `|J,m_J⟩|I_Th,m₁⟩|I_F,m₂⟩` basis with explicit Clebsch–Gordan — the check that settles the B&C (5.173) phase, which Hermiticity cannot.
+5. §9.4 B&C (9.53) against the Casimir function for (J, I) = (1,1), (2,1), (2,3/2), (3,5/2), all F — uniform ratio −1.000000.
+6. §9.4.4 reconstruction of Petrov Eq. (24)'s 483 MHz prefactor from Eq. (23) under both readings of `√(2π/5)` — **inconclusive** (−284.8 and −402.8 MHz), reported as such.
+7. §9.5 rank decomposition of `Σ_i d_a|i⟩⟨i|d_b` in a spherical-harmonic model space with and without a common denominator — `‖K=1‖ = 2.2 × 10⁻¹⁶` under exact closure, non-zero and `∝ 1/Δ` otherwise.
+8. §9.6 arithmetic: `μ_Schmidt`, `g_N`, `A∥(²²⁷Th)`, the `μ(²²⁷) = μ(²²⁹)` alternative, and the resulting J = 1 splitting and ΔJ = ±1 element against `4B`.
+
+**What was not available for §9.** The two questions that would close OPEN-17 need the authors of PRA 98, 042502 (2018); no erratum or later restatement of their Eqs. (19)/(22)/(23) was found. Long, *The Raman Effect* (2002) — the conventional home of the Placzek polarisability derivation named in [2γ] §3.4 — was again not accessible, so §9.5's closure form rests on B&C (5.141)/(5.142) and Cossel's thesis, not on that textbook. Bonin & McIlrath, JOSA B **1**, 52 (1984) remains abstract-level only. Kälber et al., Z. Phys. A **334**, 103 (1989), the one paper that might carry a ²²⁷Th hyperfine measurement, is still paywalled.
 
 ---
 
@@ -758,6 +802,8 @@ m3 = (−1)^{F₁ + J′ + k + I_Th} √((2F₁′+1)(2F₁+1)) { J  F₁  I_Th 
 ```
 
 Same column order, one level in: upper row `(J, F₁, I_Th)`, lower row `(F₁′, J′, k)`.
+
+**Why (5.174) twice and (5.175) never.** B&C (5.175), PDF p. 205 / book p. 173, is the companion form for an operator acting on the **second** constituent of a coupled pair. Here both reductions have the operator on the **first** constituent — `F₁` inside `F = F₁ + I_F`, then `J` inside `F₁ = J + I_Th` — because the coupling scheme was built inner-first for exactly this reason. (5.175) is needed only for an operator acting on a nuclear spin directly; §9.3 handles that case with the scalar-product form (5.173) instead, so (5.175) is not used anywhere in §9. `[derived]`
 
 **(iv) Rotation-matrix reduced element — B&C Eq. (5.186), PDF p. 207 / book p. 175, verbatim:**
 
@@ -1119,3 +1165,193 @@ i.e. **if a published Petrov-style `eQq₀` is entered into (9.53) as-is (which 
 - Every `eQq₂`-derived number in [TH] §4.4 (the ~35–80 MHz Ω = +1 ↔ Ω = −1 element at J = 1) inherits a √2 and a sign caveat and is order-of-magnitude only. So does [TH] §4.3's eQq₀ estimate, which took Petrov's −2100 MHz directly into (9.53).
 
 **OPEN-17 (escalated, unchanged in status, sharpened).** Two questions for the authors, either of which settles it in one sentence: (i) in PRA 98, 042502 (2018) Eq. (19), is the electronic factor `Y_{2,−q}` (standard scalar product)? (ii) is the `√(2π/5)` in Eqs. (19), (22), (23) intended, or is it `√(4π/5) = C²_q`? Absent an answer, the package refuses the conversion rather than picking a branch.
+
+---
+
+### 9.5 The rank-K two-photon operator
+
+**The starting operator** ([2γ] §3.1; Cossel PhD thesis (Colorado, 2014) Eqs. (6.29), (6.34), pp. 213, 219). Adiabatic elimination of a far-detuned intermediate manifold `{|i⟩}` gives, between X-state levels,
+
+```
+T_eff = Σ_i ( d·ε₂* ) |i⟩⟨i| ( d·ε₁ ) / Δ_i ,        Δ_i = E_i − E_g − ħω₁
+```
+
+with amplitude `A_{f←g} = ⟨f|T_eff|g⟩` and line strength `|A|²` — the sum over `p₁, p₂` taken **before** squaring (Cossel Eq. 6.34; this is the two-photon analogue of `heff`'s gate B8, and Cossel's Fig. 6.18 shows a real measured cancellation from it).
+
+#### 9.5.1 The rank decomposition and the closure form
+
+**B&C Eq. (5.141), PDF p. 198 / book p. 166, verbatim:**
+
+```
+T^K_p(A₁, B₁) = (−1)^{k₁−k₂+p} (2K+1)^{1/2} Σ_{p₁ p₂} ( k₁ k₂ K ; p₁ p₂ −p )
+                 × T^{k₁}_{p₁}(A₁) T^{k₂}_{p₂}(B₁)
+```
+
+**B&C Eq. (5.142), same page, verbatim:**
+
+```
+⟨η, j‖T^K(A₁, B₁)‖η′, j′⟩ = (2K+1)^{1/2} (−1)^{K+j+j′} Σ_{η″ j″}
+      { k₁  k₂  K ;  j′  j  j″ } ⟨η, j‖T^{k₁}(A₁)‖η″, j″⟩ ⟨η″, j″‖T^{k₂}(B₁)‖η′, j′⟩
+```
+
+With `k₁ = k₂ = 1` these are *literally* the two-photon operator: the `Σ_{η″ j″}` is the sum over intermediate states, and the 6j `{1 1 K; j′ j j″}` is what a resolved-intermediate calculation would otherwise carry numerically. Two rank-1 operators couple to `K = 0, 1, 2` and nothing else.
+
+**(1) The closure form** `[derived]`. When `Δ_i → Δ` is common it comes out of the sum, and (5.142) can be read backwards: the intermediate sum **is** the reduced element of a single rank-K operator,
+
+```
+Σ_{η″ j″} { 1  1  K ;  j′  j  j″ } ⟨η,j‖T¹(d)‖η″,j″⟩ ⟨η″,j″‖T¹(d)‖η′,j′⟩
+      = (−1)^{K+j+j′} (2K+1)^{−1/2} ⟨η,j‖T^K(d, d)‖η′,j′⟩
+```
+
+so that
+
+```
+⟨η,j‖α^K‖η′,j′⟩ ≡ (1/Δ) ⟨η,j‖T^K(d, d)‖η′,j′⟩
+```
+
+is **one scalar per (K, ΔΩ) channel times parameter-free geometry** ([2γ] §3.4). This is the Placzek-type polarisability picture; `heff` never sums over intermediates in this form.
+
+**(2) Spectator reduction over both nuclear spins.** `α^K` acts on the electronic–rotational part only, so §9.1's chain applies **unchanged with `k → K`**:
+
+```
+⟨J′,Ω′,F₁′,F′,m′_F| α^K_P |J,Ω,F₁,F,m_F⟩
+  = (−1)^{F′−m′_F} ( F′  K  F ; −m′_F  P  m_F )                                   ← (5.172)
+  × (−1)^{F + F₁′ + K + I_F} √((2F′+1)(2F+1)) { F₁  F  I_F ;  F′  F₁′  K }        ← (5.174), I_F spectator
+  × (−1)^{F₁ + J′ + K + I_Th} √((2F₁′+1)(2F₁+1)) { J  F₁  I_Th ;  F₁′  J′  K }    ← (5.174), I_Th spectator
+  × (−1)^{J′−Ω′} √((2J′+1)(2J+1)) ( J′  K  J ; −Ω′  q  Ω ) ⟨η′‖α^K‖η⟩             ← (5.186)
+```
+
+`q = Ω′ − Ω`, `Δm_F = P`. **This is the same four lines as §9.1 with `k` replaced by `K` and `p` by `P`** — the one-photon `{J F I; F′ J′ 1}` becomes `{J F I; F′ J′ K}`, exactly as [2γ] §3.2 says. Validity condition: the spectator reduction is exact **only when the intermediate hyperfine structure is unresolved**; if `Δ_i` depends on the intermediate `F′`, the `F′` sum cannot be factored out and the reduction fails.
+
+**(3) The lab contraction and the polarisation dyad** `[derived from B&C (5.141)]`. B&C (5.141) with `k₁ = k₂ = 1` is exactly the Clebsch–Gordan coupling, since `⟨k₁p₁ k₂p₂|KP⟩ = (−1)^{k₁−k₂+P}(2K+1)^{1/2}(k₁ k₂ K; p₁ p₂ −P)`. So the polarisation dyad is
+
+```
+(ε₁ ⊗ ε₂)^K_P = (−1)^P (2K+1)^{1/2} Σ_{p₁ p₂} ( 1  1  K ; p₁  p₂  −P ) ε₁^{p₁} ε₂^{p₂}
+              = Σ_{p₁ p₂} ⟨1 p₁ 1 p₂ | K P⟩ ε₁^{p₁} ε₂^{p₂} ,          P = p₁ + p₂
+```
+
+with the lab spherical components of a Jones vector `(ε_x, ε_y, ε_z)` in Condon–Shortley phase (as fixed in [HAM] §2):
+
+```
+ε_{+1} = −(ε_x + i ε_y)/√2 ,      ε_0 = ε_z ,      ε_{−1} = +(ε_x − i ε_y)/√2
+```
+
+and the full contraction
+
+```
+T_eff = Σ_{K=0,1,2} Σ_P (−1)^P (ε₁ ⊗ ε₂)^K_{−P} α^K_P .
+```
+
+`K = 0` is the scalar `ε₁·ε₂`; `K = 1` is the antisymmetric part, `∝ ε₁ × ε₂`, non-zero only for non-parallel or elliptical polarisations; `K = 2` is the symmetric traceless part.
+
+#### 9.5.2 Which (K, ΔΩ) channels exist — the algebra, not the assertion
+
+Within X ³Δ₁ both `|Ω|` are 1, so `q = Ω′ − Ω ∈ {0, ±2}`. The molecule-frame factor is the 3j `(J′ K J; −Ω′ q Ω)`, and **a 3j vanishes identically unless each projection satisfies `|m| ≤ j`** — here `|q| ≤ K`. Since `k₁ = k₂ = 1` bounds `K ≤ 2`:
+
+```
+ΔΩ = 0   : K = 0, 1, 2      (|q| = 0 ≤ K always)
+ΔΩ = ±2  : K = 2 only       (|q| = 2 requires K ≥ 2, and K ≤ 2)
+```
+
+Verified numerically over `J, J′ = 1, 2, 3` at `Ω′ = −1, Ω = +1` (so `q = −2`); printed verbatim:
+
+```
+  molecule-frame 3j (J' K J; -Om' q Om) at Om'=-1, Om=+1 (q = -2):
+     K = 0: max |3j| = 0.000000
+     K = 1: max |3j| = 0.000000
+     K = 2: max |3j| = 0.447214
+```
+
+This is the algebraic content of [2γ] §3.3's table (Ω = +1 → −1 requires an Ω = 0 intermediate, because each E1 leg has `|q_i| ≤ 1` and `ΔΩ = q₁ + q₂`).
+
+#### 9.5.3 OPEN-21 — does K = 1 survive? Answer: no, not in exact closure
+
+**The algebra** `[derived]`. `K = 1` is precisely the antisymmetric part of the dyad: the `K = 1` Clebsch–Gordan coefficients `⟨1 p₁ 1 p₂|1 P⟩` are antisymmetric under `p₁ ↔ p₂`, so `α^1 ∝ ½(d_a 𝒫 d_b − d_b 𝒫 d_a)` with `𝒫 = Σ_i |i⟩⟨i|` the intermediate projector. Now take exact closure: for `|g⟩` in X, `d|g⟩` lies **entirely** in the opposite-parity space, so if `𝒫` projects onto that whole space it acts as the identity on `d|g⟩`, and
+
+```
+α^1 ∝ P_X ½ ( d_a d_b − d_b d_a ) P_X = P_X ½ [d_a, d_b] P_X = 0
+```
+
+because `d = −e Σ_i r_i` is a vector operator whose Cartesian components commute. **`K = 1` is identically zero in exact closure**, confirming [SPEC-v2] §3.2's inference.
+
+**The order at which it reappears** `[derived]`. Writing `1/Δ_i = (1/Δ)(1 − δ_i/Δ + …)` with `δ_i = E_i − Ē`, the zeroth-order term is the closure term above and vanishes; the first-order term is `−(1/Δ²) P_X d_a (H − Ē) d_b P_X`, whose antisymmetric part `−(1/2Δ²) P_X (d_a H d_b − d_b H d_a) P_X` does **not** vanish. So `K = 1` is suppressed by one power of **(intermediate splitting)/(detuning)** — equivalently, it is the well-known antisymmetric Raman tensor, which exists only when the two time-orderings' denominators differ (resolved intermediates, or `ω₁ ≠ ω₂`).
+
+**Numerical verification, with both outcomes reachable.** Model: the sphere-harmonic space `{|l,m⟩ : l ≤ 7}`, with `d_p = C¹_p` — a genuine vector operator whose Cartesian components commute (multiplication by a function on the sphere) and which is parity-odd, connecting even `l` to odd `l` only. X = even `l ≤ 6`; intermediates = odd `l ≤ 7`, which is **complete** for `d` acting on X. The dyad is decomposed into ranks with B&C (5.141). Printed verbatim:
+
+```
+S9.5  does K = 1 survive exact closure?
+  Delta =    20.0 : ||K=0|| 2.6243e-02  ||K=1|| 4.0177e-03  ||K=2|| 1.6598e-02   K1/K0 = 1.531e-01
+  Delta =   200.0 : ||K=0|| 2.8582e-03  ||K=1|| 1.4411e-04  ||K=2|| 2.0587e-03   K1/K0 = 5.042e-02
+  Delta =  2000.0 : ||K=0|| 2.8839e-04  ||K=1|| 2.0330e-06  ||K=2|| 2.2563e-04   K1/K0 = 7.050e-03
+  Delta = 20000.0 : ||K=0|| 2.8865e-05  ||K=1|| 2.1122e-08  ||K=2|| 2.2867e-05   K1/K0 = 7.318e-04
+  max |P_X (d_a P_odd d_b - d_b P_odd d_a) P_X| = 3.331e-16   (unrestricted [d_a,d_b] at the l<=L edge: 4.667e-01)
+  EXACT CLOSURE (common denominator): ||K=0|| 5.7735e-01  ||K=1|| 2.2204e-16  ||K=2|| 4.5803e-01
+  ENERGY-WEIGHTED (Delta = 20)     : ||K=0|| 2.6243e-02  ||K=1|| 4.0177e-03  ||K=2|| 1.6598e-02
+```
+
+Three things this shows. (i) With a **common** denominator, `||K=1|| = 2.2 × 10⁻¹⁶` — zero to machine precision — while `K = 0` and `K = 2` are of order 0.5, so the test is not vacuous: the same code returns a non-zero `K = 1` in the weighted case. (ii) `K1/K0` falls as `1/Δ` asymptotically (7.05 × 10⁻³ → 7.32 × 10⁻⁴ for a factor-10 increase in Δ), confirming the "first order in `δ/Δ`" statement. (iii) The commutator is zero **on the subspace that matters** (3.3 × 10⁻¹⁶); the 0.467 is the unrestricted commutator at the `l ≤ L` truncation edge, which never enters because the projectors exclude it.
+
+**Ruling for Task 7: register `K ∈ {0, 2}` only.** There is no `alpha_K1_*` parameter in the closure operator, and none should be invented. A `K = 1` term becomes meaningful only if the *resolved* form ([2γ] §3.5, §4.2) is ever implemented, where it enters at `O(δ/Δ)`; at that point it would need its own `placeholder` α with the order recorded here.
+
+#### 9.5.4 Selection rules, as data
+
+From the lab Wigner–Eckart 3j `(F′ K F; −m′_F P m_F)` and `K ≤ 2` `[derived]`:
+
+| rule | value | source |
+|---|---|---|
+| `\|ΔF\| ≤ K` | so `ΔF ∈ {0, ±1, ±2}` | B&C (5.172) triangle |
+| `Δm_F = P`, `\|P\| ≤ K` | so `Δm_F ∈ {0, ±1, ±2}`, **never ±3** | B&C (5.172) projection; [2γ] §3.2 |
+| `ΔΩ ∈ {0, ±2}` | `±2` at `K = 2` only | §9.5.2 |
+| `ΔJ`: `\|ΔJ\| ≤ K` | `ΔJ ∈ {0, ±1, ±2}` | 3j `(J′ K J; …)` |
+| parity | **even** — at zero field it does not connect e to f | [2γ] §3.3, `[derived]` there: `P d P† = −d`, twice |
+| under σ± only (JILA) | `p₁, p₂ ∈ {±1}` ⟹ `Δm_F ∈ {0, ±2}` | Ng thesis p. 102 fn. 4; [2γ] §3.3 probe |
+
+The narrowing to `{0, ±2}` is the operational statement: Ng's target `|J=1, F=3/2, m_F=+3/2⟩ → |m_F=+1/2⟩` is `Δm_F = −1` and genuinely out of reach with σ± only, exactly as he says; `m_F = +3/2 → −1/2` is `Δm_F = −2` and **is** reachable with a σ⁻σ⁻ pair ([2γ] §3.3, `[derived]` there, not claimed to be JILA's intent).
+
+#### 9.5.5 The validity condition, in one sentence the notebook can quote
+
+> The closure form of the two-photon operator requires a detuning large compared with the intermediate rotational structure, `Δ ≫ 2B ≈ 7 GHz` for ThF⁺, whereas the JILA experiments run at 0.16–1.5 GHz — so this is the right *operator shape* and the wrong *limit for the current experiment*, and the α's could later be generated by a resolved sum once the intermediate ladder and its 0⁺/0⁻ labels are settled.
+
+([2γ] §3.4: Cossel thesis p. 218 for the 160 MHz → ≈1.5 GHz detunings; Gresh 2016 Table 2 for `B ≈ 0.23 cm⁻¹ ≈ 6.9 GHz`; [2γ] §4.2 for "A can generate B's parameters, B cannot generate A's spectra". The intermediate *hyperfine* structure is a different story and being hyperfine-unresolved is plausible; being rotationally unresolved is not, at JILA detunings.)
+
+---
+
+### 9.6 ²²⁷ThF⁺: the A∥(Th) placeholder from the Schmidt moment
+
+**Why a placeholder is needed at all.** ²²⁷Th has **no measured or estimated magnetic dipole moment anywhere** — `docs/lit/lookup-227th-nuclear-moment.md` queried Stone INDC(NDS)-0794 (2019) p. 42, the earlier PSI-hosted Stone compilation p. 149, and the IAEA NDS live nuclear-moments database, and all three jump from ²²⁷Ac straight to ²²⁹Th with no A = 227 row at Z = 90; four targeted searches returned no numeric value. The ENSDF ground-state assignment is **(1/2⁺)** — parenthesised, i.e. tentative — with 9.3 keV (5/2⁺) and 24.38 keV (3/2⁺) above it, the pattern of a K = 1/2 rotational band ([TH] §1.4).
+
+**Arian's ruling (2026-09-05): use the Schmidt single-particle moment, not `μ(²²⁷) = μ(²²⁹)`.**
+
+**Which orbital a 1/2⁺ odd neutron implies** `[derived]`. Parity `(−1)^ℓ = +1` forces even ℓ; `j = 1/2` with even ℓ forces `ℓ = 0` (an ℓ = 2 neutron gives j = 3/2 or 5/2). So the odd neutron (Z = 90, N = 137) sits in an **s₁/₂ orbital** — in the N > 126 shell, `4s₁/₂` — and this is the **`j = ℓ + ½`** Schmidt case.
+
+**The Schmidt formula** (Schmidt, Z. Phys. **106**, 358 (1937); standard modern statement in the shell-model review arXiv:2201.13247 §1, fetched 2026-09-05: *"the single particle magnetic moments, commonly called the Schmidt moments, for an odd neutron are μ = μ_n for j = ℓ + 1/2, and μ = −j/(j+1) μ_n for j = ℓ − 1/2"*, with `μ_n = −1.913` in nuclear magnetons):
+
+```
+j = ℓ + ½ :   μ = ( j − ½ ) g_ℓ + ½ g_s          (in μ_N)
+j = ℓ − ½ :   μ = [ j/(j+1) ] [ ( j + 3/2 ) g_ℓ − ½ g_s ]
+```
+
+with, for a **neutron**, `g_ℓ = 0` and `g_s = −3.826`.
+
+**The number** `[derived]`. With `ℓ = 0`, `j = ½ = ℓ + ½`:
+
+```
+μ_Schmidt(²²⁷Th) = ½ g_s = ½ (−3.826) = −1.913 μ_N        (= the free-neutron moment, as it must be
+                                                            for an s₁/₂ neutron)
+g_N = μ / I = −1.913 / (1/2) = −3.826
+
+A∥(²²⁷Th, ThF⁺ X ³Δ₁) = G_el × g_N = (−10 408 MHz) × (−3.826) = +39 821 MHz ≈ +39.8 GHz
+```
+
+with `G_el = A∥/g_N = −10 408 MHz`, the isotope-free electronic factor from Skripnikov & Titov 2015 as extracted in [TH] §2.2 (and the value that reproduces `A∥(²²⁹Th) = −10 408 × 0.1464 = −1524 MHz`).
+
+**Status: `placeholder`, and it must be labelled as one everywhere it appears.** Two independent reasons, both real:
+
+1. **Schmidt values for deformed actinides are typically wrong by a factor ~2.** Observed odd-A moments lie between the Schmidt lines, not on them; the standard remedy is a quenched effective spin g-factor (`g_s^eff ≈ 0.6 g_s^free` is the usual order), which alone would move `A∥` from +39.8 GHz to ~+24 GHz.
+2. **A K = 1/2 band decouples.** ²²⁷Th's level pattern is a K = 1/2 rotational band, and the moment of a K = 1/2 band carries a **decoupling-parameter** term (Bohr & Mottelson) that is absent from the spherical single-particle estimate and can change the magnitude and, in principle, the sign. On top of that the `(1/2⁺)` spin assignment is itself tentative, and the 5/2⁺ level sits only 9.3 keV away.
+
+**The alternative, recorded for comparison** `[derived]`: taking `μ(²²⁷) = μ(²²⁹) = 0.366 μ_N` with `I = 1/2` gives `g_N = 0.732` and `A∥ = −10 408 × 0.732 = −7619 MHz ≈ −7.62 GHz` — same order as the Schmidt value in magnitude but **opposite in sign** and 5× smaller. The two candidates disagree in sign, which is the honest measure of how unconstrained this is.
+
+**Structural consequence that does not depend on which number is used** `[derived]`. At `I_Th = 1/2` the Th hyperfine has the same algebraic shape as the ¹⁹F structure already coded (§9.2), with `F₁ = J ± 1/2` and splitting `A∥^Th (2J+1)/[2J(J+1)]`, i.e. `0.75 A∥^Th` at J = 1. At the Schmidt value that is **+29.9 GHz at J = 1, against `4B = 29.1 GHz`** — the Th hyperfine splitting is as large as the whole J = 1 → 2 rotational interval. The ΔJ = ±1 element of B&C (9.51) at (J = 2 ← 1, F₁ = 3/2, Ω = 1) is `−0.433013 × A∥^Th = −17.2 GHz`, i.e. **0.59 × the rotational spacing**: J is not even approximately a good quantum number for ²²⁷ThF⁺ at this A∥, second-order perturbation theory is meaningless, and the J_max truncation must be re-tested for this isotopologue specifically (OPEN-22). Even at the −7.62 GHz alternative the ΔJ = ±1 element is 3.30 GHz (0.113 × the rotational spacing), i.e. ~340× the 8.7–9.7 MHz ²³²ThF⁺ elements of §2.5. **²²⁷ThF⁺ is not a small perturbation of the v1 model, whichever placeholder is used.**
+
+**Escalated as OPEN-20** (the tentative spin and the absent moment). What would close it: a measurement of `μ(²²⁷Th)`, or a deformed-shell-model / DFT calculation with the K = 1/2 decoupling parameter included. The one plausibly relevant unread source is Kälber et al., Z. Phys. A **334**, 103 (1989) (collinear laser spectroscopy of stored Th⁺ ions across ²²⁷–²³²Th), paywalled in the session that produced `lookup-227th-nuclear-moment.md`; its abstract synopsis reports hyperfine analysis for ²²⁹Th only, but that is not a verified absence.
