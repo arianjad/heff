@@ -218,7 +218,8 @@ The upper component of each doublet has parity `(−1)^J`, i.e. e lies above f
 uniformly in J. That ordering is **OQ-A** in `docs/open-questions.md`: it is
 what Ng 2022 Fig. 2 and Gresh 2016's `k″ < 0` show, and reproducing it is why
 `omega_doubling` carries `−ω_ef J(J+1)/4` rather than Ng Eq. C.3's literal
-`(−1)^J` prefactor. The splitting magnitude is the same either way.
+`(−1)^J` prefactor. The splitting magnitude is the same either way. This
+ordering was confirmed by Arian on 2026-09-05; OQ-A is closed.
 """),
 
     code("""
@@ -690,7 +691,7 @@ measured, only |g| (**OPEN-4**); E_eff is 35 vs 37.3 GV/cm across sources
 **Open questions** — `docs/open-questions.md`:
 
 - **OQ-A**, the Ω-doubling sign and the parity of the upper doublet component
-  (§5 above). Resolved in code, pending confirmation of one statement.
+  (§5 above). Confirmed by Arian on 2026-09-05; closed, code as written.
 - The **[HAM] §2.8 g_F table erratum**: the printed table reproduces at
   G∥ = 0.048, not at the 0.04756 in its own header. The code uses 0.04756,
   which is what the document's own numerical confirmation line and the measured

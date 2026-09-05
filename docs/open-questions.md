@@ -3,7 +3,7 @@
 ## OQ-A — the Ω-doubling sign and the parity of the upper doublet component
 
 Raised: Task 5 of `docs/superpowers/plans/2026-09-05-heff-v1-thf-tutorial.md`.
-**Status: resolved in code, pending Arian's confirmation of one statement.**
+**Status: CLOSED 2026-09-05 — confirmed by Arian: the upper component has parity (−1)^J at every J (e above f uniformly). Code unchanged.**
 
 ### The physical invariant (convention-free)
 
@@ -69,6 +69,8 @@ unaffected by this question.
 > written and this item closes. If the ordering is instead parity `−1` at every J,
 > Ng Eq. C.3 is literal in heff's convention and the sign in `omega_doubling`
 > flips back — one character, caught either way by the V4 parity gate.
+
+**Answer (Arian, 2026-09-05): yes — (−1)^J on top. Closed; code as written.**
 
 A one-line question to K. B. Ng about the `|J, Ω = −1⟩` ket phase would settle the
 convention side of it, and is the same message that settles OPEN-3.

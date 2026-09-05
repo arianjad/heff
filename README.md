@@ -100,9 +100,9 @@ full, with the two tier-D literature comparisons skipped unless
 Every gate's docstring names the failure mode it uniquely catches, and both PASS
 and FAIL are reachable. There are no snapshot, hash or pinned-spectrum tests, and
 no constant or tolerance was tuned to make a gate pass. One physics question
-surfaced during implementation and is resolved in code but not yet confirmed by a
-source — the parity ordering of the Ω doublet, OQ-A in `docs/open-questions.md`;
-both halves of it are hard gates either way.
+surfaced during implementation — the parity ordering of the Ω doublet, OQ-A in
+`docs/open-questions.md` — and was confirmed by Arian on 2026-09-05; OQ-A is
+closed and the code is unchanged. Both halves of it are hard gates either way.
 
 ## Documentation
 
