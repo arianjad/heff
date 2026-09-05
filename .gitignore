@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+build/
+dist/
+docs/lit/*.pdf
+docs/lit/**/*.png
+docs/lit/*.png
+docs/thesis-text/_full.txt
+docs/thesis-text/_num.txt
