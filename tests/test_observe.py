@@ -165,7 +165,7 @@ def test_V5_g_factor_closed_form_is_exact_in_a_single_J_basis():
 
     Exact only when the basis holds one J -- the B&C 9.51 hyperfine term mixes
     J by ~3e-4, and the Delta-J = +-1 Zeeman cross term that mixing opens up
-    moves g at the 1e-5 level (see the next test). Ng's model has no Delta-J
+    moves g by 3.3e-6 (see the next test). Ng's model has no Delta-J
     hyperfine, which is why his closed form is exact.
 
     Uniquely catches the Ng Eq. C.6 sign error of [HAM] S2.8: with Ng's printed
@@ -194,9 +194,10 @@ def test_V5_holds_in_the_full_basis_to_the_dJ1_hyperfine_level():
     """Same closed form in the J = 1-4 basis, where it is approximate.
 
     The residual is the cross term 2c <J|dH/dB|J+1> opened up by the B&C 9.51
-    J-mixing amplitude c ~ 3e-4 -- of order 1e-5 in g. A tolerance tighter than
-    that would be tuned; a tolerance looser than 1e-3 would stop catching the
-    sign error, whose residual is 0.03 in g.
+    J-mixing amplitude c ~ 3e-4; measured here it is 3.3e-6 in g, uniform across
+    the four (J, F) groups. A tolerance at that scale would be tuned to the
+    residual; 1e-4 keeps 30x headroom and still fails the Ng-sign error by 300x,
+    whose residual is 0.03 in g.
     """
     pset = thf_v1()
     G, gN = pset.value("G_par"), pset.value("g_N")
