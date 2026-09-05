@@ -7,6 +7,9 @@ never (plotting lives in notebooks, spec S3.8).
 
 __version__ = "0.1.0"
 
-from . import wigner  # noqa: F401
+from . import spec, wigner  # noqa: F401
+from .spec import (KET_C, Blocking, ElecState, StateSpec, block_by_mF,
+                   check_basis_invariants, enumerate_kets, thf_spec)
 
-__all__ = ["wigner"]
+__all__ = ["wigner", "spec", "KET_C", "Blocking", "ElecState", "StateSpec",
+           "block_by_mF", "check_basis_invariants", "enumerate_kets", "thf_spec"]
