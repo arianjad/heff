@@ -975,3 +975,147 @@ S9.3 (independent) decoupled-basis rebuild of the (5.173)+(5.174) chain
 **The ket-F₁ phase — B&C's literal reading — is right; the bra-F₁ variant is wrong on every `ΔF₁ = ±1` element.** Code the phase as `(−1)^{F₁(ket) + F + I_F}`.
 
 **Sizes.** The `ΔF₁ = ±1` ¹⁹F elements at I_Th = 5/2, J = 1 are 0.32–0.37 × `A∥^F` ≈ 6.4–7.5 MHz against F₁ spacings of 190–2670 MHz ([TH] §4.1), so F₁ remains a good quantum number and this sign moves levels only at the ≲ 25 kHz level. It is nonetheless a sign in a matrix element that check V1 cannot see, which is why it is pinned here rather than left to the implementer.
+
+---
+
+### 9.4 The quadrupole, and the eQq₂ normalisation bridge
+
+#### 9.4.1 The B&C matrix elements, verbatim
+
+**B&C Eq. (9.52), PDF p. 636 / book p. 604** (B&C's primes are on the ket):
+
+```
+⟨η, Λ; S, Σ; J, Ω, I, F, M_F| H_Q |η′, Λ′; S, Σ; J′, Ω′, I, F, M_F⟩
+  = −(1/2) eQ Σ_q (−1)^{J′+I+F+J−Ω} {(2J+1)(2J′+1)}^{1/2}
+    × { J′  I  F ;  I  J  2 } ( J  2  J′ ; −Ω  q  Ω′ ) ( I  2  I ; −I  0  I )^{−1}
+    × ⟨η, Λ| T²_q(∇E) |η′, Λ′⟩
+```
+
+**B&C Eq. (9.53), PDF p. 637 / book p. 605**, the q = 0 specialisation:
+
+```
+  = (e q₀ Q / 4) (−1)^{J′+I+F+J−Ω} {(2J+1)(2J′+1)}^{1/2}
+    × { J′  I  F ;  I  J  2 } ( J  2  J′ ; −Ω  0  Ω ) ( I  2  I ; −I  0  I )^{−1} ,
+
+where q₀ is the negative of the electric field gradient, and eq₀Q is the quadrupole
+coupling constant. The 3-j symbol indicates that matrix elements with J′ = J, J ± 1
+and J ± 2 are non-zero, but the diagonal elements are, of course, the most significant.
+```
+
+With `I → I_Th`, `F → F₁` (justified by §9.2), and with the primes moved onto the bra so that the molecule-frame component reads `q = Ω′ − Ω` as everywhere else in §9, these are the two Th quadrupole terms `heff` needs.
+
+**Two implications read straight off the 3j `(J 2 J′; −Ω q Ω′)`:**
+
+- `ΔJ = 0, ±1, ±2` (B&C say so in the sentence quoted above).
+- `q = Ω_bra − Ω_ket`, so inside the Ω = ±1 block of ³Δ₁ there are exactly two terms: **q = 0, ΔΩ = 0** (constant `eq₀Q`) and **q = ∓2, ΔΩ = ±2** (constant `eq₂Q`). The second is parity-even, diagonal in J, F₁, F, m_F, and sits in the same matrix position as the Ω-doubling operator ([TH] §3.2, §4.4).
+- **Both vanish identically for I ≤ ½**, because `(I 2 I; −I 0 I)` in the denominator requires the triangle `(I, 2, I)`, i.e. `I ≥ 1`. So ²²⁷ThF⁺ (I_Th = ½, §9.6) has no Th quadrupole at all, exactly as ¹⁹F has none (§2.11). `[derived]`
+
+**Comparing (9.52) at q = 0 with (9.53) fixes B&C's own definition of the constant** `[derived]`:
+
+```
+−(1/2) eQ ⟨η,Λ| T²₀(∇E) |η,Λ⟩ = e q₀ Q / 4      ⟹      e q₀ Q = −2 eQ ⟨η,Λ| T²₀(∇E) |η,Λ⟩
+```
+
+which is the algebraic content of B&C's sentence "q₀ is the negative of the electric field gradient".
+
+#### 9.4.2 The Casimir cross-check, and the factor −1 that is easy to lose
+
+[TH] §3.4 reports that (9.53) at Ω = 0, J′ = J reproduces the textbook Casimir function with a **uniform ratio of exactly −1**. Re-run here independently `[derived]`; printed verbatim:
+
+```
+S9.4  quadrupole: B&C (9.53) vs the Casimir function
+     (J, I) |  F  |  (9.53)/eq0Q  |  Casimir  |  ratio
+     (1,1) | 0.0 |  -0.5000000   | +0.5000000 | -1.000000
+     (1,1) | 1.0 |  +0.2500000   | -0.2500000 | -1.000000
+     (1,1) | 2.0 |  -0.0500000   | +0.0500000 | -1.000000
+     (2,1) | 1.0 |  -0.2500000   | +0.2500000 | -1.000000
+     (2,1) | 2.0 |  +0.2500000   | -0.2500000 | -1.000000
+     (2,1) | 3.0 |  -0.0714286   | +0.0714286 | -1.000000
+     (2,1.5) | 0.5 |  -0.2500000   | +0.2500000 | -1.000000
+     (2,1.5) | 1.5 |  +0.0000000   | +0.0000000 | +nan
+     (2,1.5) | 2.5 |  +0.1785714   | -0.1785714 | -1.000000
+     (2,1.5) | 3.5 |  -0.0714286   | +0.0714286 | -1.000000
+     (3,2.5) | 0.5 |  -0.2000000   | +0.2000000 | -1.000000
+     (3,2.5) | 1.5 |  -0.1100000   | +0.1100000 | -1.000000
+     (3,2.5) | 2.5 |  +0.0066667   | -0.0066667 | -1.000000
+     (3,2.5) | 3.5 |  +0.1000000   | -0.1000000 | -1.000000
+     (3,2.5) | 4.5 |  +0.1000000   | -0.1000000 | -1.000000
+     (3,2.5) | 5.5 |  -0.0833333   | +0.0833333 | -1.000000
+```
+
+Casimir function used: `[¾C(C+1) − I(I+1)J(J+1)] / [2I(2I−1)(2J−1)(2J+3)]`, `C = F(F+1) − I(I+1) − J(J+1)`. The single `nan` row is `0/0` (both sides vanish at (J, I, F) = (2, 3/2, 3/2)), not a failure. **The uniform −1 *is* B&C's q₀ convention; code it explicitly or the sign of every quadrupole splitting flips.**
+
+**Third-source corroboration of the angular skeleton** (not of the normalisation): Skripnikov, Petrov, Titov & Flambaum, arXiv:1408.5368, Eq. (5), give the ThO ³Δ₁ MQM shift as `δ(J,F) = (−1)^{Ω+I+F+1} C(J,F) W_M M` with `C(J,F) = [(2J+1)/2] (J 2 J; −Ω 0 Ω)/(I 2 I; −I 0 I) {J I F; I J 2}` — the identical rank-2 case-(c) structure, differing only by an overall constant and by an overall sign consistent with B&C's q₀ convention ([TH] §3.4). Three sources, one angular structure.
+
+#### 9.4.3 OPEN-16 — the sign of A∥(Th) is settled, and it is not a convention
+
+Recorded here because Tasks 4 and 5 need the ruling and must not re-open it. `docs/lit/lookup-apar-th-sign-convention.md` (committed `0b3e5fa`) audited the Skripnikov & Titov 2015 (A∥ = −4163 μ_Th/μ_N MHz) versus Denis et al. 2015 (+1833 MHz) disagreement. Its findings: both groups do state their molecular-axis convention elsewhere in the same paper and the axes are opposite (Skripnikov ζ from Th to F, Denis F→Th); **A∥ as both define it is invariant under a consistent axis reversal** `[derived there]`; and the two groups **agree** on the sign of the analogous HfF⁺ constant. **The disagreement is therefore real physics, not a convention fork**, and the audit recommends `A∥(²²⁹Th, ThF⁺ X ³Δ₁) = −1.51(11) GHz`. **Arian ruled 2026-09-05 that the package default is `a_par_th_sign = 'negative'`.** The flag records which calculation you trust, not which convention you work in — unlike `n_hat`, which is a genuine convention switch — and the docstring must say so. Do not re-derive this; see the audit for the four-step chain and the one email that would close it.
+
+#### 9.4.4 OPEN-17 — the eQq₂ normalisation bridge: NOT resolved, escalated
+
+**What Petrov 2018 prints.** From `docs/lit/petrov2018-CP-violation-HfFplus.pdf`, page 2 (Eq. 19, rendered and read as an image because the text layer mangles it) and page 3 (Eqs. 22–23):
+
+```
+Ĥ_hfs = … + −e² Σ_q (−1)^q Q̂²_q(I¹) Σ_i √(2π/5) Y_{2q}(θ_{1i}, φ_{1i}) / r_{1i}³        (19)
+
+eQq₀ = 2 eQ ⟨³Δ₁| Σ_i √(2π/5) Y₂₀(θ_{1i}, φ_{1i}) / r_{1i}³ |³Δ₁⟩                        (22)
+
+eQq₂ = 2 √6 eQ ⟨³Δ₁| Σ_i √(2π/5) Y₂₂(θ_{1i}, φ_{1i}) / r_{1i}³ |³Δ₋₁⟩                    (23)
+
+with  Q = 2 ⟨U^Hf_{I¹I¹}| Q̂²₀(I¹) |U^Hf_{I¹I¹}⟩
+```
+
+**What B&C print** (PDF p. 164 / book p. 132, Ch. 4, verbatim):
+
+```
+H_Q = −e T²(∇E) · T²(Q),                                                              (4.30)
+
+T²(∇E) = −(1/4πε₀) Σ_i (e_i / R_i³) C²(θ_i, φ_i),                                     (4.31)
+
+e T²(Q) = e Σ_p R_p² C²(θ_p, φ_p),                                                    (4.32)
+```
+
+**The algebra, as far as the printed equations take it** `[derived]`. Racah's tensor is `C²_q = √(4π/5) Y_{2q}`, so Petrov's electronic operator is `𝒱_q ≡ Σ_i √(2π/5) Y_{2q}/r_i³ = (1/√2) Σ_i C²_q/r_i³`. With electron charges `e_i = −e` in (4.31), and in atomic units,
+
+```
+T²_q(∇E) = + Σ_i C²_q(i) / r_i³ = √2 𝒱_q .
+```
+
+Both Q definitions agree (`Q = 2⟨T²₀(Q)⟩` in each), so, using `eq₀Q = −2eQ⟨T²₀(∇E)⟩` from §9.4.1 and the same definition extended to `q = ±2`,
+
+```
+eq₀Q(B&C)  = −√2 · eQq₀(Petrov 2018)
+eq₂Q(B&C)  = −√2 · eQq₂(Petrov 2018) / √6  =  −eQq₂(Petrov 2018) / √3
+```
+
+**Why this is a candidate, not the answer.** Two things are not pinned by the printed text:
+
+1. **The scalar-product pairing in Eq. (19).** As printed, *both* tensor indices are `q` — `Σ_q (−1)^q Q̂²_q 𝒱_q` — which is not a scalar. A scalar product requires `Σ_q (−1)^q A_q B_{−q}`. The derivation above assumes the standard pairing (the electronic factor carrying `−q`). Under that reading Eq. (19) is **1/√2 of B&C's (4.30)**, which is exactly what a systematic `√(2π/5)` for `√(4π/5)` would produce, and Eqs. (19), (22), (23) are then mutually consistent but sit √2 below the conventional normalisation.
+2. **Whether `√(2π/5)` is intended.** If it is a typo for `√(4π/5)` (i.e. Racah's `C²_q`), then `eq₀Q(B&C) = −eQq₀(Petrov)` — which is the implicit assumption behind [TH] §4.3's use of Petrov's −2100 MHz — and `eq₂Q(B&C) = −eQq₂(Petrov)/√6`. **The two readings differ by exactly √2 and the printed equations do not discriminate.**
+
+**Attempt to discriminate from Petrov's own internal consistency** `[derived]`. Petrov Eqs. (24)–(25) give `eQq₂ = 483 w Q ⟨1/r³⟩_{5d}` MHz with `w ≈ G∥ + 0.002319`, and at `G∥ = 0.011768` this reproduces his quoted 110 MHz (`483 × 0.014087 × 3.365 × 4.86 = 111.3` MHz ✓). Reconstructing the prefactor 483 from Eq. (23) with the model Petrov states (spin–orbit admixture, weight `w`, of a Π state with leading configuration |5s5dπ|, so the active matrix element is `⟨5d, λ=+1| 𝒱₂ |5d, λ=−1⟩` times `⟨1/r³⟩_{5d}`):
+
+```
+  Petrov 2018 Eq.(24) prefactor probe  [eQq2 = 483 w Q <1/r^3>_5d MHz]
+    sqrt(2 pi/5)  as printed : <d+1|Y22|d-1> ang = -0.220728, prefactor = -284.8 MHz
+    sqrt(4 pi/5)  = C^2_q    : <d+1|Y22|d-1> ang = -0.220728, prefactor = -402.8 MHz
+    (Petrov's own numbers: w = 0.014087, Q = 3.365 b, <1/r^3> = 4.86 -> 111.3 MHz vs the 110 MHz quoted)
+```
+
+(Angular factor `∫Y*_{21}Y_{22}Y_{2,−1}dΩ`; conversion 234.97 MHz per unit `Q[barn]·⟨1/r³⟩[a.u.]`.) **Neither reading reproduces 483**, so this probe is **inconclusive** — the single-orbital, `w`-as-weight model is too crude to separate a √2 from the two-electron and spin–orbit detail Petrov does not print. It is reported because it was run and because it rules out the lazy conclusion that the factor is obvious.
+
+**What *is* pinned, and is usable** `[derived]`. Petrov's Eqs. (22) and (23) carry the **same** electronic-operator normalisation `√(2π/5) Y_{2q}`; only the leading factor differs (2 versus 2√6). So whatever the absolute bridge turns out to be, the **relative** one is fixed:
+
+```
+eq₂Q(B&C) / eq₀Q(B&C)  =  [ eQq₂(Petrov) / √6 ] / eQq₀(Petrov)
+```
+
+i.e. **if a published Petrov-style `eQq₀` is entered into (9.53) as-is (which is what [TH] §4.3 and §4.4 do), then consistency requires entering `eQq₂ / √6` into (9.52) at `q = ±2`.** That relation follows from the printed equations alone and does not depend on either open question above.
+
+**Ruling for the code, per the brief's stop-work condition.**
+
+- `eqq2_norm = 'bc_9p52_q2'` is the **only implemented normalisation**: the package computes in B&C's normalisation, where the parameter is `eq₂Q` defined by `−2eQ⟨η,Λ|T²_{±2}(∇E)|η,Λ′⟩`.
+- The `'petrov2018_eq23'` converter must **raise `NotImplementedError`**, naming OPEN-17 and quoting the two candidate factors (`−1/√3` and `−1/√6`) and the reason they cannot be separated. **A guessed factor is a stop-work condition; none is guessed here.**
+- Every `eQq₂`-derived number in [TH] §4.4 (the ~35–80 MHz Ω = +1 ↔ Ω = −1 element at J = 1) inherits a √2 and a sign caveat and is order-of-magnitude only. So does [TH] §4.3's eQq₀ estimate, which took Petrov's −2100 MHz directly into (9.53).
+
+**OPEN-17 (escalated, unchanged in status, sharpened).** Two questions for the authors, either of which settles it in one sentence: (i) in PRA 98, 042502 (2018) Eq. (19), is the electronic factor `Y_{2,−q}` (standard scalar product)? (ii) is the `√(2π/5)` in Eqs. (19), (22), (23) intended, or is it `√(4π/5) = C²_q`? Absent an answer, the package refuses the conversion rather than picking a branch.
