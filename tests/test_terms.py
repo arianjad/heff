@@ -16,8 +16,8 @@ import pytest
 from heff.conventions import Conventions
 from heff.params import MU_B, MU_N, thf_v1
 from heff.spec import enumerate_kets, thf_spec
-from heff.terms import (REGISTRY, Ctx, Rules, Term, check_selection_rules,
-                        ctx_from, term, terms_for_case)
+from heff.terms import (Ctx, Rules, Term, check_selection_rules, ctx_from,
+                        term, terms_for_case)
 
 
 @pytest.fixture
