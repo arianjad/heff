@@ -173,12 +173,15 @@ def thf_v1():
                    note="sign of g_F is NOT measured; theory forces g_F < 0. OPEN-4"),
         "g_N": P(5.25773, "", status="held-fixed",
                  source="19F nuclear g-factor, Petrov et al. arXiv:1704.06631 Eq. 3"),
-        "E_eff": P(35.0, "GV/cm", status="ab-initio",
+        "E_eff": P(35.0, "GV/cm", uncertainty=2.45, status="ab-initio",
                    source="Ng thesis Eq. C.8 discussion p.322 (JILA adopts ~35); "
                           "Skripnikov & Titov 2015 give 37.3(7 %), Denis 2015 35.2",
-                   note="OPEN-14: 35.2 vs 37.3 GV/cm"),
-        "W_TP": P(50.0, "kHz", status="ab-initio",
-                  source="Skripnikov & Titov 2015 Table II p.8 (+-7 %)"),
+                   note="OPEN-14: 35.2 vs 37.3 GV/cm. Uncertainty is the quoted "
+                        "+-7 % of the adopted value (2.45 GV/cm), not a spread "
+                        "over the three calculations"),
+        "W_TP": P(50.0, "kHz", uncertainty=3.5, status="ab-initio",
+                  source="Skripnikov & Titov 2015 Table II p.8 (+-7 %)",
+                  note="uncertainty is that quoted +-7 % of 50 kHz"),
         "d_e": P(0.0, "", status="held-fixed",
                  note="electron EDM in e.cm; 0 turns the PT-odd block off"),
         "k_TP": P(0.0, "", status="held-fixed",

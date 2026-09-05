@@ -1,6 +1,6 @@
 # Lifted verbatim from Molecule-Structure Source Code/formalism.py
-# Source: C:/Users/Arian/Code/Molecule-Structure @ 9eec91a  (record the hash you got)
-# 118 lines, exactly invertible, 22 kernel tests. Kept as-is per spec S3.9
+# Source: C:/Users/Arian/Code/Molecule-Structure @ 9eec91a
+# 118 lines, exactly invertible, 20 kernel tests. Kept as-is per spec S3.9
 # "lift verbatim (rename only)". Do not refactor: its identity-on-absence
 # contract is what keeps untagged legacy dicts byte-identical through it.
 """Bidirectional N²↔R² spectroscopic-parameter converter (B&C Table 7.2,
@@ -27,7 +27,9 @@ Energy_Levels user-dict path). 'formalism'/'Lambda' are left in the returned
 dict; the Hamiltonian builders read params by targeted key access, so the extra
 keys are inert.
 
-Spec: docs/superpowers/specs/2026-05-15-n2-r2-formalism-converter-design.md
+Spec: the design note lives in Molecule-Structure at
+docs/superpowers/specs/2026-05-15-n2-r2-formalism-converter-design.md (not
+copied here)
 (that spec describes the earlier one-directional, metadata-stripping contract;
 this module is now bidirectional and tag-preserving — spec superseded here).
 """

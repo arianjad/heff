@@ -16,8 +16,7 @@ import numpy as np
 import pytest
 from _helpers import _gamma, _kappa
 
-from heff import elements_c  # noqa: F401
-from heff.assemble import build_term_matrices, hamiltonian
+from heff.assemble import build_term_matrices, hamiltonian, vertex
 from heff.conventions import Conventions
 from heff.observe import (expectation, g_factors, multi_curvature, offdiag,
                           pair_differential)
@@ -187,7 +186,12 @@ def test_V5_g_factor_closed_form_is_exact_in_a_single_J_basis():
     assert checked >= 5
     tm, ctx = _block(1.5, J_range=(1, 1))
     g = g_factors(tm, pset, {"E_z": 0.0, "B_z": 0.0}, ctx=ctx)["g"][0]
-    assert g * MU_B == pytest.approx(-0.020853, abs=1e-6)   # -20.85 kHz/G, [HAM] S2.8
+    # The same closed form again in MHz/G, from the ParamSet -- [HAM] S2.8 quotes
+    # -20.85 kHz/G for this level, but the number a default-on gate compares
+    # against is computed, never a transcribed measurement.
+    want_MHz_per_G = MU_B * (-G * _gamma(1, 1.5, I=I_F)
+                             + gN * (MU_N / MU_B) * _kappa(1, 1.5, I=I_F))
+    assert g * MU_B == pytest.approx(want_MHz_per_G, abs=1e-12)
 
 
 def test_V5_holds_in_the_full_basis_to_the_dJ1_hyperfine_level():
@@ -211,28 +215,87 @@ def test_V5_holds_in_the_full_basis_to_the_dJ1_hyperfine_level():
 
 def test_V5_the_wrong_zeeman_sign_gives_the_wrong_g():
     """The fabricated failure that makes V5 non-vacuous: with Ng's printed
-    minus_Gpar operator the same block returns 23.52 kHz/G, not 20.85."""
+    minus_Gpar operator the same block returns ~23.5 kHz/G, not ~20.85.
+
+    The wrong value is the SAME closed form with the G_par term's sign flipped,
+    computed from the ParamSet rather than transcribed -- it is a prediction of
+    the convention block, not a measurement.
+    """
     bad = replace(thf_v1(), conventions=Conventions(zeeman_sign="minus_Gpar"))
     tm, ctx = _block(1.5, pset=bad)
     g = g_factors(tm, bad, {"E_z": 0.0, "B_z": 0.0}, ctx=ctx)["g"][0]
-    assert abs(g * MU_B) == pytest.approx(0.02352, abs=1e-4)   # 23.52 kHz/G, wrong
+    G, gN = bad.value("G_par"), bad.value("g_N")
+    want_bad = MU_B * (G * _gamma(1, 1.5, I=I_F)
+                       + gN * (MU_N / MU_B) * _kappa(1, 1.5, I=I_F))
+    assert abs(g * MU_B) == pytest.approx(abs(want_bad), abs=1e-4)
 
 
-def test_V6_zeeman_is_even_in_omega_in_a_single_J_basis():
-    """[HAM] V6: at E = 0 with only J = 1 in the basis (so no Delta-J = +-1
-    Stark or Zeeman path), the two Omega-doublet components have identical
-    g-factors -- exactly. Uniquely catches an odd-in-Omega contamination of the
-    Zeeman operator, which would fake an eEDM signal in the four-way chop.
-    FAIL is reachable: drop the ket['Om'] factor from zeeman_Gpar and the two
-    g's differ.
+def _omega_flip(kets):
+    """The permutation pi taking every ket to its Omega partner (same J, F, m_F).
+
+    Built by MATCHING QUANTUM NUMBERS in the ket array, never by index
+    arithmetic: the enumerator happens to store the two Omega partners
+    adjacently, and a swap-your-neighbour shortcut would keep passing if that
+    ordering ever changed.
     """
+    perm = np.empty(len(kets), dtype=int)
+    for i in range(len(kets)):
+        hit = np.flatnonzero((kets["J"] == kets["J"][i]) & (kets["F"] == kets["F"][i])
+                             & (kets["mF"] == kets["mF"][i])
+                             & (kets["Om"] == -kets["Om"][i]))
+        assert len(hit) == 1, "every ket needs exactly one Omega partner in the block"
+        perm[i] = int(hit[0])
+    return perm
+
+
+def test_V6_the_zeeman_vertex_is_even_under_omega_reversal_and_the_stark_one_is_odd():
+    """[HAM] V6, stated on the OPERATOR instead of on eigenstates.
+
+    Under the Omega-flip permutation pi the Zeeman vertex dH/dB_z must satisfy
+    V_B[pi][:, pi] == V_B and the Stark vertex dH/dE_z must satisfy
+    V_E[pi][:, pi] == -V_E: the G_par Zeeman is quadratic in n_hat (the explicit
+    Omega and the geometry's Omega multiply out) while the Stark operator is
+    linear in it.
+
+    Uniquely catches an odd-in-Omega contamination of the Zeeman operator, which
+    shifts the two Omega-doublet components oppositely and therefore fakes an
+    eEDM signal in the four-way chop. It has to be checked on the operator: at
+    E = 0 the eigenstates are parity eigenstates -- equal-weight +-Omega
+    superpositions -- so ANY odd-in-Omega operator has identically zero diagonal
+    expectation on them, and an eigenstate-level "the two g's agree" test is
+    forced by parity whatever the Zeeman operator contains.
+
+    Scope is ONE J per block, and that is exact rather than convenient: the bare
+    permutation is the true Omega-reversal only within a J, because
+    dipole_geometry carries (-1)^(J'-Omega) and across Delta-J = +-1 the flip
+    picks up (-1)^(J+J'+1) = +1, which swaps both operators' parity there. The
+    phase-corrected flip is exactly conventions.parity_operator, and its
+    commutation with H is gate V8's job (tests/test_assemble.py).
+
+    FAIL is reachable and is asserted below: adding 1e-3 sign(Omega) to the
+    diagonal of V_B -- the smallest imaginable odd-in-Omega contamination --
+    breaks the evenness check by exactly 2e-3.
+    """
+    pset = thf_v1()
+    knobs = {"E_z": 0.0, "B_z": 0.0}
+    checked = 0
+    for J, mF in ((1, 0.5), (1, 1.5), (2, 0.5), (3, 2.5), (4, 3.5)):
+        tm, ctx = _block(mF, J_range=(J, J))
+        pi = _omega_flip(tm.kets)
+        V_B = vertex(tm, pset, knobs, "B_z")
+        V_E = vertex(tm, pset, knobs, "E_z")
+        # neither check is being run on a zero matrix
+        assert np.max(np.abs(V_B)) > 1e-3 and np.max(np.abs(V_E)) > 1e-3
+        assert np.max(np.abs(V_B[pi][:, pi] - V_B)) < 1e-14, f"J={J} m_F={mF}"
+        assert np.max(np.abs(V_E[pi][:, pi] + V_E)) < 1e-14, f"J={J} m_F={mF}"
+        checked += 1
+    assert checked == 5
+
     tm, ctx = _block(1.5, J_range=(1, 1))
-    res = g_factors(tm, thf_v1(), {"E_z": 0.0, "B_z": 0.0}, ctx=ctx)
-    assert len(res["g"]) == 2
-    assert res["g"][0] == pytest.approx(res["g"][1], abs=1e-14)
-    dg, label = pair_differential(res["g"][1], res["g"][0], thf_v1().conventions)
-    assert dg == pytest.approx(0.0, abs=1e-14)
-    assert "g^u - g^l" in label
+    pi = _omega_flip(tm.kets)
+    V_B = vertex(tm, pset, knobs, "B_z")
+    bad = V_B + np.diag(1e-3 * np.sign(np.asarray(tm.kets["Om"], dtype=float)))
+    assert np.max(np.abs(bad[pi][:, pi] - bad)) == pytest.approx(2e-3, rel=1e-9)
 
 
 def test_pair_differential_honours_the_dg_def_convention():

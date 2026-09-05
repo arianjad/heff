@@ -11,7 +11,7 @@ v1 basis (docs/thf-plus-x3delta1-effective-hamiltonian.md S1.1): Hund's case (c)
 never appear; the electronic structure enters only through the effective
 constants A_par, omega_ef, d_mf, G_par, E_eff.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Mapping
 
 import numpy as np
@@ -39,6 +39,10 @@ class StateSpec:
     J_range: tuple
     v: int = 0
     M: str = "blocks"
+    # A DOCUMENTED LABEL ONLY: no code path reads `frame` yet -- it is stamped
+    # into the term-matrix manifest and nothing else. The trigger for wiring it
+    # is the rotating-frame term (omega_rot F_x), which is the first operator
+    # whose matrix elements differ between 'rotating' and 'lab' (spec S3.1).
     frame: str = "rotating"
 
     def __post_init__(self):
@@ -142,3 +146,24 @@ def block_by_mF(kets):
     labels = tuple(sorted({float(v) for v in values}))
     index = {label: np.flatnonzero(values == label) for label in labels}
     return Blocking(kind="signed_mF", labels=labels, index=index, n_total=len(kets))
+
+
+def blocks_for(spec, kets):
+    """The Blocking a spec's `M` mode asks for (spec S3.1).
+
+    'blocks' -> one block per signed m_F, the collinear fast path and the
+    default; 'all' -> a single 'all' block holding the whole basis, which is
+    what a Delta-m_F != 0 term (transverse or rotating field) must be built on;
+    'none' -> the m-free field-free basis, not implemented.
+
+    `block_by_mF` keeps its own signature for the callers that want the
+    per-m_F partition regardless of the spec.
+    """
+    if spec.M == "blocks":
+        return block_by_mF(kets)
+    if spec.M == "all":
+        return Blocking(kind="all", labels=("all",),
+                        index={"all": np.arange(len(kets))}, n_total=len(kets))
+    raise NotImplementedError(
+        "M='none' is the field-free spectra path; add when a consumer needs an "
+        "m-free basis")

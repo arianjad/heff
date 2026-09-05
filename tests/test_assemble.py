@@ -7,13 +7,12 @@ they must not depend on any physics. V8 and V9 run on the real ThF+ blocks.
 import numpy as np
 import pytest
 
-from heff import elements_c  # noqa: F401  (registers the terms)
 from heff.assemble import (TermMatrices, active, build_term_matrices, hamiltonian,
                            hamiltonian_batch, sweep_coefficients, vertex)
 from heff.conventions import parity_operator
 from heff.params import Param, ParamSet, thf_v1
 from heff.spec import block_by_mF, enumerate_kets, thf_spec
-from heff.terms import ctx_from
+from heff.terms import Rules, ctx_from, term
 
 
 @pytest.fixture
@@ -184,6 +183,53 @@ def test_vertex_is_the_exact_derivative_of_H(block):
     k1, k2 = tm.names.index("zeeman_Gpar"), tm.names.index("zeeman_nuclear")
     assert np.allclose(V, pset.value("G_par") * tm.mats[k1]
                        + pset.value("g_N") * tm.mats[k2], atol=1e-13)
+
+
+def test_a_delta_mF_term_refuses_to_build_on_a_single_mF_block():
+    """Spec S3.1 "what could go wrong" (iv): a term whose DECLARED rules couple
+    Delta m_F != 0 cannot be built on a single-m_F block -- every element it has
+    lies outside the block, so the sparsity mask would hand back an all-zero
+    matrix and the caller would sweep a transverse or rotating field that is
+    silently absent. Structural, so it raises.
+
+    Uniquely catches exactly that silent zero: no other gate looks at a term's
+    dmF against the block it is being built on. Both outcomes are reachable and
+    both are asserted -- the raise on the m_F = 3/2 block, and a clean,
+    genuinely non-zero build of the same term on the merged full basis.
+
+    The term is registered in a PRIVATE registry, so the package registry is
+    untouched and no other test can see it.
+    """
+    priv = {}
+
+    @term(name="fake_transverse", param=("E_x",), cases=("c",),
+          rules=Rules(dJ=(0,), dOm=(0.0,), dF=(-1, 0, 1), dmF=(-1, 1)),
+          hermitian=True, real=True, cite="fabricated for this test", registry=priv)
+    def fake_transverse(bra, ket, ctx):
+        return 1.0
+
+    spec = thf_spec()
+    kets = enumerate_kets(spec)
+    ctx = ctx_from(spec, thf_v1())
+    blocks = block_by_mF(kets)
+    with pytest.raises(ValueError, match="dmF"):
+        build_term_matrices(kets[blocks.index[1.5]], ctx, registry=priv)
+
+    merged = kets[blocks.merge(blocks.labels)]
+    tm = build_term_matrices(merged, ctx, registry=priv)
+    assert tm.names == ("fake_transverse",)
+    assert np.count_nonzero(tm.mats[0]) > 0
+
+
+def test_hamiltonian_batch_names_the_width_it_wanted():
+    """A wrong-width coefficient array is a caller error, not an IndexError
+    from deep inside the tensordot -- the message has to name both widths."""
+    spec = thf_spec()
+    kets = enumerate_kets(spec)
+    tm = build_term_matrices(kets[block_by_mF(kets).index[3.5]], ctx_from(spec, thf_v1()))
+    with pytest.raises(ValueError, match=r"c\.shape\[-1\] = 3.*len\(tm\.names\) = %d"
+                       % len(tm.names)):
+        hamiltonian_batch(tm, np.ones((2, 3)))
 
 
 def test_V8_parity_commutes_at_zero_field_and_not_with_the_stark_term():

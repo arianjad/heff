@@ -20,12 +20,13 @@ from .observe import (expectation, g_factors, multi_curvature, offdiag,
                       pair_differential)
 from .params import MU_B, MU_N, Param, ParamSet, thf_v1
 from .spec import (KET_C, Blocking, ElecState, StateSpec, block_by_mF,
-                   check_basis_invariants, enumerate_kets, thf_spec)
+                   blocks_for, check_basis_invariants, enumerate_kets, thf_spec)
 from .spectra import dipole_matrix, label_lines, line_strengths
 from .terms import Ctx, Rules, Term, ctx_from, term, terms_for_case
 
 __all__ = ["wigner", "spec", "KET_C", "Blocking", "ElecState", "StateSpec",
-           "block_by_mF", "check_basis_invariants", "enumerate_kets", "thf_spec",
+           "block_by_mF", "blocks_for", "check_basis_invariants",
+           "enumerate_kets", "thf_spec",
            "conventions", "formalism", "params", "Conventions", "ef_label",
            "n_hat_sign", "parity_operator", "parity_phase", "superposition_parity",
            "convert_formalism", "dipole_geometry", "MU_B", "MU_N",

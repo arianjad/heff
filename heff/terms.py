@@ -42,6 +42,9 @@ class Ctx:
     `S = 1/2` keyword default is the entire reason S is never threaded there and
     every element silently evaluates at S = 1/2. A signature with no defaults
     turns that whole bug class into a TypeError at first call.
+
+    `frame` is the StateSpec label carried through so the term-matrix manifest
+    can record it; no element reads it (see StateSpec.frame).
     """
     S: float
     Lam: float
@@ -49,6 +52,7 @@ class Ctx:
     mu_B: float
     mu_N: float
     conventions: object
+    frame: str
 
 
 def ctx_from(spec, pset):
@@ -57,7 +61,7 @@ def ctx_from(spec, pset):
 
     es = spec.electronic[0]
     return Ctx(S=es.S, Lam=es.Lam, I=spec.I, mu_B=MU_B, mu_N=MU_N,
-               conventions=pset.conventions)
+               conventions=pset.conventions, frame=spec.frame)
 
 
 @dataclass(frozen=True)

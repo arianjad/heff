@@ -9,10 +9,12 @@ a check rather than a transcription.
 
 FAIL is reachable and demonstrated in test_invariants_reject_a_bad_basis.
 """
+from dataclasses import replace
+
 import numpy as np
 import pytest
 
-from heff.spec import (KET_C, Blocking, ElecState, StateSpec, block_by_mF,
+from heff.spec import (KET_C, ElecState, StateSpec, block_by_mF, blocks_for,
                        check_basis_invariants, enumerate_kets, thf_spec)
 
 
@@ -104,6 +106,33 @@ def test_invariants_reject_a_bad_basis():
     thirds = np.array([(1.0, 1.0, 1.5, 1.0 / 3.0)], dtype=KET_C)
     with pytest.raises(ValueError, match="multiple of 0.5"):
         check_basis_invariants(thirds, spec)
+
+
+def test_blocks_for_blocks_is_the_per_mF_partition():
+    """M='blocks' (the default) is exactly block_by_mF -- the collinear fast path."""
+    spec = thf_spec()
+    kets = enumerate_kets(spec)
+    got, want = blocks_for(spec, kets), block_by_mF(kets)
+    assert got.kind == want.kind == "signed_mF"
+    assert got.labels == want.labels
+    assert all(np.array_equal(got.index[m], want.index[m]) for m in got.labels)
+
+
+def test_blocks_for_all_is_one_block_holding_the_whole_basis():
+    """M='all' is the basis a Delta-m_F != 0 term has to be built on."""
+    spec = replace(thf_spec(), M="all")
+    kets = enumerate_kets(spec)
+    blocks = blocks_for(spec, kets)
+    assert blocks.kind == "all" and blocks.labels == ("all",)
+    assert np.array_equal(blocks.index["all"], np.arange(len(kets)))
+    assert blocks.n_total == len(kets) == 96
+
+
+def test_blocks_for_none_names_its_trigger():
+    """M='none' is declared but not implemented; the message says what unlocks it."""
+    spec = replace(thf_spec(), M="none")
+    with pytest.raises(NotImplementedError, match="field-free spectra path"):
+        blocks_for(spec, enumerate_kets(spec))
 
 
 def test_case_other_than_c_is_refused():

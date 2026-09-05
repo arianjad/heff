@@ -28,7 +28,7 @@ def ctx():
 def _reconvention(ctx, **kw):
     """The same Ctx with a different conventions block."""
     return Ctx(S=ctx.S, Lam=ctx.Lam, I=ctx.I, mu_B=ctx.mu_B, mu_N=ctx.mu_N,
-               conventions=Conventions(**kw))
+               conventions=Conventions(**kw), frame=ctx.frame)
 
 
 # ---------------------------------------------------------------------- Stark

@@ -74,8 +74,9 @@ Internal unit is MHz throughout; fields are `E_z` in V/cm and `B_z` in G.
 
 ## Validation
 
-Gated by the test suite — `conda run -n heff python -m pytest tests/ -q` currently
-gives **159 passed, 2 skipped**, the two skips being the opt-in tier below.
+Gated by the test suite — `conda run -n heff python -m pytest tests/ -q` passes in
+full, with the two tier-D literature comparisons skipped unless
+`HEFF_RUN_LITERATURE=1` (the opt-in tier described below).
 
 - **Kernel gates (A1–A8)**, none of which depend on a particular Hamiltonian:
   the resum identity and the `tensordot` fast path on random matrices, the exact

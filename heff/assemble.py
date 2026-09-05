@@ -58,6 +58,19 @@ def build_term_matrices(kets, ctx, *, case="c", registry=REGISTRY):
     if not terms:
         raise ValueError(f"no terms registered for case {case!r}; import heff.elements_c")
     d = len(kets)
+    # Refuse to block a Delta-m_F != 0 term into a single-m_F block (spec S3.1
+    # "what could go wrong" (iv)): the rules mask would zero every element the
+    # term actually has and the caller would get a silent all-zero matrix
+    # instead of a transverse/rotating-field coupling. Structural, so it raises.
+    single_mF = len({float(v) for v in np.asarray(kets["mF"], dtype=float)}) == 1
+    if single_mF:
+        for t in terms:
+            if any(float(x) != 0.0 for x in t.rules.dmF):
+                raise ValueError(
+                    f"term {t.name!r} declares dmF={tuple(t.rules.dmF)}, which couples "
+                    f"Delta m_F != 0, but this block holds the single m_F = "
+                    f"{float(kets['mF'][0])}; build it on the merged full basis "
+                    f"(Blocking.merge(...) / StateSpec(M='all')) instead")
     t0 = time.perf_counter()
     mats = []
     for t in terms:
@@ -86,6 +99,7 @@ def build_term_matrices(kets, ctx, *, case="c", registry=REGISTRY):
         "terms": [t.name for t in terms],
         "cites": {t.name: t.cite for t in terms},
         "conventions": ctx.conventions.stamp(),
+        "frame": ctx.frame,
         "wigner_backend": "sympy+lru_cache",
         "wigner_version": wigner_version,
         "build_seconds": time.perf_counter() - t0,
@@ -207,6 +221,10 @@ def hamiltonian_batch(tm, c):
     physical field/parameter sweep) is preserved.
     """
     c = np.atleast_2d(np.asarray(c))
+    if c.shape[-1] != len(tm.names):
+        raise ValueError(
+            f"coefficient array has c.shape[-1] = {c.shape[-1]} but this "
+            f"TermMatrices has len(tm.names) = {len(tm.names)} terms")
     # ponytail: dense assembled H; if dim > ~5e3 the sum itself needs chunking.
     d = tm.mats[0].shape[0]
     active_idx = [k for k in range(c.shape[1]) if np.any(c[:, k] != 0.0)]

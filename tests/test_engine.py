@@ -6,7 +6,6 @@ labels and expectation values, so this is not optional.
 import numpy as np
 import pytest
 
-from heff import elements_c  # noqa: F401
 from heff.assemble import build_term_matrices, hamiltonian
 from heff.engine import eigh_batch, sweep
 from heff.params import thf_v1
