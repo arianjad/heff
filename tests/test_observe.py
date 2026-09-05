@@ -194,8 +194,8 @@ def test_V5_holds_in_the_full_basis_to_the_dJ1_hyperfine_level():
     """Same closed form in the J = 1-4 basis, where it is approximate.
 
     The residual is the cross term 2c <J|dH/dB|J+1> opened up by the B&C 9.51
-    J-mixing amplitude c ~ 3e-4; measured here it is 3.3e-6 in g, uniform across
-    the four (J, F) groups. A tolerance at that scale would be tuned to the
+    J-mixing amplitude c ~ 3e-4; measured here it is 3.3e-6 at (J=1, F=3/2), falling
+    monotonically with J to 0 at (J=4, F=9/2). A tolerance at that scale would be tuned to the
     residual; 1e-4 keeps 30x headroom and still fails the Ng-sign error by 300x,
     whose residual is 0.03 in g.
     """
