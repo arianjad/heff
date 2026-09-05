@@ -7,7 +7,9 @@ never (plotting lives in notebooks, spec S3.8).
 
 __version__ = "0.1.0"
 
-from . import conventions, elements_c, formalism, params, spec, terms, wigner  # noqa: F401
+from . import assemble, conventions, elements_c, formalism, params, spec, terms, wigner  # noqa: F401
+from .assemble import (TermMatrices, active, build_term_matrices, coefficients,
+                       hamiltonian, hamiltonian_batch, sweep_coefficients, vertex)
 from .conventions import Conventions, ef_label, n_hat_sign, parity_operator, parity_phase
 from .params import MU_B, MU_N, Param, ParamSet, thf_v1
 from .spec import (KET_C, Blocking, ElecState, StateSpec, block_by_mF,
@@ -19,4 +21,6 @@ __all__ = ["wigner", "spec", "KET_C", "Blocking", "ElecState", "StateSpec",
            "conventions", "formalism", "params", "Conventions", "ef_label",
            "n_hat_sign", "parity_operator", "parity_phase", "MU_B", "MU_N",
            "Param", "ParamSet", "thf_v1", "terms", "Ctx", "Rules", "Term",
-           "ctx_from", "term", "terms_for_case", "elements_c"]
+           "ctx_from", "term", "terms_for_case", "elements_c", "assemble",
+           "TermMatrices", "build_term_matrices", "coefficients", "active",
+           "hamiltonian", "hamiltonian_batch", "sweep_coefficients", "vertex"]
