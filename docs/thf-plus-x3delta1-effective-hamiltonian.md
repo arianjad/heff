@@ -1020,7 +1020,9 @@ S9.3 (independent) decoupled-basis rebuild of the (5.173)+(5.174) chain
 
 **The ket-F₁ phase — B&C's literal reading — is right; the bra-F₁ variant is wrong on every `ΔF₁ = ±1` element.** Code the phase as `(−1)^{F₁(ket) + F + I_F}`.
 
-**Sizes.** The `ΔF₁ = ±1` ¹⁹F elements at I_Th = 5/2, J = 1 are 0.32–0.37 × `A∥^F` ≈ 6.4–7.5 MHz against F₁ spacings of 190–2670 MHz ([TH] §4.1), so F₁ remains a good quantum number and this sign moves levels only at the ≲ 25 kHz level. It is nonetheless a sign in a matrix element that check V1 cannot see, which is why it is pinned here rather than left to the implementer.
+**Sizes.** The `ΔF₁ = ±1` ¹⁹F elements at I_Th = 5/2, J = 1 are 0.32–0.37 × `A∥^F` ≈ 6.4–7.5 MHz against F₁ spacings of 190–2670 MHz ([TH] §4.1), so F₁ remains a good quantum number and this sign moves levels only at the ≲ 30 kHz level. It is nonetheless a sign in a matrix element that check V1 cannot see, which is why it is pinned here rather than left to the implementer.
+
+**Correction to [TH] §4.5** `[derived]`: that section quotes the same elements as `0.13–0.37 × A∥^F/[J(J+1)]` ≈ 1.3–3.8 MHz, i.e. **low by one factor of `J(J+1)`** — the `1/[J(J+1)]` of the operator is already inside the numbers printed in the table above (its header reads `⟨F₁′|O|F₁⟩/[J(J+1)]` with `O = T¹(J)·T¹(I_F)`), so multiplying by it again double-counts. §9.3 is self-consistent and is the version to code. With the corrected elements the second-order shift is `(7.52 MHz)²/1905 MHz ≈ 30 kHz` for the F₁ = 3/2 ↔ 5/2 pair and `(6.42)²/2667 ≈ 15 kHz` for 5/2 ↔ 7/2, against [TH]'s ≲ 25 kHz — **the conclusion (F₁ is a good quantum number) is unchanged**, and the digest is deliberately left as written; the correction lives here.
 
 ---
 
@@ -1054,7 +1056,7 @@ With `I → I_Th`, `F → F₁` (justified by §9.2), and with the primes moved 
 
 - `ΔJ = 0, ±1, ±2` (B&C say so in the sentence quoted above).
 - `q = Ω_bra − Ω_ket`, so inside the Ω = ±1 block of ³Δ₁ there are exactly two terms: **q = 0, ΔΩ = 0** (constant `eq₀Q`) and **q = ∓2, ΔΩ = ±2** (constant `eq₂Q`). The second is parity-even, diagonal in J, F₁, F, m_F, and sits in the same matrix position as the Ω-doubling operator ([TH] §3.2, §4.4).
-- **Both vanish identically for I ≤ ½**, because `(I 2 I; −I 0 I)` in the denominator requires the triangle `(I, 2, I)`, i.e. `I ≥ 1`. So ²²⁷ThF⁺ (I_Th = ½, §9.6) has no Th quadrupole at all, exactly as ¹⁹F has none (§2.11). `[derived]`
+- **Both vanish identically for `I ≤ ½` — and the reason is the numerator, not the denominator.** A nucleus with `I < 1` **has no quadrupole moment**: the moment is defined by the rank-2 element `⟨I‖T²(Q)‖I⟩`, which requires the triangle `(I, 2, I)`, so `eQ = 0` and `H_Q ≡ 0` for `I = 0, ½`. The 3j `(I 2 I; −I 0 I)` in the *denominator* of (9.52)/(9.53) vanishes on exactly the same triangle, so the printed expression at `I ≤ ½` is `0/0` — **singular, not zero**; reading the vanishing denominator as the reason for the vanishing element is backwards, and a literal transcription divides by zero. **The code must carry an explicit `if I < 1: return 0.0` guard ahead of the inverse 3j** (this is what Task 5's gate V21 encodes). So ²²⁷ThF⁺ (I_Th = ½, §9.6) has no Th quadrupole at all, exactly as ¹⁹F has none (§2.11). `[derived]`
 
 **Comparing (9.52) at q = 0 with (9.53) fixes B&C's own definition of the constant** `[derived]`:
 
@@ -1130,14 +1132,16 @@ T²_q(∇E) = + Σ_i C²_q(i) / r_i³ = √2 𝒱_q .
 Both Q definitions agree (`Q = 2⟨T²₀(Q)⟩` in each), so, using `eq₀Q = −2eQ⟨T²₀(∇E)⟩` from §9.4.1 and the same definition extended to `q = ±2`,
 
 ```
-eq₀Q(B&C)  = −√2 · eQq₀(Petrov 2018)
-eq₂Q(B&C)  = −√2 · eQq₂(Petrov 2018) / √6  =  −eQq₂(Petrov 2018) / √3
+eq₀Q(B&C)      = −√2 · eQq₀(Petrov 2018)
+eq₂Q(B&C-ext)  = −√2 · eQq₂(Petrov 2018) / √6  =  −eQq₂(Petrov 2018) / √3
 ```
+
+**Naming, so nothing is attributed to B&C that B&C does not print.** B&C define **only** `eq₀Q`, through (9.53), i.e. only the `q = 0` component: `eq₀Q ≡ −2eQ⟨η,Λ|T²₀(∇E)|η,Λ⟩`. There is no `eq₂Q` anywhere in B&C. **`eq₂Q(B&C-ext)` is this document's `[derived]` extension of that same definition to the `q = ±2` component**, `eq₂Q ≡ −2eQ⟨η,Λ|T²_{±2}(∇E)|η,Λ′⟩`, entered into (9.52) at `q = ±2`; the extension is the natural one and is what `eqq2_norm='bc_9p52_q2'` means, but it is ours, not B&C's. Every "`(B&C)`" tag on an `eq₂Q` below should be read as "`(B&C-ext)`" in this sense.
 
 **Why this is a candidate, not the answer.** Two things are not pinned by the printed text:
 
 1. **The scalar-product pairing in Eq. (19).** As printed, *both* tensor indices are `q` — `Σ_q (−1)^q Q̂²_q 𝒱_q` — which is not a scalar. A scalar product requires `Σ_q (−1)^q A_q B_{−q}`. The derivation above assumes the standard pairing (the electronic factor carrying `−q`). Under that reading Eq. (19) is **1/√2 of B&C's (4.30)**, which is exactly what a systematic `√(2π/5)` for `√(4π/5)` would produce, and Eqs. (19), (22), (23) are then mutually consistent but sit √2 below the conventional normalisation.
-2. **Whether `√(2π/5)` is intended.** If it is a typo for `√(4π/5)` (i.e. Racah's `C²_q`), then `eq₀Q(B&C) = −eQq₀(Petrov)` — which is the implicit assumption behind [TH] §4.3's use of Petrov's −2100 MHz — and `eq₂Q(B&C) = −eQq₂(Petrov)/√6`. **The two readings differ by exactly √2 and the printed equations do not discriminate.**
+2. **Whether `√(2π/5)` is intended.** If it is a typo for `√(4π/5)` (i.e. Racah's `C²_q`), then `eq₀Q(B&C) = −eQq₀(Petrov)` — which is the implicit assumption behind [TH] §4.3's use of Petrov's −2100 MHz — and `eq₂Q(B&C-ext) = −eQq₂(Petrov)/√6`. **The two readings differ by exactly √2 and the printed equations do not discriminate.**
 
 **Attempt to discriminate from Petrov's own internal consistency** `[derived]`. Petrov Eqs. (24)–(25) give `eQq₂ = 483 w Q ⟨1/r³⟩_{5d}` MHz with `w ≈ G∥ + 0.002319`, and at `G∥ = 0.011768` this reproduces his quoted 110 MHz (`483 × 0.014087 × 3.365 × 4.86 = 111.3` MHz ✓). Reconstructing the prefactor 483 from Eq. (23) with the model Petrov states (spin–orbit admixture, weight `w`, of a Π state with leading configuration |5s5dπ|, so the active matrix element is `⟨5d, λ=+1| 𝒱₂ |5d, λ=−1⟩` times `⟨1/r³⟩_{5d}`):
 
@@ -1153,7 +1157,7 @@ eq₂Q(B&C)  = −√2 · eQq₂(Petrov 2018) / √6  =  −eQq₂(Petrov 2018) 
 **What *is* pinned, and is usable** `[derived]`. Petrov's Eqs. (22) and (23) carry the **same** electronic-operator normalisation `√(2π/5) Y_{2q}`; only the leading factor differs (2 versus 2√6). So whatever the absolute bridge turns out to be, the **relative** one is fixed:
 
 ```
-eq₂Q(B&C) / eq₀Q(B&C)  =  [ eQq₂(Petrov) / √6 ] / eQq₀(Petrov)
+eq₂Q(B&C-ext) / eq₀Q(B&C)  =  [ eQq₂(Petrov) / √6 ] / eQq₀(Petrov)
 ```
 
 i.e. **if a published Petrov-style `eQq₀` is entered into (9.53) as-is (which is what [TH] §4.3 and §4.4 do), then consistency requires entering `eQq₂ / √6` into (9.52) at `q = ±2`.** That relation follows from the printed equations alone and does not depend on either open question above.
@@ -1223,26 +1227,73 @@ is **one scalar per (K, ΔΩ) channel times parameter-free geometry** ([2γ] §3
 
 `q = Ω′ − Ω`, `Δm_F = P`. **This is the same four lines as §9.1 with `k` replaced by `K` and `p` by `P`** — the one-photon `{J F I; F′ J′ 1}` becomes `{J F I; F′ J′ K}`, exactly as [2γ] §3.2 says. Validity condition: the spectator reduction is exact **only when the intermediate hyperfine structure is unresolved**; if `Δ_i` depends on the intermediate `F′`, the `F′` sum cannot be factored out and the reduction fails.
 
-**(3) The lab contraction and the polarisation dyad** `[derived from B&C (5.141)]`. B&C (5.141) with `k₁ = k₂ = 1` is exactly the Clebsch–Gordan coupling, since `⟨k₁p₁ k₂p₂|KP⟩ = (−1)^{k₁−k₂+P}(2K+1)^{1/2}(k₁ k₂ K; p₁ p₂ −P)`. So the polarisation dyad is
+**(3) The lab contraction and the polarisation dyad** `[derived from B&C (5.141)]`.
+
+**Which polarisation goes in which tensor slot.** The operator is `T_eff = Σ_i (d·ε₂*)|i⟩⟨i|(d·ε₁)/Δ_i`: the **bra-side** factor carries `ε₂*` (conjugated — photon 2 is the *emitted* one in this Raman-type process) and the **ket-side** factor carries `ε₁`. B&C (5.142) has the same ordering — `⟨j‖T^{k₁}(A₁)‖j″⟩⟨j″‖T^{k₂}(B₁)‖j′⟩`, bra-side leg first — so slot 1 of the coupled tensor is the `ε₂*` leg and slot 2 is the `ε₁` leg. Write
 
 ```
-(ε₁ ⊗ ε₂)^K_P = (−1)^P (2K+1)^{1/2} Σ_{p₁ p₂} ( 1  1  K ; p₁  p₂  −P ) ε₁^{p₁} ε₂^{p₂}
-              = Σ_{p₁ p₂} ⟨1 p₁ 1 p₂ | K P⟩ ε₁^{p₁} ε₂^{p₂} ,          P = p₁ + p₂
+ε_a ≡ ε₂*   (slot 1, bra-side leg)          ε_b ≡ ε₁   (slot 2, ket-side leg)
 ```
 
-with the lab spherical components of a Jones vector `(ε_x, ε_y, ε_z)` in Condon–Shortley phase (as fixed in [HAM] §2):
+**Neither the conjugation nor the ordering is cosmetic**: dropping the star and writing the dyad as `(ε₁ ⊗ ε₂)` gives a different function of the two Jones vectors (checked below: the two differ by up to `1.3 × 10¹` on random ε's, and they swap which physical polarisation pair reaches `Δm_F = ±2`).
+
+**The spherical components, written out.** For **any** vector `v = (v_x, v_y, v_z)`, complex included, in the Condon–Shortley phase fixed by [HAM] §2,
 
 ```
-ε_{+1} = −(ε_x + i ε_y)/√2 ,      ε_0 = ε_z ,      ε_{−1} = +(ε_x − i ε_y)/√2
+v_{+1} = −(v_x + i v_y)/√2 ,      v_0 = v_z ,      v_{−1} = +(v_x − i v_y)/√2
 ```
 
-and the full contraction
+and the scalar product of two vectors is `A·B = Σ_p (−1)^p A_p B_{−p}` (a bilinear identity, valid for complex components). Hence each leg is
 
 ```
-T_eff = Σ_{K=0,1,2} Σ_P (−1)^P (ε₁ ⊗ ε₂)^K_{−P} α^K_P .
+d·ε = Σ_p (−1)^p ε_{−p} T¹_p(d) ≡ Σ_p c[p] T¹_p(d) ,        c[p] ≡ (−1)^p ε_{−p}
 ```
 
-`K = 0` is the scalar `ε₁·ε₂`; `K = 1` is the antisymmetric part, `∝ ε₁ × ε₂`, non-zero only for non-parallel or elliptical polarisations; `K = 2` is the symmetric traceless part.
+so that `c_a[p] = (−1)^p (ε₂*)_{−p}` and `c_b[p] = (−1)^p (ε₁)_{−p}`. **Note `(ε₂*)_{−p}` means: conjugate the Cartesian Jones vector first, then take its spherical component with the formula above.** For the σ⁺ Jones vector `ê_{+1} = −(x̂ + iŷ)/√2` this gives `c[+1] = +1` and nothing else, i.e. absorbing a σ⁺ photon raises `m_F` by one — the sanity anchor for the whole convention.
+
+**The dyad, in the form Task 7's `dyad_weights(eps1, eps2)` returns.** B&C (5.141) at `k₁ = k₂ = 1` is exactly the Clebsch–Gordan coupling, since `⟨k₁p₁ k₂p₂|KP⟩ = (−1)^{k₁−k₂+P}(2K+1)^{1/2}(k₁ k₂ K; p₁ p₂ −P)`. Inverting it and collecting the polarisation factors gives one weight per `(K, P)`:
+
+```
+w^K_P = Σ_{p_a + p_b = P} ⟨1 p_a  1 p_b | K P⟩  c_a[p_a] c_b[p_b] ,        p_a, p_b ∈ {0, ±1}
+```
+
+and the contraction is then free of further phases:
+
+```
+T_eff = Σ_{K=0,1,2} Σ_P w^K_P α^K_P ,          Δm_F = P .
+```
+
+`[derived]` In the conventional dyad notation `(ε_a ⊗ ε_b)^K_Q ≡ Σ_{q_a q_b} ⟨1 q_a 1 q_b|K Q⟩ ε_a^{q_a} ε_b^{q_b}` the same weights read
+
+```
+w^K_P = (−1)^{K+P} (ε₂* ⊗ ε₁)^K_{−P}
+```
+
+— the `(−1)^K` comes from `⟨1,−q_a 1,−q_b|K,−Q⟩ = (−1)^{2−K}⟨1 q_a 1 q_b|K Q⟩`, and is the second thing lost by writing `(ε₁ ⊗ ε₂)^K_{−P}` with a bare `(−1)^P`. **Implement `w^K_P` directly from the line above; the dyad form is given only so the expression can be recognised.**
+
+`K = 0` is the scalar `ε₂*·ε₁`; `K = 1` is the antisymmetric part, `∝ ε₂* × ε₁`, non-zero only for non-parallel or elliptical polarisations; `K = 2` is the symmetric traceless part.
+
+**Numerical check of the convention, run in the fix round** (`conda run -n heff python dyad_check.py`, scratch). Printed verbatim:
+
+```
+S9.5.1(3)  polarisation dyad: conjugate + slot order
+  (a) identity (d.eps2*)(d.eps1) == sum_KP w^K_P T^K_P : max |dev| = 2.512e-15
+  (b) w^K_P == (-1)^(K+P) (eps2* x eps1)^K_(-P)        : max |dev| = 9.930e-16
+  (c) w^K_P == (-1)^P    (eps1  x eps2)^K_(-P) [old]   : max |dev| = 1.296e+01
+  (d) Delta m_F = P reachable, RAMAN reading  T_eff = (d.eps2*)(d.eps1)/Delta
+      eps1=sigma+ eps2=sigma+ : legs (p_a,p_b)=-1,+1  Delta m_F = [0]
+      eps1=sigma+ eps2=sigma- : legs (p_a,p_b)=+1,+1  Delta m_F = [2]
+      eps1=sigma+ eps2=pi     : legs (p_a,p_b)=+0,+1  Delta m_F = [1]
+      eps1=sigma- eps2=sigma+ : legs (p_a,p_b)=-1,-1  Delta m_F = [-2]
+      eps1=sigma- eps2=sigma- : legs (p_a,p_b)=+1,-1  Delta m_F = [0]
+      eps1=pi     eps2=sigma+ : legs (p_a,p_b)=-1,+0  Delta m_F = [-1]
+  (e) same, LADDER reading (both photons absorbed) T_eff = (d.eps2)(d.eps1)/Delta
+      eps1=sigma+ eps2=sigma+ : Delta m_F = [2]
+      eps1=sigma+ eps2=sigma- : Delta m_F = [0]
+      eps1=sigma- eps2=sigma- : Delta m_F = [-2]
+```
+
+Rows (a) and (b) are identities to machine precision; row (c) shows the check is **not** vacuous — the pre-fix line fails it by `13`. Rows (d)/(e) reproduce the [2γ] §3.3 probe (`p₁ + p₂ = +1+1 → Δm_F = +2`, `+1−1 → 0`, `−1−1 → −2`) and pin down what "σ⁺σ⁺" means: the probe's rows are labelled by the **leg components** `(p_a, p_b)`, not by the two Jones vectors. With the conjugate in place, `(p_a, p_b) = (+1, +1)` is `ε₁ = σ⁺` with `ε₂ = σ⁻`, because conjugating `ε₂` flips the sign of its helicity label. `[derived]` The reachable **set** `Δm_F ∈ {0, ±2}` under σ± only (§9.5.4) is the same either way; only the mapping from beam polarisations to `Δm_F` differs, and it is inverted between the Raman reading (rows d, the operator as [2γ] §3.1 and Cossel write it) and the ladder reading (rows e, both photons absorbed, no star). **The notebook must say which reading it is using when it labels a polarisation pair.**
 
 #### 9.5.2 Which (K, ΔΩ) channels exist — the algebra, not the assertion
 
@@ -1291,7 +1342,11 @@ S9.5  does K = 1 survive exact closure?
 
 Three things this shows. (i) With a **common** denominator, `||K=1|| = 2.2 × 10⁻¹⁶` — zero to machine precision — while `K = 0` and `K = 2` are of order 0.5, so the test is not vacuous: the same code returns a non-zero `K = 1` in the weighted case. (ii) `K1/K0` falls as `1/Δ` asymptotically (7.05 × 10⁻³ → 7.32 × 10⁻⁴ for a factor-10 increase in Δ), confirming the "first order in `δ/Δ`" statement. (iii) The commutator is zero **on the subspace that matters** (3.3 × 10⁻¹⁶); the 0.467 is the unrestricted commutator at the `l ≤ L` truncation edge, which never enters because the projectors exclude it.
 
-**Ruling for Task 7: register `K ∈ {0, 2}` only.** There is no `alpha_K1_*` parameter in the closure operator, and none should be invented. A `K = 1` term becomes meaningful only if the *resolved* form ([2γ] §3.5, §4.2) is ever implemented, where it enters at `O(δ/Δ)`; at that point it would need its own `placeholder` α with the order recorded here.
+**Scope of the proof, stated exactly** `[derived]`. The argument needs `𝒫` to project onto the **complete** opposite-parity space, so that it acts as the identity on `d|g⟩`. That is what the closure operator of §9.5.1 *is*, and the ruling below is a ruling about that operator. It is **not** a statement about a common detuning alone: with a common `Δ` but an **incomplete** intermediate manifold — a single intermediate electronic state, which is the actual ThF⁺/HfF⁺ situation — `P_X d_a 𝒫 d_b P_X` is generically **not** symmetric in `a ↔ b`, and `K = 1` survives at **zeroth** order in `δ/Δ`. The extreme case is explicit: for `𝒫 = |i⟩⟨i|`, `P_X d_a |i⟩⟨i| d_b P_X = v_a v_b†` with `v_a = P_X d_a |i⟩`, whose antisymmetric part `½(v_a v_b† − v_b v_a†)` vanishes only if `v_a ∥ v_b`. So there are two distinct suppressions of `K = 1`, and they must not be conflated: **completeness of the intermediate manifold** (exact zero) and **commonness of the detuning** (which alone buys nothing once the manifold is restricted).
+
+**Ruling for Task 7: register `K ∈ {0, 2}` only, for the complete-closure operator §9.5.1 defines.** There is no `alpha_K1_*` parameter in that operator, and none should be invented. A `K = 1` term becomes meaningful in two places, both outside v2's registered set: the *resolved* form ([2γ] §3.5, §4.2), where it enters at `O(δ/Δ)`; and any restricted-manifold model, where it enters at `O(1)`. Either would need its own `placeholder` α with the order recorded here.
+
+**Consequence for Task 8's closure test.** The identity being tested is the complete-closure one, so the fixture's intermediate manifold must be **complete in the relevant angular space** for `K = 1` to come out zero — a one-intermediate-state fixture will not satisfy it. **Recommended shape**: the fixture compares the `K = 0` and `K = 2` projections against the closure prediction, and reports the `K = 1` residual **separately**, as the measured restricted-manifold (or `δ/Δ`) effect rather than as a failure. With a complete manifold that residual is machine-zero (the `2.2 × 10⁻¹⁶` row above); with a restricted one it is `O(1)` relative to `K = 0`, and that number is the diagnostic, not the verdict.
 
 #### 9.5.4 Selection rules, as data
 
@@ -1304,15 +1359,17 @@ From the lab Wigner–Eckart 3j `(F′ K F; −m′_F P m_F)` and `K ≤ 2` `[de
 | `ΔΩ ∈ {0, ±2}` | `±2` at `K = 2` only | §9.5.2 |
 | `ΔJ`: `\|ΔJ\| ≤ K` | `ΔJ ∈ {0, ±1, ±2}` | 3j `(J′ K J; …)` |
 | parity | **even** — at zero field it does not connect e to f | [2γ] §3.3, `[derived]` there: `P d P† = −d`, twice |
-| under σ± only (JILA) | `p₁, p₂ ∈ {±1}` ⟹ `Δm_F ∈ {0, ±2}` | Ng thesis p. 102 fn. 4; [2γ] §3.3 probe |
+| under σ± only (JILA) | `p_a, p_b ∈ {±1}` ⟹ `Δm_F ∈ {0, ±2}` | Ng thesis p. 102 fn. 4; [2γ] §3.3 probe |
 
-The narrowing to `{0, ±2}` is the operational statement: Ng's target `|J=1, F=3/2, m_F=+3/2⟩ → |m_F=+1/2⟩` is `Δm_F = −1` and genuinely out of reach with σ± only, exactly as he says; `m_F = +3/2 → −1/2` is `Δm_F = −2` and **is** reachable with a σ⁻σ⁻ pair ([2γ] §3.3, `[derived]` there, not claimed to be JILA's intent).
+`p_a, p_b` are the **leg** components of §9.5.1(3), not the beams' helicity labels: which pair of beam polarisations realises a given `(p_a, p_b)` depends on whether the second photon is conjugated (Raman) or not (ladder), and the two readings are inverted with respect to each other — see the table in §9.5.1(3). The reachable **set** `{0, ±2}` is the same in both.
+
+The narrowing to `{0, ±2}` is the operational statement: Ng's target `|J=1, F=3/2, m_F=+3/2⟩ → |m_F=+1/2⟩` is `Δm_F = −1` and genuinely out of reach with σ± only, exactly as he says; `m_F = +3/2 → −1/2` is `Δm_F = −2` and **is** reachable with a same-helicity σ⁻σ⁻ pair in the ladder reading, or with `ε₁ = σ⁻, ε₂ = σ⁺` in the Raman reading of §9.5.1(3) ([2γ] §3.3, `[derived]` there, not claimed to be JILA's intent).
 
 #### 9.5.5 The validity condition, in one sentence the notebook can quote
 
-> The closure form of the two-photon operator requires a detuning large compared with the intermediate rotational structure, `Δ ≫ 2B ≈ 7 GHz` for ThF⁺, whereas the JILA experiments run at 0.16–1.5 GHz — so this is the right *operator shape* and the wrong *limit for the current experiment*, and the α's could later be generated by a resolved sum once the intermediate ladder and its 0⁺/0⁻ labels are settled.
+> The closure form of the two-photon operator requires a detuning large compared with the intermediate rotational structure, `Δ ≫ B_i ≈ 7 GHz` for ThF⁺ (`B_i` = the **intermediate** electronic state's rotational constant, `B_e ≈ 0.23 cm⁻¹`), whereas the JILA experiments run at 0.16–1.5 GHz — so this is the right *operator shape* and the wrong *limit for the current experiment*, and the α's could later be generated by a resolved sum once the intermediate ladder and its 0⁺/0⁻ labels are settled.
 
-([2γ] §3.4: Cossel thesis p. 218 for the 160 MHz → ≈1.5 GHz detunings; Gresh 2016 Table 2 for `B ≈ 0.23 cm⁻¹ ≈ 6.9 GHz`; [2γ] §4.2 for "A can generate B's parameters, B cannot generate A's spectra". The intermediate *hyperfine* structure is a different story and being hyperfine-unresolved is plausible; being rotationally unresolved is not, at JILA detunings.)
+([2γ] §3.4: Cossel thesis p. 218 for the 160 MHz → ≈1.5 GHz detunings; Gresh 2016 Table 2 for the intermediate-state `B_e ≈ 0.229–0.236 cm⁻¹ ≈ 6.9–7.1 GHz` (the Ω = 0⁻ at 14 589 cm⁻¹ and its neighbours — X ³Δ₁ itself has `B_e = 0.243 cm⁻¹`); [2γ] §4.2 for "A can generate B's parameters, B cannot generate A's spectra". The intermediate *hyperfine* structure is a different story and being hyperfine-unresolved is plausible; being rotationally unresolved is not, at JILA detunings.)
 
 ---
 
@@ -1347,8 +1404,8 @@ with `G_el = A∥/g_N = −10 408 MHz`, the isotope-free electronic factor from 
 
 **Status: `placeholder`, and it must be labelled as one everywhere it appears.** Two independent reasons, both real:
 
-1. **Schmidt values for deformed actinides are typically wrong by a factor ~2.** Observed odd-A moments lie between the Schmidt lines, not on them; the standard remedy is a quenched effective spin g-factor (`g_s^eff ≈ 0.6 g_s^free` is the usual order), which alone would move `A∥` from +39.8 GHz to ~+24 GHz.
-2. **A K = 1/2 band decouples.** ²²⁷Th's level pattern is a K = 1/2 rotational band, and the moment of a K = 1/2 band carries a **decoupling-parameter** term (Bohr & Mottelson) that is absent from the spherical single-particle estimate and can change the magnitude and, in principle, the sign. On top of that the `(1/2⁺)` spin assignment is itself tentative, and the 5/2⁺ level sits only 9.3 keV away.
+1. **Observed moments sit inside the Schmidt lines, not on them.** The phenomenon is standard and is cited here to a source read this session: Fan & Zamick, arXiv:2201.13247 §2.2 (the same review §9.6 already quotes for the Schmidt formula), reporting the Ca isotopes against the single-`j` neutron value −1.913 μ_N — "They are closer to −1.4. This is called quenching." That measured case is a factor ≈ 0.73. The remedy usually applied is a quenched effective spin g-factor; the commonly quoted range `g_s^eff ≈ 0.6–0.7 g_s^free`, and the "factor ~2 for deformed actinides" scale, are **`[rule of thumb, uncited]`** — no source giving either number for the actinides was read this session. Taking the range at face value would move `A∥` from +39.8 GHz to ~+24 to +28 GHz, which is the size of the effect, not a corrected value.
+2. **A K = 1/2 band decouples.** ²²⁷Th's level pattern is a K = 1/2 rotational band, and the moment of a K = 1/2 band carries a **decoupling-parameter** term, absent from the spherical single-particle estimate, that can change the magnitude and, in principle, the sign. The standard treatment is the strong-coupling (Nilsson/unified) model of Bohr & Mottelson, *Nuclear Structure*, Vol. II — **UNVERIFIED**: no volume or section of Bohr & Mottelson was consulted in this session or the one that wrote §9.6, so this pointer must be checked before it is cited onward. The Schmidt formula itself needs no such pointer: it is cited above to Schmidt (1937) and, verbatim, to Fan & Zamick §1, both of which were read. On top of that the `(1/2⁺)` spin assignment is itself tentative, and the 5/2⁺ level sits only 9.3 keV away.
 
 **The alternative, recorded for comparison** `[derived]`: taking `μ(²²⁷) = μ(²²⁹) = 0.366 μ_N` with `I = 1/2` gives `g_N = 0.732` and `A∥ = −10 408 × 0.732 = −7619 MHz ≈ −7.62 GHz` — same order as the Schmidt value in magnitude but **opposite in sign** and 5× smaller. The two candidates disagree in sign, which is the honest measure of how unconstrained this is.
 
