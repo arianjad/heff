@@ -703,3 +703,106 @@ Explicitly **not** a check: any comparison to a stored spectrum for one paramete
 6. **A 96-state Ω = ±1 Hamiltonian (J = 1–4) built from the §2 operators and diagonalised**, used to: confirm Hermiticity; confirm the zero-field level pattern (0, ω_ef, 3A∥/4, 3A∥/4 + ω_ef); settle the Eq. C.6 Zeeman sign (20.85 vs 23.52 kHz/G); measure the hyperfine ΔJ mixing (max 2.603 kHz); measure the c_I effect (50 kHz at c_I = 20 kHz); and extract `g^u`, `g^ℓ` from the m_F = ±3/2 splittings of the two Stark doublets at E = 40, 60, 100 V/cm, giving **δg/g = −0.00223 at 60 V/cm**, identical to Ng's own 32-level value, with convergence already reached at J_max = 2.
 
 **What was not available.** `pdf-mcp` and the `zotero` MCP server both failed to connect (HTTP 401); B&C and all PDFs were read with PyMuPDF instead. Brown & Merer 1979 (the ³Δ effective-Hamiltonian paper Leanhardt cites as [118]) and Nelis et al. [120] are not in `notes/lit/` and were not obtained — so the `o_Δ, p_Δ, q_Δ` and `g_rS, g′_rS` operator definitions in §2.3 and §2.9 rest on Leanhardt's transcription of them, not on the originals. Loh et al., Science 342, 1220 (2013) supplement was likewise not obtained. Petrov, PRA 108, 062804 (2023) (the source of the S₂, S₃ formulas) and Caldwell et al., PRA 108, 012804 (2023) were not obtained; neither affects any parameter used here.
+
+---
+
+## 9. Two nuclear spins, and the rank-K two-photon operator (v2 derivations)
+
+Written 2026-09-05 for `heff` v2 (²²⁷ThF⁺, ²²⁹ThF⁺, and the two-photon operator). **This section is the single source Tasks 4, 5 and 7 copy from; they cite §9 and do not re-derive.** Every formula carries its Brown & Carrington equation number with both the PDF page and the book page of the copy at `C:\Users\Arian\Zotero\storage\CKZKCGXY\Brown and Carrington, Rotational Spectroscopy of Diatomic Molecules.pdf` (**PDF page = book page + 32**). Steps that are algebra or numerics run here are tagged `[derived]`; anything a source does not support is tagged **UNVERIFIED** and escalated in §7, never guessed.
+
+**Notation contract for all of §9, stated once because it is the commonest way to get a phase backwards.**
+
+- **A prime means the bra.** `⟨J′, Ω′, F₁′, F′, m′_F | … | J, Ω, F₁, F, m_F⟩`. This is the convention of [HAM] §2, of `heff/elements_c.py`, and of Ng thesis Eq. C.5. **B&C's own convention is the opposite** — in (5.172)–(5.176), (5.186), (9.50)–(9.53) the *primed* labels are the **ket**. Every B&C equation reproduced below is first quoted verbatim in B&C's convention and then rewritten with the primes moved onto the bra; the rewrite is nothing but a relabelling, but skipping it transposes 6j columns and flips phases.
+- **Coupling scheme**: `F₁ = J + I_Th`, `F = F₁ + I_F`, basis `|((J I_Th) F₁, I_F) F, m_F⟩` ([TH] §3.1; justified there by |A∥(Th)| ≈ 1.5 GHz ≫ |A∥(F)| = 20.1 MHz and by Petrov 2018's use of F₁ as the HfF⁺ label). Ω is the signed molecule-frame projection, as in §1.1. Setting `I_Th = 0` must return every v1 formula of §2 exactly; that is the master gate of §9.1.
+- **Molecule-frame component**: `q = Ω′ − Ω = Ω_bra − Ω_ket`. This is forced by the 3j `(J′ k J; −Ω′ q Ω)`, whose projections must sum to zero. B&C write the same physical statement as `q = Ω − Ω′` in (9.52) **because their primes are on the ket** — the two are the same rule, not two conventions. Cairncross thesis p. 141 ("we can simply set q = Ω′ − Ω") uses primed = bra and agrees with the form written here.
+- Wigner 3j in round brackets, 6j in curly brackets, both in the `heff.wigner` argument order: `(j₁ j₂ j₃; m₁ m₂ m₃)` and `{j₁ j₂ j₃; j₄ j₅ j₆}`.
+
+---
+
+### 9.1 The two-spectator axial geometry
+
+**The operator.** Any molecule-frame tensor of rank k with a lab component p — the E1 dipole, the axial hyperfine vector n̂, the rank-2 field gradient, the rank-K two-photon polarisability — enters the lab frame through B&C's space-to-molecule transformation, so its matrix element factorises into (i) a lab Wigner–Eckart 3j on F, (ii) a spectator reduction of I_F out of F, (iii) a spectator reduction of I_Th out of F₁, and (iv) a rotation-matrix reduced element. Four factors, four cited equations, in that order.
+
+**(i) Lab Wigner–Eckart — B&C Eq. (5.172), PDF p. 205 / book p. 173, verbatim:**
+
+```
+⟨j, m|T^k_p(A)|j′, m′⟩ = (−1)^{j−m} ( j k j′ ; −m p m′ ) ⟨j‖T^k(A)‖j′⟩
+```
+
+With primes on the bra and j = F:
+
+```
+m1 = (−1)^{F′−m′_F} ( F′  k  F ; −m′_F  p  m_F )
+```
+
+**(ii) I_F spectator — B&C Eq. (5.174), PDF p. 205 / book p. 173, verbatim** (this is the Appendix 5.1 form, the one [HAM] §2 already uses; the main-text form is not used anywhere in this document):
+
+```
+⟨j₁, j₂, j₁₂‖T^{k₁}(A₁)‖j₁′, j₂′, j₁₂′⟩
+   = δ_{j₂ j₂′} (−1)^{j₁₂′ + j₁ + k₁ + j₂} [(2j₁₂+1)(2j₁₂′+1)]^{1/2}
+     × { j₁′  j₁₂′  j₂ ;  j₁₂  j₁  k₁ } ⟨j₁‖T^{k₁}(A₁)‖j₁′⟩
+```
+
+Applied with `j₁ = F₁, j₂ = I_F, j₁₂ = F, k₁ = k`, and with the primes moved onto the bra:
+
+```
+m2 = (−1)^{F + F₁′ + k + I_F} √((2F′+1)(2F+1)) { F₁  F  I_F ;  F′  F₁′  k }
+```
+
+**The 6j column order is literal**: upper row `(F₁, F, I_F)` = (ket's inner angular momentum, ket's total, spectator), lower row `(F′, F₁′, k)` = (bra's total, bra's inner, operator rank). Transposing the two upper entries `F₁ ↔ F` breaks the reduction check below by 0.65 in a quantity of order 1 (§9.1 self-check, falsification row 1).
+
+**(iii) I_Th spectator — B&C Eq. (5.174) again**, now with `j₁ = J, j₂ = I_Th, j₁₂ = F₁, k₁ = k`:
+
+```
+m3 = (−1)^{F₁ + J′ + k + I_Th} √((2F₁′+1)(2F₁+1)) { J  F₁  I_Th ;  F₁′  J′  k }
+```
+
+Same column order, one level in: upper row `(J, F₁, I_Th)`, lower row `(F₁′, J′, k)`.
+
+**(iv) Rotation-matrix reduced element — B&C Eq. (5.186), PDF p. 207 / book p. 175, verbatim:**
+
+```
+⟨J, Ω‖D^{(k)}_{·q}(ω)*‖J′, Ω′⟩ = (−1)^{J−Ω} ( J k J′ ; −Ω q Ω′ ) [(2J+1)(2J′+1)]^{1/2}
+```
+
+With primes on the bra:
+
+```
+m4 = (−1)^{J′−Ω′} √((2J′+1)(2J+1)) ( J′  k  J ; −Ω′  q  Ω ),      q = Ω′ − Ω
+```
+
+**The master element.** `[derived]`
+
+```
+⟨J′,Ω′,F₁′,F′,m′_F| T^k_p(axial, molecule-frame component q) |J,Ω,F₁,F,m_F⟩
+  = (−1)^{F′−m′_F} ( F′  k  F ; −m′_F  p  m_F )                                   ← (5.172)
+  × (−1)^{F + F₁′ + k + I_F} √((2F′+1)(2F+1)) { F₁  F  I_F ;  F′  F₁′  k }        ← (5.174), I_F spectator
+  × (−1)^{F₁ + J′ + k + I_Th} √((2F₁′+1)(2F₁+1)) { J  F₁  I_Th ;  F₁′  J′  k }    ← (5.174), I_Th spectator
+  × (−1)^{J′−Ω′} √((2J′+1)(2J+1)) ( J′  k  J ; −Ω′  q  Ω ) ⟨η′‖T^k‖η⟩             ← (5.186)
+
+with q = Ω′ − Ω, and Δm_F = p forced by the first 3j.
+```
+
+This is the same four-line layout §2.7 uses for the Stark element, with one extra line — line 3 — and with `k` and `q` left general instead of frozen at `k = 1, q = 0`.
+
+**Analytic collapse at I_Th = 0** `[derived]`. Then `F₁ = J`, `F₁′ = J′`, and line 3 contains `{J J 0; J′ J′ k}`. A 6j with a zero in the upper-right slot is `{a a 0; c c f} = (−1)^{a+c+f} / √((2a+1)(2c+1))`, so line 3 becomes
+
+```
+(−1)^{J + J′ + k} √((2J′+1)(2J+1)) × (−1)^{J+J′+k} / √((2J+1)(2J′+1)) = 1
+```
+
+exactly, and the remaining three lines at `k = 1, q = 0` are `heff.elements_c.dipole_geometry`'s `m1 · m2 · m3` term for term. The same argument at `I_F = 0` (so `F = F₁`) collapses line 2 to 1 and leaves `dipole_geometry` with `I → I_Th`, `F → F₁`. Both limits are therefore analytic identities, not approximations.
+
+**Self-check as run** (scratch script `verify_s9.py`, `conda run -n heff python`, `heff.wigner` + `heff.elements_c.dipole_geometry`; script kept out of the repo). Printed verbatim:
+
+```
+S9.1  reduction of the two-spectator element
+  (a) I_Th = 0, k=1,q=0 vs dipole_geometry : 1720 elements, max |dev| = 2.220e-16
+  (b) I_F  = 0, k=1,q=0 vs dipole_geometry(I->I_Th, F->F1): max |dev| = 2.220e-16
+  falsification: transpose the I_F 6j  -> max |dev| = 6.455e-01
+  falsification: transpose the I_Th 6j -> max |dev| = 2.220e-16   (blind at I_Th = 0, see (b)/S9.3)
+```
+
+Row (a) is the check the brief asks for: all 1720 elements over `J ≤ 4`, `J′ ≤ 4`, `Ω = ±1`, every `F = J ± ½`, every `m_F`, every `p ∈ {0, ±1}`, **max deviation 2.220 × 10⁻¹⁶** — machine epsilon, i.e. exact.
+
+**The check's blind spot, stated because a reviewer must know it.** Transposing the *I_F* 6j's upper pair is caught loudly (0.65). Transposing the *I_Th* 6j's upper pair is **not** caught at I_Th = 0, because there `F₁ = J` makes the corrupted symbol identical to the correct one. Two further checks close that hole and both are reported below: row (b) here (`I_F = 0`, `I_Th = 5/2`, `F₁ ≠ J`, max deviation 2.220 × 10⁻¹⁶), and the §9.3 Table 2 falsification, where the same corruption collapses the whole table to zero. Do not treat row (a) alone as validating line 3.
