@@ -7,9 +7,14 @@ never (plotting lives in notebooks, spec S3.8).
 
 __version__ = "0.1.0"
 
-from . import spec, wigner  # noqa: F401
+from . import conventions, formalism, params, spec, wigner  # noqa: F401
+from .conventions import Conventions, ef_label, n_hat_sign, parity_operator, parity_phase
+from .params import MU_B, MU_N, Param, ParamSet, thf_v1
 from .spec import (KET_C, Blocking, ElecState, StateSpec, block_by_mF,
                    check_basis_invariants, enumerate_kets, thf_spec)
 
 __all__ = ["wigner", "spec", "KET_C", "Blocking", "ElecState", "StateSpec",
-           "block_by_mF", "check_basis_invariants", "enumerate_kets", "thf_spec"]
+           "block_by_mF", "check_basis_invariants", "enumerate_kets", "thf_spec",
+           "conventions", "formalism", "params", "Conventions", "ef_label",
+           "n_hat_sign", "parity_operator", "parity_phase", "MU_B", "MU_N",
+           "Param", "ParamSet", "thf_v1"]
