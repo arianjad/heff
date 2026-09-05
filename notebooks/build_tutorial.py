@@ -349,8 +349,9 @@ to a memory budget. What is mapped is again the Zeeman part alone —
 `E(E_z, B_z) − E(E_z, 0)` — because the Stark shift is three orders of
 magnitude larger and would be the only thing visible otherwise. What is left is
 linear in B and, at this colour scale, flat in E_z — g moves by only a fraction
-of a percent across 0–60 V/cm for this level, which is why §14 plots it on its
-own axis. The cell prints the size of that residual E dependence.
+of a percent across 0–60 V/cm for this level, which is why §14 gives the J = 1
+pair a second, fractional-change panel where that sub-percent, opposite-signed
+motion is resolved. The cell prints the size of that residual E dependence.
 """),
 
     code("""
@@ -518,16 +519,35 @@ print(f"W_TP k_TP at k_TP = 1e-9    = {pset.value('W_TP') * 1e-9 * 1e12:.1f} uHz
 The same exact-derivative kernel, swept. Levels are ordered by energy at each
 field point, so a label follows an energy slot rather than a character — the
 two J = 1 components (0 and 1) never cross here, the J = 2 slots do rearrange.
+
+The left panel plots all six levels on one g-factor axis, where the J = 1
+pair's motion is sub-pixel — §9 already flagged this as a fraction of a
+percent. The right panel isolates levels 0 and 1 and plots the fractional
+change `(g − g(E_ref)) / |g(E_ref)|` relative to `E_ref = 10 V/cm` (the first
+field point, past the low-field polarisation knee), which resolves the ∓0.4 %
+opposite-signed motion that is Δg.
 """),
 
     code("""
-plt.figure(figsize=(6, 4))
+E_ref = Es[0]                                        # 10 V/cm, first field point (past the polarisation knee)
+g_ref = g_all[0, :2]
+frac_pct = (g_all[:, :2] - g_ref) / np.abs(g_ref) * 100     # levels 0, 1 only
+
+fig, ax = plt.subplots(1, 2, figsize=(11, 4))
 for s in range(6):
-    plt.plot(Es, g_all[:, s], lw=1.2, label=f'level {s}')
-plt.xlabel('E_z (V/cm)')
-plt.ylabel('g-factor')
-plt.title('g vs E_z, m_F = +3/2 block')
-plt.legend(fontsize=8, ncol=2)
+    ax[0].plot(Es, g_all[:, s], lw=1.2, label=f'level {s}')
+ax[0].set_xlabel('E_z (V/cm)')
+ax[0].set_ylabel('g-factor')
+ax[0].set_title('g vs E_z, m_F = +3/2 block')
+ax[0].legend(fontsize=8, ncol=2)
+
+for s in (0, 1):
+    ax[1].plot(Es, frac_pct[:, s], lw=1.4, label=f'level {s}')
+ax[1].axhline(0.0, ls=':', c='k', lw=0.8)
+ax[1].set_xlabel('E_z (V/cm)')
+ax[1].set_ylabel(f'(g - g(E_ref)) / |g(E_ref)|  (%)\\nE_ref = {E_ref:.0f} V/cm')
+ax[1].set_title('J = 1 doublet, fractional change')
+ax[1].legend(fontsize=8)
 plt.tight_layout()
 plt.show()
 
