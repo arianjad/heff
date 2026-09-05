@@ -35,6 +35,11 @@ class SweepResult:
     built on the other convention. So order=, gauge=, assignment= and the
     active terms travel inside the artifact (spec S3.5; ruling 2). `manifest`
     already carries the conventions stamp (assemble.build_term_matrices).
+    `reference` names which grid index `order='adiabatic_zero_field'` used as
+    the zero-field anchor (ruling 5, `track.order_states`) -- stamped here for
+    the same reason `order`/`gauge` are: point 0 is only the right anchor when
+    the sweep itself starts at zero field, and a reader of the artifact alone
+    cannot otherwise tell which point that was.
     """
     knobs: dict
     evals: np.ndarray
@@ -43,6 +48,7 @@ class SweepResult:
     order: str
     gauge: str
     assignment: str
+    reference: int
     active_terms: tuple
     manifest: dict
 
@@ -67,7 +73,11 @@ def eigh_batch(H, *, chunk=None, chunk_bytes=_DEFAULT_CHUNK_BYTES):
     if chunk is None:
         chunk = _chunk_size(n, d, H.dtype, chunk_bytes)
     w = np.empty((n, d), dtype=float)
-    v = np.empty(H.shape, dtype=H.dtype)
+    # np.linalg.eigh always returns real or complex floats, never the input's
+    # own dtype -- allocating v as H.dtype silently truncated an int-typed H's
+    # eigenvectors to zero. result_type promotes int/bool to float64 and
+    # leaves complex alone (ruling 4).
+    v = np.empty(H.shape, dtype=np.result_type(H.dtype, np.float64))
     for c0 in range(0, n, chunk):
         c1 = min(n, c0 + chunk)
         w[c0:c1], v[c0:c1] = _EIGH(H[c0:c1])
@@ -75,17 +85,23 @@ def eigh_batch(H, *, chunk=None, chunk_bytes=_DEFAULT_CHUNK_BYTES):
 
 
 def sweep(tm, pset, knob_arrays, *, chunk=None, chunk_bytes=_DEFAULT_CHUNK_BYTES,
-          order="energy", gauge="none", assignment="adaptive"):
+          order="energy", gauge="none", assignment="adaptive", reference=0):
     """Diagonalise one block over a collection of knob values.
 
     knob_arrays values are broadcast against each other, so a 1D sweep is
     {'E_z': E, 'B_z': zeros}, and a 2D grid is the ravel of a meshgrid (ruling
     3: both return eigenvalues AND eigenvectors -- this is the one thing C2V's
     equivalent entry point does not do).
+
+    `reference` (default 0, ruling 5) is the grid index `order=
+    'adiabatic_zero_field'` treats as the zero-field point; it is ignored by
+    the other two order policies. Pass it whenever the sweep's own knob_arrays
+    do not start at the zero-field point, or tracking silently anchors to
+    whatever point 0 happens to be.
     """
     c = sweep_coefficients(tm, pset, knob_arrays)
     w, v = eigh_batch(hamiltonian_batch(tm, c), chunk=chunk, chunk_bytes=chunk_bytes)
-    perm = order_states(w, v, order=order, strategy=assignment)
+    perm = order_states(w, v, order=order, strategy=assignment, reference=reference)
     w = np.take_along_axis(w, perm, axis=1)
     v = np.take_along_axis(v, perm[:, None, :], axis=2)
     if gauge != "none":
@@ -98,4 +114,5 @@ def sweep(tm, pset, knob_arrays, *, chunk=None, chunk_bytes=_DEFAULT_CHUNK_BYTES
     return SweepResult(
         knobs={k: np.asarray(a, dtype=float) for k, a in knob_arrays.items()},
         evals=w, evecs=v, kets=tm.kets, order=order, gauge=gauge,
-        assignment=assignment, active_terms=active_terms, manifest=dict(tm.manifest))
+        assignment=assignment, reference=reference, active_terms=active_terms,
+        manifest=dict(tm.manifest))

@@ -50,6 +50,20 @@ def test_eigh_batch_default_chunk_bytes_forces_chunking_and_agrees_with_unchunke
     assert np.allclose(np.abs(v_budget), np.abs(v_full))
 
 
+def test_eigh_batch_promotes_int_input_instead_of_silently_zeroing_it():
+    """Ruling 4: `v = np.empty(H.shape, dtype=H.dtype)` silently returns
+    int-truncated (all-zero, since eigenvector components are non-integer)
+    eigenvectors for an int-typed H. np.result_type(H.dtype, np.float64)
+    promotes int/bool to float64 (complex input stays complex) and the
+    eigenvectors come out correct."""
+    H = np.array([[[2, 1], [1, 2]]], dtype=np.int64)
+    w, v = eigh_batch(H)
+    assert v.dtype.kind == "f"
+    wn, vn = np.linalg.eigh(H[0].astype(float))
+    assert np.allclose(w[0], wn)
+    assert np.allclose(np.abs(v[0]), np.abs(vn))
+
+
 def test_eigenvectors_are_columns_and_reconstruct_H():
     """v[n][:, k] is eigenvector k: v @ diag(w) @ v.T reconstructs H exactly."""
     rng = np.random.default_rng(8)
@@ -87,6 +101,15 @@ def test_sweep_result_carries_the_assignment_strategy(tm):
     """Ruling 2: the assignment strategy used for tracking travels on the artifact too."""
     res = sweep(tm, thf_v1(), {"E_z": np.zeros(2), "B_z": np.zeros(2)}, assignment="hungarian")
     assert res.assignment == "hungarian"
+
+
+def test_sweep_result_carries_the_zero_field_reference(tm):
+    """Ruling 5: `reference` (default 0) travels on the artifact so a reader
+    knows which grid index adiabatic_zero_field anchored to."""
+    res = sweep(tm, thf_v1(), {"E_z": np.zeros(2), "B_z": np.zeros(2)})
+    assert res.reference == 0
+    res = sweep(tm, thf_v1(), {"E_z": np.zeros(2), "B_z": np.zeros(2)}, reference=1)
+    assert res.reference == 1
 
 
 def test_sweep_broadcasts_a_2d_grid(tm):

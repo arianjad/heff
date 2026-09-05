@@ -57,6 +57,19 @@ def global_sign_col(ref_amp, ref_sign=1):
     return np.where(np.asarray(ref_amp) * rs < 0, np.int8(-1), np.int8(1))
 
 
+def _dominant_index(vecs):
+    """Tie-robust argmax(|.|) along the last axis: lowest-index near-max.
+
+    Shared tiebreak (`_PIN_TIE`) behind both `pin_col` (per-vector dominant
+    component) and the 'global' gauge's ground-reference index (a single
+    vector) -- plain argmax(|.|) picks a different winner across near-tied
+    entries; this rule is what makes either pin deterministic.
+    """
+    am = np.abs(vecs)
+    mx = am.max(axis=-1, keepdims=True)
+    return np.argmax(am >= mx * (1 - _PIN_TIE), axis=-1)
+
+
 def pin_col(vecs, ref_sign=1):
     """Sign of each vector's dominant component, with the near-max tie rule.
 
@@ -67,34 +80,68 @@ def pin_col(vecs, ref_sign=1):
     that can zero an eigenvector (Molecule-Structure Energy_Levels.py:312).
     """
     rs = 1 if ref_sign >= 0 else -1
-    am = np.abs(vecs)
-    mx = am.max(axis=-1, keepdims=True)
-    dom = np.argmax(am >= mx * (1 - _PIN_TIE), axis=-1)
+    dom = _dominant_index(vecs)
     amp = np.take_along_axis(vecs, dom[..., None], axis=-1)[..., 0]
     return np.where(amp * rs < 0, np.int8(-1), np.int8(1))
 
 
 def apply_gauge(evecs, mode, *, ref_sign=1):
-    """Return a NEW array with a sign gauge applied. Component axis LAST."""
+    """Return a NEW array with a sign gauge applied. Component axis LAST.
+
+    'none'   -> untouched copy.
+    'pinned' -> per-(point, state) flip: EACH eigenvector gets its own sign so
+                its dominant component has sign ref_sign (Form B; C2V
+                `pin_per_state`, kernel `pin_col`).
+    'global' -> per-POINT whole-set flip: exactly ONE +/-1 per grid point,
+                applied to EVERY state at that point together -- not one flip
+                per eigenvector. The flip is keyed on the lowest-energy state
+                (state index 0; `order_states` always keeps point 0 identity,
+                so this is well-defined for every order policy) and its
+                dominant basis component AT POINT 0 (the ground-reference
+                index, found with the tie-robust `_dominant_index`, matching
+                C2V's `_ground_ref_index` + `_global_sign_field`,
+                matching/_utils.py:427,499). Requires `evecs` shaped
+                (n_points, n_states, n_components) -- exactly how
+                `heff.engine.sweep` calls this.
+
+    Keying 'global' on each vector's OWN component 0 (the pre-fix behaviour)
+    left ~9% of real eigenvectors ungauged whenever their amplitude on
+    component 0 happened to be near zero; anchoring on one fixed, generically
+    large ground-state component removes that failure mode entirely.
+    """
     v = np.array(evecs, copy=True)
     if mode == "none":
         return v
     if mode == "pinned":
         return v * pin_col(v, ref_sign)[..., None]
     if mode == "global":
-        return v * global_sign_col(v[..., 0], ref_sign)[..., None]
+        if v.ndim != 3:
+            raise ValueError(
+                "gauge='global' requires evecs shaped (n_points, n_states, "
+                f"n_components), got ndim={v.ndim}"
+            )
+        ref_index = int(_dominant_index(v[0, 0]))
+        field = global_sign_col(v[:, 0, ref_index], ref_sign)  # (n_points,)
+        return v * field[:, None, None]
     raise ValueError(f"gauge must be none|pinned|global, got {mode!r}")
 
 
-def order_states(evals, evecs, *, order, strategy="adaptive"):
+def order_states(evals, evecs, *, order, strategy="adaptive", reference=0):
     """Permutation (n_points, d) mapping output slot -> raw eigen index.
 
     'energy'                 identity (eigh already sorts ascending): exact by
                              construction, point-local, and the one policy that
                              cannot silently mislabel. Default.
-    'adiabatic_step'         assign each point against the previous point.
-    'adiabatic_zero_field'   assign every point against point 0 -- the thesis
-                             rule (p.267).
+    'adiabatic_step'         assign each point against the previous point's
+                             already-accumulated slot arrangement (point 0 has
+                             no predecessor and seeds the identity).
+    'adiabatic_zero_field'   assign every point against grid index `reference`
+                             (default 0) -- the thesis rule (p.267: order by
+                             the "adiabatically correlated free field state").
+                             `reference` names WHICH grid index IS that
+                             zero-field point; a sweep that does not start at
+                             zero field must pass its own index here, or
+                             tracking silently anchors to the wrong point.
     """
     evals = np.asarray(evals)
     evecs = np.asarray(evecs)
@@ -104,10 +151,20 @@ def order_states(evals, evecs, *, order, strategy="adaptive"):
     if order not in _ORDERS:
         raise ValueError(f"order must be one of {_ORDERS}, got {order!r}")
     perm = np.zeros((n, d), dtype=int)
-    perm[0] = np.arange(d)
-    ref = evecs[0]
-    for i in range(1, n):
-        prev = evecs[i - 1][:, perm[i - 1]] if order == "adiabatic_step" else ref
-        overlap = prev.T @ evecs[i]                 # (slot, raw)
-        perm[i] = assign(overlap, mode="overlap", strategy=strategy)
+    if order == "adiabatic_step":
+        perm[0] = np.arange(d)
+        for i in range(1, n):
+            # Reindex the previous point by ITS OWN accumulated slot order,
+            # not the raw eigenvectors -- dropping this turns a held
+            # permutation (P, P) back into an overlap of P against itself
+            # (P.T @ P == I for any orthogonal P), which silently reverts the
+            # tracked swap instead of holding it.
+            prev = evecs[i - 1][:, perm[i - 1]]
+            overlap = prev.T @ evecs[i]               # (slot, raw)
+            perm[i] = assign(overlap, mode="overlap", strategy=strategy)
+    else:
+        ref = evecs[reference]
+        for i in range(n):
+            overlap = ref.T @ evecs[i]                 # (slot, raw)
+            perm[i] = assign(overlap, mode="overlap", strategy=strategy)
     return perm
