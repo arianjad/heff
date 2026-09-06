@@ -25,6 +25,29 @@ def code(text):
     return ("code", text.strip("\n"))
 
 
+# Reused verbatim in every 229/227 figure caption (review finding #2) so the
+# wording never drifts between cells.
+STATUS_229 = (
+    "**Status behind every number above**: `A_par_Th` is **ab-initio**, sign "
+    "unresolved between two calculations that agree in magnitude (OPEN-16); "
+    "`eQq0_Th` and `eQq2_Th` are both **estimates** transferred from "
+    "isoelectronic ¹⁷⁷HfF⁺ (OPEN-18, OPEN-17); `c_I(Th)` is "
+    "held at **0** by default, unconstrained over three decades (OPEN-19)."
+)
+STATUS_227 = (
+    "**Status behind every ²²⁷ number above**: `A_par_Th` = "
+    "**+39.8 GHz** is a **Schmidt single-particle placeholder** for a "
+    "tentative **(1/2⁺)** ground-state spin assignment — no "
+    "measured or estimated μ(²²⁷Th) exists in any "
+    "compilation checked; real deformed-actinide moments are typically "
+    "**~2× smaller** than the Schmidt value; the "
+    "μ(²²⁷Th)=μ(²²⁹Th)-scaled "
+    "alternative is **−7.6 GHz, the opposite sign**; ²²⁷Th "
+    "(I = 1/2) has **no quadrupole moment at all** — structurally "
+    "absent, not merely small ([HAM] §9.6, "
+    "`docs/lit/lookup-227th-nuclear-moment.md`, OPEN-20)."
+)
+
 CELLS = [
 
     # ------------------------------------------------------------- 1 -----
@@ -98,8 +121,8 @@ from heff import (block_by_mF, build_term_matrices, ctx_from, enumerate_kets,
                   g_factors, hamiltonian, label_lines, line_strengths,
                   sweep, terms_for_case, thf_spec, thf_v2)
 from heff.elements_c2 import REGISTRY_C2, j_convergence
-from heff.spec import ElecState, Spin, StateSpec
-from heff.twophoton import dyad_weights, two_photon_line_strengths
+from heff.spec import Spin, StateSpec
+from heff.twophoton import two_photon_line_strengths
 
 import matplotlib.pyplot as plt
 %matplotlib inline
@@ -162,7 +185,11 @@ is copied out here from [HAM] with its B&C equation numbers.
 - **Rotation + centrifugal** (§2.1): `H_rot = B₀ J(J+1) − D₀ [J(J+1)]²`,
   diagonal.
 - **Ω-doubling** (§2.3, Ng Eq. C.3): off-diagonal element between `Ω = ±1` at
-  fixed `J`, `−ω_ef J(J+1)/4`; splitting `ω_ef J(J+1)/2`.
+  fixed `J`, `−ω_ef J(J+1)/4`; splitting `ω_ef J(J+1)/2`. Ng's own printed
+  operator carries an extra `(−1)^J` prefactor on this element; `heff` uses
+  the J-independent sign by convention ([HAM] §2.3) — both give the identical
+  physical splitting law, `ω_ef J(J+1)/2`, and only the J-dependent phase of
+  the off-diagonal element differs.
 - **¹⁹F hyperfine, ΔJ = 0** (§2.4, B&C (9.50)): diagonal,
   `A∥ [F(F+1) − I(I+1) − J(J+1)] / [2J(J+1)]`.
 - **¹⁹F hyperfine, ΔJ = ±1** (§2.5, B&C (9.51)): off-diagonal in `J`, same
@@ -276,7 +303,7 @@ print("blue = e, red = f -- upper component is e at every J (OQ-A, closed).")
 """),
 
     # ------------------------------------------------------------- 5 -----
-    md("""
+    md(f"""
 ## 4. ²²⁹ and ²²⁷ThF⁺ level diagrams, side by side with ²³²
 
 **Every ¹⁹F structure and the whole Ω-doubling now live inside one F₁
@@ -284,12 +311,14 @@ level.** The ²²⁹ J = 1 Th hyperfine spread is **~4.6 GHz — 63 % of B₀**
 ([TH] §4.1), so the two panels below need separate energy scales (a broken
 axis would show mostly white space at this ratio): the ²²⁹/²²⁷ panel is
 plotted on its own axis, referred to `B₀ J(J+1)` exactly as ²³² was, but at a
-much larger vertical scale.
+much larger vertical scale. At this scale, each F₁ manifold's internal ¹⁹F
+hyperfine and Ω-doubling substructure (kHz–MHz) is invisible — the level
+diagram below effectively shows F₁ **centroids**, not the full sublevel
+structure, even though every individual eigenvalue is plotted.
 
 `A_par_Th` (²²⁹) is **ab-initio**, sign-unresolved (OPEN-16, cell 6 below).
-`A_par_Th` (²²⁷) is a **Schmidt-moment placeholder** ([HAM] §9.6, OPEN-20) —
-no measured or estimated μ(²²⁷Th) exists anywhere ([TH] §1.4). Both spreads
-below are **computed by the code**, not the [TH] table numbers.
+{STATUS_227} Both spreads below are **computed by the code**, not the [TH]
+table numbers.
 """),
 
     code("""
@@ -308,8 +337,10 @@ fig, axes = plt.subplots(1, 2, figsize=(10, 4))
 _, w232b, _, lo232, hi232, spread232 = level_spread_J1('232')
 OFF = 2 * pset232.value('B0')
 axes[0].hlines((w232b[(np.arange(len(w232b)))] - OFF)[:4], 0.8, 1.2)
-axes[0].set_title(f'232ThF+ J=1  spread = {spread232*1e3:.1f} kHz (measured A_par, omega_ef)')
+axes[0].set_title(f'232ThF+ J=1  spread = {spread232:.4f} MHz (measured A_par, omega_ef)')
 axes[0].set_ylabel('E - 2B0 (MHz)')
+axes[0].set_xticks([1.0])
+axes[0].set_xticklabels(['232ThF+'])
 
 colors = {'229': 'C1', '227': 'C2'}
 for iso in ('229', '227'):
@@ -322,10 +353,16 @@ for iso in ('229', '227'):
     print(f"{iso}ThF+ J=1 spread = {spread/1e3:.3f} GHz  "
           f"({spread/pset229.value('B0')*100:.1f}% of B0)   A_par_Th status={status!r}")
 axes[1].legend()
-axes[1].set_title('229/227ThF+ J=1 (Th hyperfine)')
+axes[1].set_title('229/227ThF+ J=1 (Th hyperfine, F1 centroids only at this scale)')
 axes[1].set_ylabel('E - 2B0 (MHz)')
+axes[1].set_xticks([1.0, 1.4])
+axes[1].set_xticklabels(['229ThF+', '227ThF+'])
 plt.tight_layout()
 plt.show()
+print("Both panels' x-axes are categorical (one column per isotopologue); "
+      "individual hlines are plotted, but within one F1 manifold the 19F "
+      "hyperfine/Omega-doubling substructure (kHz-MHz) is far below the "
+      "GHz scale here, so only F1 centroids are visually distinguishable.")
 """),
 
     # ------------------------------------------------------------- 6 -----
@@ -378,9 +415,11 @@ MHz**, OPEN-17: the bridge to Petrov 2018's normalisation carries an
 unresolved `√2` and an unresolved sign) against two reference scales: the
 Ω-doubling off-diagonal element `ω_ef J(J+1)/4 = 2.65 MHz` at J = 1, and the
 fully-polarised Stark shift `γ_F m_F d_mf E = 50.9 MHz` at F = 3/2, m_F = 3/2,
-E = 60 V/cm (the JILA operating field, [HAM] §2.7). **At the JILA field the
-Stark and quadrupole scales are comparable, so the three compete rather than
-one simply winning** ([TH] §4.4).
+E = 60 V/cm (the JILA operating field, [HAM] §2.7) — the **²³²-basis**
+(`I_Th = 0`) F = 3/2, m_F = 3/2 value, used here only as a familiar scale
+against which to size the ²²⁹ quadrupole/Ω-doubling competition, not a ²²⁹
+quantity itself. **At the JILA field the Stark and quadrupole scales are
+comparable, so the three compete rather than one simply winning** ([TH] §4.4).
 """),
 
     code("""
@@ -462,7 +501,7 @@ for iso, mF in (('229', 0.0), ('227', 0.0)):
 """),
 
     # ------------------------------------------------------------- 9 -----
-    md("""
+    md(f"""
 ## 8. Zeeman maps and g-factors
 
 Exact Hellmann–Feynman g-factors (`observe.g_factors`), one non-zero
@@ -470,7 +509,13 @@ signed-`m_F` block per isotopologue: `m_F = +1/2` for ²³² (matches the v1
 tutorial's block), `m_F = +1` for ²²⁹/²²⁷ (smallest non-zero integer m_F).
 **Predicted g at J > 1 carries an unquantified ~1 % error from the absorbed
 rotational g-factor `g_r`** ([HAM] §2.10, OPEN-7) — not fitted for any
-isotopologue, so the same caveat applies to every g below.
+isotopologue, so the same caveat applies to every g below. All J = 1 states
+of the chosen `m_F` block are plotted below (three panels, one per
+isotopologue), not just the lowest.
+
+{STATUS_229}
+
+{STATUS_227}
 """),
 
     code("""
@@ -481,34 +526,46 @@ for iso, mF in (('232', 0.5), ('229', 1.0), ('227', 1.0)):
     gblocks[iso] = (kets, ctx, tm, pset, mF)
 
 B = np.linspace(0.0, 5.0, 51)
-fig, ax = plt.subplots(figsize=(6, 4))
-for iso, (kets, ctx, tm, pset, mF) in gblocks.items():
+fig, axes = plt.subplots(1, 3, figsize=(13, 4), sharex=True)
+for ax, (iso, (kets, ctx, tm, pset, mF)) in zip(axes, gblocks.items()):
     res0 = g_factors(tm, pset, {'E_z': 0.0, 'B_z': 0.0}, ctx=ctx)
     j1 = kets['J'] == 1
     g_j1 = res0['g'][j1]
-    print(f"{iso}ThF+ (m_F={mF:g}): g at J=1 (n={j1.sum()} states) = "
-          f"{np.unique(np.round(g_j1, 6))}")
+    g_unique = np.unique(np.round(g_j1, 6))
+    n_states, n_unique = j1.sum(), len(g_unique)
+    degen_note = (f" ({n_unique} unique of {n_states} states -- "
+                  f"{n_states - n_unique} exactly degenerate pair(s))"
+                  if n_unique < n_states else f" ({n_states} states, all distinct)")
+    print(f"{iso}ThF+ (m_F={mF:g}): g at J=1{degen_note} = {g_unique}")
     r = sweep(tm, pset, {'E_z': np.zeros_like(B), 'B_z': B})
-    shift = r.evals[:, np.flatnonzero(j1)[0]] - r.evals[0, np.flatnonzero(j1)[0]]
-    ax.plot(B, shift, label=f'{iso}ThF+, lowest J=1 state')
-ax.set_xlabel('B_z (G)')
-ax.set_ylabel('E(B) - E(0)  (MHz)')
-ax.set_title('Zeeman shift, J=1, field-free m_F block per isotopologue')
-ax.legend()
+    for s in np.flatnonzero(j1):
+        ax.plot(B, r.evals[:, s] - r.evals[0, s], lw=1.1)
+    ax.set_title(f'{iso}ThF+  m_F={mF:g}  ({n_states} J=1 states)')
+    ax.set_xlabel('B_z (G)')
+axes[0].set_ylabel('E(B) - E(0)  (MHz)')
 plt.tight_layout()
 plt.show()
 """),
 
     # ------------------------------------------------------------ 10 -----
-    md("""
+    md(f"""
 ## 9. Stark maps
 
 The three isotopologues' `m_F` blocks from §8 (`m_F = +1/2` for ²³², `+1` for
-²²⁹/²²⁷), swept in `E_z`. The ²³² closed form `Ω m_F γ_F d_mf E`, evaluated
-for the `J = 1, F = 1/2` component of that block, is drawn as the reference
-curve on the ²³² panel — the ²²⁹/²²⁷ panels have no such closed form because
-the Th hyperfine mixes many more `(F₁, F)` states at comparable energy, so
-only the direct diagonalisation is shown for them.
+²²⁹/²²⁷), swept in `E_z`. The ²³² panel draws the **`F = 1/2` linear-limit
+closed form** `|Ω m_F γ_F(F=1/2) d_mf E|` as a dashed reference curve — the
+²²⁹/²²⁷ panels have no such closed form because the Th hyperfine mixes many
+more `(F₁, F)` states at comparable energy, so only the direct
+diagonalisation is shown for them. Even on the ²³² panel, the **exact**
+curves visibly exceed this linear-limit reference by 60 V/cm: the closed
+form assumes `F = 1/2` and `F = 3/2` stay decoupled, but the ¹⁹F hyperfine
+splitting between them (`15 MHz` at J = 1) is comparable to, not much larger
+than, the Stark shift at the top of the sweep (`~40 MHz`), so the two `F`
+manifolds mix and the exact eigenvalues depart from the linear-limit formula.
+
+{STATUS_229}
+
+{STATUS_227}
 """),
 
     code("""
@@ -528,23 +585,31 @@ for ax, iso in zip(axes, ('232', '229', '227')):
 axes[0].set_ylabel('E(E_z) - E(0)  (MHz)')
 d_mf = pset232.value('d_mf')
 closed = np.abs(1.0 * 0.5 * gam(1, 0.5) * d_mf * E)
-axes[0].plot(E, closed, 'k--', lw=1, label='closed form |Om m_F gam_F(F=1/2) d_mf E|')
+axes[0].plot(E, closed, 'k--', lw=1, label='F=1/2 linear-limit |Om m_F gam_F(F=1/2) d_mf E|')
 axes[0].legend(fontsize=8)
 plt.tight_layout()
 plt.show()
 """),
 
     # ------------------------------------------------------------ 11 -----
-    md("""
+    md(f"""
 ## 10. One-photon E1 spectra
 
 Two adjacent `m_F` blocks per isotopologue, each diagonalised separately at
 zero field, then `heff.spectra.line_strengths` (v1 geometry for ²³²,
 `functools.partial(heff.elements_c2.axial_geometry, k=1, q=0.0)` for
-²²⁹/²²⁷) between them, filtered by the resulting labels into **within J = 1**
-(`ΔJ = 0`, same-Ω dipole transitions that only exist because both `Ω = ±1`
-mix inside one `m_F` block) and **J = 1 ↔ 2**. Lines are labelled by
-`(J, F₁, F, parity)` via `label_lines`.
+²²⁹/²²⁷) between them, with only a **single σ⁻ polarisation**
+(`polarizations=(-1,)`) driven — enough to see which `(J, F₁, F)` transitions
+are geometrically allowed and their relative strengths, though the absolute
+strengths would differ under σ⁺ or an unpolarised sum. Lines are filtered by
+`J` into **within J = 1** (`ΔJ = 0`, same-Ω dipole transitions that only
+exist because both `Ω = ±1` mix inside one `m_F` block) and **J = 1 ↔ 2**;
+the strongest ~6 lines per panel are printed with their full
+`(J, F₁, F, parity)` labels from `label_lines`.
+
+{STATUS_229}
+
+{STATUS_227}
 """),
 
     code("""
@@ -568,7 +633,13 @@ def e1_spectrum(iso, mF_a, mF_b):
     return freqs, S, lab_a, lab_b
 
 
+def fmt_lab(lab):
+    F1s = f"F1={lab['F1']:.1f} " if 'F1' in lab else ''
+    return f"J={lab['J']:.0f} {F1s}F={lab['F']:.1f} parity={lab['parity']:+d}"
+
+
 PAIRS = {'232': (0.5, 1.5), '229': (0.0, 1.0), '227': (0.0, 1.0)}
+print("Single polarisation shown throughout: sigma- (polarizations=(-1,)).")
 fig, axes = plt.subplots(2, 3, figsize=(13, 6), sharey='row')
 for col, iso in enumerate(('232', '229', '227')):
     mFa, mFb = PAIRS[iso]
@@ -579,13 +650,17 @@ for col, iso in enumerate(('232', '229', '227')):
             [(1, 1, 'within J=1'), (1, 2, 'J=1 -> 2')]):
         sel = [(i, j) for i, j in zip(ia, ib)
                if lab_a[i]['J'] == Jsel_a and lab_b[j]['J'] == Jsel_b]
+        sel.sort(key=lambda ij: -S[ij[0], ij[1]])
         f0 = 0.0 if Jsel_a == Jsel_b else 4 * thf_v2(iso).value('B0')
         xs = [freqs[i, j] - f0 for i, j in sel]
         ys = [S[i, j] for i, j in sel]
         if xs:
             axes[row, col].stem(xs, ys, basefmt=' ')
         axes[row, col].set_title(f'{iso}ThF+ {title} ({len(sel)} lines)')
-        print(f"{iso}ThF+ {title}: {len(sel)} lines above 1e-6 of the strongest")
+        print(f"{iso}ThF+ {title}: {len(sel)} lines above 1e-6 of the strongest, "
+              f"strongest {min(6, len(sel))} shown:")
+        for i, j in sel[:6]:
+            print(f"    {fmt_lab(lab_a[i])}  ->  {fmt_lab(lab_b[j])}   S={S[i, j]:.3g}")
     axes[1, col].set_xlabel('freq - ref (MHz)')
 axes[0, 0].set_ylabel('strength (d_mf^2)')
 axes[1, 0].set_ylabel('strength (d_mf^2)')
@@ -654,8 +729,21 @@ allow — not physical rates.
 Same two `m_F` blocks as §10, now driven by `two_photon_line_strengths` at
 `alphas = 1` for every registered channel (`alpha_K0_dOm0`, `alpha_K2_dOm0`,
 `alpha_K2_dOm2` — all `placeholder`). Three polarisation pairs, **Raman
-reading** (`dyad_weights` conjugates `ε₂`): `(σ⁺, σ⁺) → Δm_F = 0`,
-`(σ⁺, σ⁻) → Δm_F = +2`, `(σ⁻, σ⁻) → Δm_F = −2`.
+reading** (`dyad_weights` conjugates `ε₂`, [HAM] §9.5.1(3)): `(σ⁺, σ⁺) →
+Δm_F = 0`, `(σ⁺, σ⁻) → Δm_F = +2`, `(σ⁻, σ⁺) → Δm_F = −2` (and `(σ⁻, σ⁻) → 0`
+likewise, not drawn separately since it repeats the `(σ⁺, σ⁺)` panel's
+`Δm_F = 0` physics).
+
+**Frequency and `Δm_F` sign convention, stated explicitly.** `freqs[i, j]`
+below is `E_ket[j] − E_bra[i]` (`heff.spectra._strengths_from_matrices`'s own
+convention, reused unchanged by `two_photon_line_strengths`); in the Raman
+reading, where `ε₂` is the *emitted* photon, this difference is the physical
+difference frequency `ω₁ − ω₂`. `Δm_F` is defined as `m_bra − m_ket`
+(`axial_geometry`'s `P = bra_mF − ket_mF`), so in the **J = 1 → 2** panels
+below the bra-side block is the J = 1 states and the ket-side block reaches
+into J = 2 — a positive `freq` there means the J = 2 (ket) state sits above
+the J = 1 (bra) state, i.e. the panel reads left-to-right as the ket state
+climbing away from the bra state, not the other way around.
 
 **Ng's opposite-helicity case, highlighted** — Ng thesis p. 102, verbatim:
 "An alternative to the π-polarized microwaves is to use a two-photon Raman
@@ -740,13 +828,22 @@ for col, (label, (eps1, eps2, dmF)) in enumerate(TWOP_PAIRS.items()):
     ia, ib = np.nonzero(mask)
     for row, (Ja, Jb, title) in enumerate([(1, 1, 'within J=1'), (1, 2, 'J=1->2')]):
         sel = [(i, j) for i, j in zip(ia, ib) if lab_a[i]['J'] == Ja and lab_b[j]['J'] == Jb]
+        n_diag = 0
+        if dmF == 0 and Ja == Jb:
+            # dmF=0 reuses the SAME mF block for bra and ket, so i==j is the
+            # literal same eigenstate: a diagonal alpha^K=0 "light shift"
+            # element, not a transition. Excluded from the transition panels
+            # (controller ruling, item 9) -- reported separately below.
+            n_diag = sum(1 for i, j in sel if i == j)
+            sel = [(i, j) for i, j in sel if i != j]
         f0 = 0.0 if Ja == Jb else 4 * pset229.value('B0')
         if sel:
             axes[row, col].stem([freqs[i, j] - f0 for i, j in sel],
                                 [S[i, j] for i, j in sel], basefmt=' ')
         axes[row, col].set_title(f'{label}\\n{title} ({len(sel)} lines)', fontsize=8)
-        print(f"229ThF+ {label} {title}: {len(sel)} lines")
-    axes[1, col].set_xlabel('freq - ref (MHz)')
+        print(f"229ThF+ {label} {title}: {len(sel)} lines"
+              + (f" ({n_diag} diagonal i=f light-shift element(s) excluded)" if n_diag else ""))
+    axes[1, col].set_xlabel('E_ket - E_bra  (MHz, ref-subtracted)')
 axes[0, 0].set_ylabel('strength (alpha^2)')
 axes[1, 0].set_ylabel('strength (alpha^2)')
 plt.tight_layout()
@@ -754,12 +851,18 @@ plt.show()
 """),
 
     # ------------------------------------------------------------ 14 -----
-    md("""
+    md(f"""
 ## 13. Two-photon spectra, all three isotopologues
 
 Same `(σ⁺, σ⁻)`, `Δm_F = +2`, within-J = 1 panel, for ²³², ²²⁹ and ²²⁷.
 ²³² needs the I_Th = 0 `KET_C2`-shaped basis (`_v2_shaped_232` above) since
-`axial_geometry`/`two_photon_geometry` require a two-spin `ctx`.
+`axial_geometry`/`two_photon_geometry` require a two-spin `ctx`. The ²²⁹ and
+²²⁷ panels are built on the same field-free Hamiltonian as every other
+²²⁹/²²⁷ figure in this notebook, so the same status caveats apply here too:
+
+{STATUS_229}
+
+{STATUS_227}
 """),
 
     code("""
@@ -785,7 +888,7 @@ plt.show()
 """),
 
     # ------------------------------------------------------------ 15 -----
-    md("""
+    md(f"""
 ## 14. What this model contains and does not
 
 **In** (the v2 term list, on top of v1's nine terms): `hyperfine_A_par_Th`,
@@ -809,9 +912,7 @@ plt.show()
   constant exists at all — **OPEN-18**.
 - `c_I(Th)`: held at 0, unconstrained over three decades (~1 kHz–1 MHz) —
   **OPEN-19**.
-- Every ²²⁷Th constant: **placeholder**, a Schmidt single-particle moment for
-  a *tentative* (1/2⁺) spin assignment with no measured or estimated moment
-  anywhere — **OPEN-20**.
+- Every ²²⁷Th constant: **placeholder**. {STATUS_227}
 - The two-photon `K = 1` channel: **resolved**, not registered — exact
   closure makes it identically zero — **OPEN-21** (this notebook, §11).
 - `J_max`: a `StateSpec` knob, this notebook uses 4 throughout with a
