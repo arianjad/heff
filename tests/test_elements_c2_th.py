@@ -267,6 +267,122 @@ def test_the_casimir_ratio_flips_when_the_q0_sign_is_dropped(monkeypatch):
     assert flipped == 15
 
 
+# ------------------- V20b: (9.52) transcribed independently, off-diagonal J
+
+def bc_9p52(bra, ket, ctx, q=0.0, *, fail=None):
+    """B&C Eq. (9.52)/(9.53) transcribed HERE, from the printed equation.
+
+    Written from the equation as it stands on PDF p.636-637 / book p.604-605
+    (docs/lit/bc-pages/bc_p636-652_ch6-8-zeeman.txt lines 33-70), NOT from
+    heff.elements_c2._quadrupole_body -- that is the point of the gate below.
+
+    B&C print the primes on the KET:
+
+      <eta,Lam; S,Sig; J,Om,I,F,MF| H_Q |eta',Lam'; S,Sig; J',Om',I,F,MF>
+        = (e q0 Q / 4) (-1)^(J' + I + F + J - Om) {(2J+1)(2J'+1)}^(1/2)
+          x { J'  I  F ;  I  J  2 } ( J  2  J' ; -Om  q  Om' )
+          x ( I  2  I ; -I  0  I )^(-1)
+
+    with the (9.53) prefactor e q0 Q / 4 (B&C's own q0 sign: "q0 is the
+    negative of the electric field gradient"), so the geometry returned here is
+    in units of e q0 Q, as the package's element functions are.
+
+    Substitutions, and nothing else: B&C's unprimed (J, Om) is the BRA and their
+    primed (J', Om') is the KET (opposite to the package's own primes-on-the-bra
+    convention, [HAM] S9's convention note), I -> I_Th, and B&C's total F -> the
+    intermediate F1 = J + I_Th (B&C Eq. (5.176), [HAM] S9.2), diagonal, with the
+    outer 19F spin a spectator (delta_{F F'} delta_{m m'}).
+
+    `fail='phase_J'` reads the phase's leading J' as J -- the corrupted variant
+    used by the FAIL demonstration below.
+    """
+    I = ctx.spins[0].I
+    if I < 1.0:                          # no rank-2 moment; the printed 0/0
+        return 0.0
+    if not all(float(bra[f]) == float(ket[f]) for f in ("F1", "F", "mF")):
+        return 0.0
+    J_bra, Om_bra = float(bra["J"]), float(bra["Om"])
+    J_ket, Om_ket = float(ket["J"]), float(ket["Om"])
+    F1 = float(ket["F1"])
+    lead = J_bra if fail == "phase_J" else J_ket
+    return (0.25
+            * _ph(lead + I + F1 + J_bra - Om_bra)
+            * np.sqrt((2 * J_bra + 1.0) * (2 * J_ket + 1.0))
+            * w6j(J_ket, I, F1, I, J_bra, 2)
+            * w3j(J_bra, 2, J_ket, -Om_bra, q, Om_ket)
+            / w3j(I, 2, I, -I, 0, I))
+
+
+def _eQq0_matrices(J_max=3, **kw):
+    """(kets, |eQq0_Th| geometry from the registry, the same from bc_9p52)."""
+    spec = thf_spec("229", J_max=J_max)
+    kets = enumerate_kets(spec)
+    ctx = ctx_from(spec, thf_v2("229"))
+    got = dense(REGISTRY_C2["quadrupole_eQq0_Th"].fn, kets, ctx)
+    want = dense(lambda b, k, c: bc_9p52(b, k, c, **kw), kets, ctx)
+    return kets, got, want
+
+
+def _dJ_classes(kets):
+    return np.abs(kets["J"][:, None] - kets["J"][None, :])
+
+
+def test_V20b_quadrupole_dJ_elements_match_an_independent_transcription_of_bc_9p52():
+    """V20b. EVERY element of quadrupole_eQq0_Th on the real 229ThF+ basis
+    (thf_spec('229', J_max=3), 360 kets, all m_F) against an independent
+    transcription of B&C (9.52)/(9.53) written straight from the printed
+    equation -- including the Delta J = +-1 and +-2 classes.
+
+    WHY THIS AND NOT V20. V20 checks the same body only at Omega = 0 and
+    J' = J, where it is MINUS the textbook Casimir function. That leaves every
+    J'-dependent factor of (9.52) unchecked, and those factors are not a
+    detail: on the 229 basis at eQq0 = -2600 MHz the Delta J = +-1 elements
+    reach 461 MHz and the Delta J = +-2 elements 361 MHz, against a 390 MHz
+    largest diagonal, and they move the field-free spectrum by ~51 MHz. So this
+    gate uniquely catches a J'-dependent phase or a 3j-column-order error --
+    both of which are IDENTITIES at J' = J and therefore invisible to V20, to
+    hermiticity (the corrupted matrix is still symmetric), to parity, and to A5
+    (the corrupted elements sit inside the declared Delta J = 0, +-1, +-2).
+
+    Independence: the transcription above shares only heff.wigner's w3j/w6j and
+    the _ph helper with the package -- the same standard R13 uses for the Th
+    nuclear Zeeman rebuild.
+    """
+    kets, got, want = _eQq0_matrices()
+    assert len(kets) == 360
+    dev = float(np.max(np.abs(got - want)))
+    assert dev < 1e-12, f"max |registry - independent (9.52)| = {dev:.3e}"
+
+    dJ = _dJ_classes(kets)
+    reach = {}
+    for k in (0, 1, 2):
+        cls = np.abs(got[dJ == k])
+        reach[k] = float(np.max(cls))
+        assert np.sum(cls > 1e-12) > 0, f"Delta J = {k} class is empty"
+    # The off-diagonal-in-J elements are not a correction: the largest of them
+    # is larger than the largest diagonal one. Measured, not assumed.
+    assert reach[1] > reach[0], f"Delta J reach {reach}"
+
+
+def test_V20b_fails_when_the_transcription_misreads_the_J_prime_phase():
+    """FAIL reachability for V20b, and the proof that it sees what V20 cannot:
+    read (9.52)'s phase (-1)^(J'+I+F+J-Om) with J in place of J' and the
+    Delta J = +-1 elements flip sign, while the Delta J = 0 block -- the ONLY
+    block V20 measures -- stays bit-for-bit identical.
+
+    Delta J = +-2 is also unmoved by this particular corruption, because J is
+    an integer here and (-1)^(J'-J) = +1 across two rotational quanta; that is a
+    property of the corruption, not of the gate, which compares the +-2 class
+    element by element like every other.
+    """
+    kets, got, bad = _eQq0_matrices(fail="phase_J")
+    dJ = _dJ_classes(kets)
+    same = float(np.max(np.abs((got - bad)[dJ == 0])))
+    broken = float(np.max(np.abs((got - bad)[dJ == 1])))
+    assert same == 0.0, f"the J'-phase misreading moved a Delta J = 0 element by {same:.3e}"
+    assert broken > 0.1, f"Delta J = 1 deviation {broken:.3e} is too small to be a gate"
+
+
 # ------------------------------------------- V21: no quadrupole below I = 1
 
 def test_quadrupole_is_identically_zero_for_I_Th_at_most_one_half():
@@ -295,31 +411,28 @@ def test_quadrupole_is_identically_zero_for_I_Th_at_most_one_half():
             assert np.all(M == 0.0), f"I_Th = {I_Th}: {name} has a non-zero element"
 
 
-def test_the_unguarded_quadrupole_transcription_gives_nan_at_I_Th_one_half():
+def test_the_unguarded_quadrupole_gives_nan_at_I_Th_one_half(monkeypatch):
     """FAIL reachability for V21, and the reason the guard is a guard.
 
-    A literal transcription of B&C (9.52) -- no `if I < 1` -- evaluates
-    (I 2 I; -I 0 I)^(-1) at I = 1/2, where that 3j is 0. It does not quietly
-    return the q = 0 limit and it does not return zero: in float64 it returns
-    NaN, which then propagates silently through every eigenvalue of the block.
-    That is the failure the guard exists to prevent, and it is why the guard
-    sits AHEAD of the inverse 3j rather than after a `six == 0` early return
-    (which would make it inert).
+    B&C (9.52) with no `if I < 1` evaluates (I 2 I; -I 0 I)^(-1) at I = 1/2,
+    where that 3j is 0. It does not quietly return the q = 0 limit and it does
+    not return zero: in float64 it returns NaN, which then propagates silently
+    through every eigenvalue of the block. That is the failure the guard exists
+    to prevent, and it is why the guard sits AHEAD of the inverse 3j rather than
+    after a `six == 0` early return (which would make it inert).
+
+    Run on the PRODUCTION path: the guard's threshold is the named constant
+    elements_c2._MIN_I_FOR_QUADRUPOLE, lowered here to 0.0, so what returns NaN
+    is heff's own element function and not a hand copy of the formula kept in
+    the test file (which could drift away from the code it falsifies).
     """
     I = 0.5
     assert w3j(I, 2, I, -I, 0, I) == 0.0
+    k = row(1.0, 1.0, 1.5, 1.0, 1.0)
+    monkeypatch.setattr(elements_c2, "_MIN_I_FOR_QUADRUPOLE", 0.0)
     with np.errstate(invalid="ignore"):
-        bad = _unguarded_quadrupole(1.0, 1.0, 1.5, 1.0, 1.0, 1.5, I, 0.0)
-    assert not np.isfinite(bad), f"the unguarded transcription returned {bad}"
-
-
-def _unguarded_quadrupole(J2, Om2, G2, J1, Om1, G1, I, q):
-    """B&C (9.52) transcribed with NO I < 1 guard -- the falsification variant
-    for V21, kept out of heff/ on purpose."""
-    return (0.25 * _ph(J1 + I + G1 + J2 - Om2)
-            * np.sqrt((2 * J2 + 1.0) * (2 * J1 + 1.0))
-            * w6j(J1, I, G1, I, J2, 2) * w3j(J2, 2, J1, -Om2, q, Om1)
-            / w3j(I, 2, I, -I, 0, I))
+        bad = REGISTRY_C2["quadrupole_eQq0_Th"].fn(k, k, ctx_at(I))
+    assert not np.isfinite(bad), f"the unguarded product path returned {bad}"
 
 
 # ------------------------------------------------------------- V22: eQq2
@@ -393,9 +506,12 @@ def test_eQq2_is_dOmega_two_diagonal_in_J_F1_F_mF_and_parity_even():
         for f in ("F1", "F", "mF"):
             assert kets[f][i] == kets[f][j], f"off-diagonal in {f}"
         dJ.add(float(kets["J"][i] - kets["J"][j]))
-    assert dJ == {-1.0, 0.0, 1.0}, (
-        f"Delta J reach on a J = 1-2 basis should be 0, +-1 (and +-2 once J = 3 "
-        f"is in the basis), got {sorted(dJ)}")
+    # >= not ==: {0, +-1} is all a J = 1-2 basis can show, but the rule (and
+    # B&C's sentence under (9.53)) is Delta J = 0, +-1, +-2, so a wider basis
+    # must be allowed to populate +-2 without failing this assertion.
+    assert dJ >= {-1.0, 0.0, 1.0} and dJ <= {-2.0, -1.0, 0.0, 1.0, 2.0}, (
+        f"Delta J reach should be 0, +-1 (and +-2 once J = 3 is in the basis), "
+        f"got {sorted(dJ)}")
     P = parity_operator(kets, 1.0, ell=0, s=0)
     assert np.max(np.abs(P @ M @ P.T - M)) < 1e-12, "eQq2 is not parity-even"
 

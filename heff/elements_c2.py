@@ -99,6 +99,11 @@ def axial_geometry(bra, ket, ctx, *, k, q=None, p):
             f"|q| = {abs(float(q))} exceeds the operator rank k = {k}; a rank-k "
             "molecule-frame tensor has no such component")
     I_Th, I_F = _spins(ctx)
+    # NAMING, so the lines below read against B&C: the locals F1/F2 are the KET
+    # and BRA values of the TOTAL F (the ket_c2 field "F"), following B&C's
+    # own use of F for the total; G1/G2 are the intermediate F1 = J + I_Th (the
+    # field "F1"). The trailing digit is 1 = ket, 2 = bra throughout this
+    # module; primes are on the bra ([HAM] S9 convention note).
     J1, G1, F1, m1 = (float(ket["J"]), float(ket["F1"]), float(ket["F"]),
                       float(ket["mF"]))
     J2, G2, F2, m2 = (float(bra["J"]), float(bra["F1"]), float(bra["F"]),
@@ -164,6 +169,8 @@ def outer_spin_scalar(bra, ket, ctx, *, dJ):
     if not _same(bra, ket, "F", "mF"):
         return 0.0
     I_Th, I_F = _spins(ctx)
+    # Same naming as axial_geometry: G1/G2 are the intermediate F1 = J + I_Th
+    # (ket/bra), F is the total F (diagonal here); 1 = ket, 2 = bra.
     J1, G1, Om1 = float(ket["J"]), float(ket["F1"]), float(ket["Om"])
     J2, G2, Om2 = float(bra["J"]), float(bra["F1"]), float(bra["Om"])
     F = float(ket["F"])
@@ -538,6 +545,32 @@ def zeeman_nuclear_Th(bra, ket, ctx):
 # becomes +1 ([HAM] S9.4.2, [TH] S3.4).
 _Q0_IS_NEGATIVE_EFG = -1.0
 
+# The smallest I that HAS a quadrupole moment: <I||T2(Q)||I> needs the triangle
+# (I, 2, I). Named rather than inlined so gate V21's FAIL demonstration can
+# monkeypatch it to 0.0 and run the REAL product path unguarded (which is where
+# the 0/0 lives), instead of a hand copy of the formula.
+_MIN_I_FOR_QUADRUPOLE = 1.0
+
+
+def _q0_sign(ctx):
+    """conventions.quadrupole_convention -> the sign factor above.
+
+    Mirrors quadrupole_eQq2_Th's eqq2_norm guard: the constant is a convention
+    field's consequence, so it is read from the Ctx rather than hardcoded, and
+    an unrecognised fork raises instead of silently keeping B&C's. _ALLOWED
+    currently lists one value, so the raise is a tripwire for the day a second
+    q0 convention is added, not a branch reachable through a valid Conventions.
+    """
+    conv = ctx.conventions.quadrupole_convention
+    if conv != "bc_q0_is_negative_efg":
+        raise NotImplementedError(
+            f"quadrupole_convention={conv!r} is not implemented: the only "
+            "transcribed convention is B&C's 'bc_q0_is_negative_efg' (q0 is the "
+            "NEGATIVE of the electric field gradient, [HAM] S9.4.1). A new fork "
+            "needs its own sign derived from its own printed equations, not a "
+            "guess.")
+    return _Q0_IS_NEGATIVE_EFG
+
 
 def _quadrupole_body(bra, ket, ctx, q):
     """B&C Eq. (9.52) at molecule-frame component q, in units of the constant.
@@ -571,7 +604,7 @@ def _quadrupole_body(bra, ket, ctx, q):
     if not _same(bra, ket, "F1", "F", "mF"):
         return 0.0
     I_Th, _ = _spins(ctx)
-    if I_Th < 1.0:
+    if I_Th < _MIN_I_FOR_QUADRUPOLE:
         return 0.0
     J1, Om1 = float(ket["J"]), float(ket["Om"])
     J2, Om2 = float(bra["J"]), float(bra["Om"])
@@ -579,7 +612,7 @@ def _quadrupole_body(bra, ket, ctx, q):
         return 0.0
     G = float(ket["F1"])
     den = w3j(I_Th, 2, I_Th, -I_Th, 0, I_Th)
-    return (_Q0_IS_NEGATIVE_EFG * -0.25
+    return (_q0_sign(ctx) * -0.25
             * _ph(J1 + I_Th + G + J2 - Om2)
             * np.sqrt((2 * J2 + 1.0) * (2 * J1 + 1.0))
             * w6j(J1, I_Th, G, I_Th, J2, 2)
