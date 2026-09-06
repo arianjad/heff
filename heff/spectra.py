@@ -39,15 +39,41 @@ from .conventions import ef_label, parity_operator
 from .elements_c import dipole_geometry
 
 
-def dipole_matrix(kets_a, kets_b, ctx, p):
+def _v1_geometry(bra, ket, ctx, p):
+    """The v1 default, wrapped to `geometry`'s (bra, ket, ctx, p) shape."""
+    return dipole_geometry(bra, ket, ctx.I, p)
+
+
+def dipole_matrix(kets_a, kets_b, ctx, p, *, geometry=None):
     """<a|d_p|b> in the primitive basis, shape (len(a), len(b)).
 
     Dimensionless geometry; multiply by d_mf for a dipole in MHz/(V/cm).
+
+    `geometry` is a callable `geometry(bra, ket, ctx, p) -> float`, evaluated
+    with `kets_a[i]` as bra and `kets_b[j]` as ket. `None` (the default) uses
+    `heff.elements_c.dipole_geometry(bra, ket, ctx.I, p)` -- the v1 one-spin
+    formula, byte-identical to before this keyword existed:
+
+        dipole_matrix(kets_a, kets_b, ctx, p)
+
+    A v2 (two-spin) caller passes the E1 geometry through
+    `heff.elements_c2.axial_geometry` bound at rank k=1, molecule-frame
+    component q=0 (E1 within a fixed-Omega block has Delta Omega = 0):
+
+        import functools
+        from heff.elements_c2 import axial_geometry
+        dipole_matrix(kets_a, kets_b, ctx, p,
+                      geometry=functools.partial(axial_geometry, k=1, q=0.0))
+
+    which [HAM] S9.1's analytic collapse reduces to the v1 formula exactly
+    at I_Th = 0 (tests/test_elements_c2_reduction.py
+    test_axial_geometry_reduces_to_dipole_geometry_at_one_spin).
     """
+    fn = _v1_geometry if geometry is None else geometry
     out = np.zeros((len(kets_a), len(kets_b)))
     for i in range(len(kets_a)):
         for j in range(len(kets_b)):
-            out[i, j] = dipole_geometry(kets_a[i], kets_b[j], ctx.I, p)
+            out[i, j] = fn(kets_a[i], kets_b[j], ctx, p=p)
     return out
 
 
@@ -77,13 +103,17 @@ def _strengths_from_matrices(evals_a, evecs_a, evals_b, evecs_b, mats, *, weight
 
 
 def line_strengths(evals_a, evecs_a, kets_a, evals_b, evecs_b, kets_b, ctx, *,
-                   polarizations=(-1, 0, 1), weights=None):
+                   polarizations=(-1, 0, 1), weights=None, geometry=None):
     """Line positions (MHz) and strengths (units of d_mf^2) between two
     separately diagonalised blocks.
 
     weights: {p: complex} polarisation amplitudes (default 1 for each p in
     `polarizations`). Because amplitudes are summed before squaring, a coherent
     superposition of polarisations interferes -- which is the point.
+
+    `geometry` is forwarded to `dipole_matrix` unchanged (see its docstring);
+    `None` keeps the v1 formula, a v2 caller passes
+    `functools.partial(heff.elements_c2.axial_geometry, k=1, q=0.0)`.
 
     CAVEAT on the default: `polarizations=(-1, 0, 1)` with unit real weights
     adds all three channels COHERENTLY before squaring. That default is only
@@ -100,7 +130,7 @@ def line_strengths(evals_a, evecs_a, kets_a, evals_b, evecs_b, kets_b, ctx, *,
     """
     if weights is None:
         weights = {p: 1.0 for p in polarizations}
-    mats = {p: dipole_matrix(kets_a, kets_b, ctx, p) for p in polarizations}
+    mats = {p: dipole_matrix(kets_a, kets_b, ctx, p, geometry=geometry) for p in polarizations}
     return _strengths_from_matrices(evals_a, evecs_a, evals_b, evecs_b, mats,
                                     weights=weights)
 
@@ -114,6 +144,14 @@ def label_lines(kets, evecs, S, *, rule, ell, s):
     then be reported as e.g. "(J=1, F=3/2, +) -> (J=2, F=5/2, -)" by pairing a
     row of `label_lines(kets_a, evecs_a, ...)` with a column of
     `label_lines(kets_b, evecs_b, ...)`.
+
+    When `kets.dtype` carries an `F1` field (the two-spin `KET_C2` basis) the
+    dict also gets `"F1": float` (the SAME dominant component's F1, so it is
+    read off the identical `dom` index as J and F, not a separately-weighted
+    group) and `"purity": float` -- |amplitude|^2 of that dominant component,
+    i.e. how much of the eigenvector actually sits on the labelled (J, F1, F)
+    ket. A v1 `KET_C` basis (no `F1` field) gets neither key, so the returned
+    dict is unchanged from before this was added.
 
     Labels are recorded on the output for a caller to report; `line_strengths`
     itself never calls this and a line's strength/frequency never depends on
@@ -136,12 +174,17 @@ def label_lines(kets, evecs, S, *, rule, ell, s):
     physics claim.
     """
     P = parity_operator(kets, S, ell=ell, s=s)
+    has_F1 = "F1" in kets.dtype.names
     out = []
     for k in range(evecs.shape[1]):
         v = evecs[:, k]
         dom = int(np.argmax(np.abs(v)))
         J, F = float(kets["J"][dom]), float(kets["F"][dom])
         parity = int(round(float(np.real(np.vdot(v, P @ v)))))
-        out.append({"J": J, "F": F, "parity": parity,
-                   "ef": ef_label(J, parity, rule=rule, S=S, ell=ell)})
+        row = {"J": J, "F": F, "parity": parity,
+              "ef": ef_label(J, parity, rule=rule, S=S, ell=ell)}
+        if has_F1:
+            row["F1"] = float(kets["F1"][dom])
+            row["purity"] = float(np.abs(v[dom]) ** 2)
+        out.append(row)
     return out
