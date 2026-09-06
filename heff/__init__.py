@@ -8,7 +8,8 @@ never (plotting lives in notebooks, spec S3.8).
 __version__ = "0.1.0"
 
 from . import (assemble, conventions, elements_c, elements_c2, engine, formalism,
-              observe, params, spec, spectra, terms, track, wigner)  # noqa: F401
+              observe, params, spec, spectra, terms, track, twophoton,
+              wigner)  # noqa: F401
 from .assemble import (TermMatrices, active, build_term_matrices, coefficients,
                        hamiltonian, hamiltonian_batch, sweep_coefficients, vertex)
 from .conventions import (Conventions, ef_label, n_hat_sign,
@@ -26,6 +27,8 @@ from .spec import (KET_C, KET_C2, Blocking, ElecState, Spin, StateSpec,
                    enumerate_kets, thf_spec)
 from .spectra import dipole_matrix, label_lines, line_strengths
 from .terms import Ctx, Rules, Term, ctx_from, term, terms_for_case
+from .twophoton import (REGISTRY_2G, dyad_weights, two_photon_geometry,
+                        two_photon_line_strengths, two_photon_matrix)
 
 __all__ = ["wigner", "spec", "KET_C", "KET_C2", "Blocking", "ElecState",
            "Spin", "StateSpec",
@@ -44,4 +47,6 @@ __all__ = ["wigner", "spec", "KET_C", "KET_C2", "Blocking", "ElecState",
            "engine", "SweepResult", "eigh_batch", "sweep",
            "track", "observe", "expectation", "g_factors",
            "multi_curvature", "offdiag", "pair_differential", "spectra",
-           "dipole_matrix", "label_lines", "line_strengths"]
+           "dipole_matrix", "label_lines", "line_strengths",
+           "twophoton", "REGISTRY_2G", "dyad_weights", "two_photon_geometry",
+           "two_photon_matrix", "two_photon_line_strengths"]
