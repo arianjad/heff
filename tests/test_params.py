@@ -137,7 +137,7 @@ def test_thf_v2_232_agrees_with_thf_v1_on_every_v1_symbol():
 def test_thf_v2_229_carries_the_documented_values_and_statuses():
     ps = thf_v2("229")
     expect = {
-        "A_par_Th": (1510, "MHz", "ab-initio"),
+        "A_par_Th": (-1510, "MHz", "ab-initio"),
         "g_N_Th": (0.1464, "", "derived"),
         "eQq0_Th": (-2600, "MHz", "estimate"),
         "eQq2_Th": (300, "MHz", "estimate"),
@@ -172,3 +172,16 @@ def test_thf_v2_227_A_par_is_a_labelled_placeholder():
     # eQq0_Th/eQq2_Th are structurally absent for I_Th = 1/2, not zero-valued
     assert "eQq0_Th" not in ps.params
     assert "eQq2_Th" not in ps.params
+
+
+def test_thf_v2_229_a_par_th_sign_keyword_selects_the_trusted_calculation():
+    """R14: the sign of A_par_Th is a parameter choice made through thf_v2's
+    keyword, not a conventions.py fork -- 229Th's Param is signed, and the
+    227Th placeholder ignores the keyword entirely."""
+    assert thf_v2("229").params["A_par_Th"].value == pytest.approx(-1510)
+    assert thf_v2("229", a_par_th_sign="positive").params["A_par_Th"].value == \
+        pytest.approx(1510)
+    assert thf_v2("227", a_par_th_sign="positive").params["A_par_Th"].value == \
+        pytest.approx(39821, abs=1)
+    with pytest.raises(ValueError, match="a_par_th_sign"):
+        thf_v2("229", a_par_th_sign="sideways")

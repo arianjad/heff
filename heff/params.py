@@ -194,7 +194,7 @@ def thf_v1():
 _ISOTOPOLOGUES_V2 = ("232", "229", "227")
 
 
-def thf_v2(isotopologue):
+def thf_v2(isotopologue, *, a_par_th_sign="negative"):
     """The 232/229/227 ThF+ X 3Delta1 parameter set (spec-v2 S5).
 
     Every value, unit, uncertainty, status and source/note is copied
@@ -210,12 +210,26 @@ def thf_v2(isotopologue):
     every v1 symbol); '229' and '227' add the isotope-specific Th hyperfine/
     quadrupole knobs. eQq0_Th/eQq2_Th are STRUCTURALLY ABSENT for 227ThF+
     (I_Th = 1/2 has no rank-2 nuclear matrix element), not zero-valued.
+
+    `a_par_th_sign` is one of 'negative' | 'positive'. The 229Th A_par_Th
+    Param is a SIGNED physical value, and this keyword selects which ab
+    initio calculation it is signed from: 'negative' (the default) trusts
+    Skripnikov & Titov 2015, recommended by docs/lit/lookup-apar-th-sign-
+    convention.md; 'positive' trusts Denis 2015. This is a parameter choice
+    -- which calculation you trust -- not a convention, so it lives here in
+    params, not in conventions ([HAM] S9.4.3). For '227' and '232' the
+    keyword is accepted but ignored: 227ThF+'s A_par_Th placeholder already
+    carries a physical sign ([HAM] S9.6), and 232Th has no nuclear spin.
     """
     from .conventions import Conventions
 
     if isotopologue not in _ISOTOPOLOGUES_V2:
         raise ValueError(
             f"isotopologue must be one of {_ISOTOPOLOGUES_V2}, got {isotopologue!r}")
+    if a_par_th_sign not in ("negative", "positive"):
+        raise ValueError(
+            f"a_par_th_sign must be one of ('negative', 'positive'), "
+            f"got {a_par_th_sign!r}")
 
     P = Param
     two_photon = {
@@ -254,17 +268,19 @@ def thf_v2(isotopologue):
         }
     elif isotopologue == "229":
         th = {
-            "A_par_Th": P(1510, "MHz", uncertainty=60, status="ab-initio",
+            "A_par_Th": P(-1510 if a_par_th_sign == "negative" else 1510,
+                "MHz", uncertainty=60, status="ab-initio",
                 source="Skripnikov & Titov 2015 Table II FINAL(ThF+) -4163 "
                        "(mu/mu_N) MHz and Denis 2015 +1833 MHz, both rescaled "
                        "to mu = 0.366(6) mu_N => -1524 / +1491 MHz; mean of "
                        "the two rescalings with a spread-based uncertainty "
                        "([TH] S2.2)",
-                note="sign UNVERIFIED, gap G4; add the authors' 7 % in "
-                     "quadrature for a hard bar. Magnitude only -- the sign "
-                     "is applied by conventions.a_par_th_sign, default "
-                     "'negative' per docs/lit/lookup-apar-th-sign-"
-                     "convention.md"),
+                note="This value is SIGNED. sign UNVERIFIED, gap G4; add the "
+                     "authors' 7 % in quadrature for a hard bar. The sign "
+                     "selects which ab initio calculation is trusted: "
+                     "'negative' (default) trusts Skripnikov & Titov 2015, "
+                     "recommended by docs/lit/lookup-apar-th-sign-"
+                     "convention.md; 'positive' trusts Denis 2015"),
             "g_N_Th": P(0.1464, "", uncertainty=0.0024, status="derived",
                 source="mu(229Th)/I = 0.366(6)/(5/2) ([TH] S1.2, Porsev 2021 "
                        "arXiv:2107.14723)",

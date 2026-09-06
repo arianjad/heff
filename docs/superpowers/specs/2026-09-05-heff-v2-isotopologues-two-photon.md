@@ -331,13 +331,12 @@ gate still passes.
 
 ## 4. Conventions block additions
 
-Four fields, each a real fork or a real trap, each stamped on every result. Fields are added
-to `Conventions` and to `_ALLOWED`, so `stamp()` gains four keys; no test asserts the stamp
+Three fields, each a real fork or a real trap, each stamped on every result. Fields are added
+to `Conventions` and to `_ALLOWED`, so `stamp()` gains three keys; no test asserts the stamp
 as a whole (measured, §0), and `version` moves to `'thf-v2'` only when a v2 spec is in play.
 
 | field | default | alternatives | why it exists |
 |---|---|---|---|
-| `a_par_th_sign` | `'negative'` | `'positive'` | Skripnikov & Titov 2015 print A∥(Th) = −4163 (μ/μ_N) MHz, Denis 2015 print +1833 MHz from the **same defining equation**, agreeing to 2.2 % in magnitude and disagreeing in sign ([TH] §2.2, gap G4). `docs/lit/lookup-apar-th-sign-convention.md` **landed during this session** (committed `0b3e5fa`) and resolves G4's *cause*: both groups do state their axis convention, the axes are opposite (Skripnikov ζ from Th to F, Denis F→Th), A∥ as both define it is invariant under a consistent axis reversal, and the two groups **agree** on the sign of the analogous HfF⁺ constant. So **the disagreement is real, not conventional**, and the audit recommends **A∥ < 0**. The flag therefore records *which calculation you trust*, not which convention you work in — which is a different kind of switch from `n_hat`, and the docstring must say so. Applied by the element as a multiplier, exactly like `n_hat_sign`; the `Param` carries the **magnitude**, so a sign never lives in two places. **OPEN-16.** |
 | `quadrupole_convention` | `'bc_q0_is_negative_efg'` | (one value for now) | B&C state verbatim, on the page that carries (9.53), that "q₀ is the negative of the electric field gradient". [TH] §3.4 verified this numerically: B&C (9.53) at Ω = 0 reproduces the textbook Casimir function with a **uniform ratio of exactly −1** across (J, I) = (1,1), (2,1), (2,3/2), (3,5/2) and every F. Code it explicitly or the sign of every quadrupole splitting flips. Single-valued like v1's `zeeman_energy`: it is a trap to record, not a fork to choose. |
 | `eqq2_norm` | `'bc_9p52_q2'` | `'petrov2018_eq23'` | The **UNVERIFIED normalisation bridge** ([TH] §3.2). B&C define `eq₀Q` by the q = 0 specialisation of (9.52); Petrov 2018 define `eQq₀`/`eQq₂` by their Eqs. (22)–(23) with a √6 and a Y₂₂ that have not been shown to map onto B&C's T²_{±2} with the same ¼ prefactor. The package computes in B&C's normalisation; the converter exists so a *published* Petrov-style number can be entered without hand-editing a factor, in exactly the pattern `n_hat` already uses. The derivation task resolves the factor and states it with citation **before** any eQq₂ is coded. **OPEN-17.** |
 | `two_photon_norm` | `'bc_5p142_reduced'` | — | Pins what `α^K_{ΔΩ}` multiplies: the geometry returned by `two_photon_matrix` is dimensionless and normalised to B&C (5.142)'s reduced element with unit one-photon reduced elements, so a strength comes out in units of α². Recorded, not chosen — but recorded, because an α transplanted from a Placzek-convention source would otherwise be silently off by a rank-dependent factor. |
@@ -367,7 +366,9 @@ are `thf_v1()`'s, plus the Th knobs at zero, plus the two-photon α's — and a 
 
 | symbol | value | unit | uncert. | status | source / note |
 |---|---|---|---|---|---|
-| `A_par_Th` | 1510 (magnitude; sign from `a_par_th_sign`) | MHz | 60 | `ab-initio` | Skripnikov & Titov 2015 Table II FINAL(ThF⁺) −4163 (μ/μ_N) MHz and Denis 2015 +1833 MHz, both rescaled to μ = 0.366(6) μ_N ⇒ −1524 / +1491 MHz; mean of the two rescalings with a spread-based uncertainty ([TH] §2.2). Note: **sign UNVERIFIED, gap G4**; add the authors' 7 % in quadrature for a hard bar |
+| `A_par_Th` | −1510 (signed; `thf_v2(..., a_par_th_sign=)` selects the trusted calculation) | MHz | 60 | `ab-initio` | Skripnikov & Titov 2015 Table II FINAL(ThF⁺) −4163 (μ/μ_N) MHz and Denis 2015 +1833 MHz, both rescaled to μ = 0.366(6) μ_N ⇒ −1524 / +1491 MHz; mean of the two rescalings with a spread-based uncertainty ([TH] §2.2). Note: **sign UNVERIFIED, gap G4**; add the authors' 7 % in quadrature for a hard bar |
+
+R14 (fix round 1): `A_par_Th`'s value is SIGNED, not a magnitude paired with a `conventions.a_par_th_sign` fork -- `params.thf_v2(isotopologue, *, a_par_th_sign="negative")` picks which ab initio calculation (Skripnikov & Titov 2015 vs Denis 2015) the sign comes from; this is a parameter choice, not a convention, so it does not appear in §4's table.
 | `g_N_Th` | 0.1464 | — | 0.0024 | `derived` | μ(²²⁹Th)/I = 0.366(6)/(5/2) ([TH] §1.2, Porsev 2021 arXiv:2107.14723). Note: the 1974 value 0.46(4) still in ENSDF is superseded and must never be used to rescale a published A∥ |
 | `eQq0_Th` | −2600 | MHz | 1000 | `estimate` | HfF⁺ anchor: eQq₀(¹⁷⁷HfF⁺) = −2100 MHz (Petrov 2018, CCSD(T)) × Q(²²⁹Th)/Q(¹⁷⁷Hf) = 3.11/3.365 × R_el ∈ [1, 1.65] ⇒ −2 to −3.3 GHz ([TH] §4.3). **No ThF⁺ or ThO eQq₀ is published, for any isotope or state — gap G2** |
 | `eQq2_Th` | 300 | MHz | 100 | `estimate` | Petrov 2018 Eqs. (24)–(25) route with w(ThF⁺) = G∥ + 0.002319 = 0.0499 against w(HfF⁺) = 0.014 ⇒ ~200–400 MHz ([TH] §4.4). Inherits the **UNVERIFIED normalisation bridge** of §4 |
@@ -441,7 +442,7 @@ The sign is what **orders the F₁ manifold**, so every ²²⁹ThF⁺ level diag
 the two groups' axis conventions are opposite but that A∥ is invariant under a consistent
 reversal, and that they agree on the analogous HfF⁺ constant — so **the disagreement is a real
 disagreement between two calculations, not a convention mismatch**, and the audit recommends
-A∥ < 0. §4 therefore defaults `a_par_th_sign='negative'` on that recommendation.
+A∥ < 0. §5 therefore defaults `thf_v2(..., a_par_th_sign='negative')` on that recommendation.
 *Questions:* (a) do you accept the audit's recommendation as the shipped default, given that
 an ab initio disagreement is not settled by an audit of conventions? (b) should the notebook
 draw both branches side by side anyway, since the F₁ ordering is the most visible feature of

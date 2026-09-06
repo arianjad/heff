@@ -11,7 +11,7 @@ from . import (assemble, conventions, elements_c, elements_c2, engine, formalism
               observe, params, spec, spectra, terms, track, wigner)  # noqa: F401
 from .assemble import (TermMatrices, active, build_term_matrices, coefficients,
                        hamiltonian, hamiltonian_batch, sweep_coefficients, vertex)
-from .conventions import (Conventions, a_par_th_sign, ef_label, n_hat_sign,
+from .conventions import (Conventions, ef_label, n_hat_sign,
                           parity_operator, parity_phase, superposition_parity)
 from .elements_c import dipole_geometry
 from .elements_c2 import REGISTRY_C2, axial_geometry, outer_spin_scalar
@@ -31,7 +31,7 @@ __all__ = ["wigner", "spec", "KET_C", "KET_C2", "Blocking", "ElecState",
            "block_by_mF", "blocks_for", "check_basis_invariants",
            "enumerate_kets", "thf_spec",
            "conventions", "formalism", "params", "Conventions", "ef_label",
-           "a_par_th_sign", "n_hat_sign", "parity_operator", "parity_phase",
+           "n_hat_sign", "parity_operator", "parity_phase",
            "superposition_parity",
            "convert_formalism", "dipole_geometry", "MU_B", "MU_N",
            "Param", "ParamSet", "thf_v1", "thf_v2", "terms", "Ctx", "Rules", "Term",

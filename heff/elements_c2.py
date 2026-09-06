@@ -24,7 +24,7 @@ from dataclasses import replace
 
 import numpy as np
 
-from .conventions import a_par_th_sign, n_hat_sign
+from .conventions import n_hat_sign
 from .elements_c import _ph, _same
 from .elements_c import (centrifugal as _v1_centrifugal,
                          hyperfine_A_par as _v1_hyperfine_A_par,
@@ -429,29 +429,6 @@ def _inner_spin(fn):
     return wrapped
 
 
-def _with_a_par_th_sign(fn):
-    """Apply conventions.a_par_th_sign to a Th magnetic-hyperfine element.
-
-    [SPEC-v2] S4: the A_par_Th Param carries the MAGNITUDE and the flag carries
-    the sign, "applied by the element as a multiplier, exactly like n_hat_sign",
-    so a sign never lives in two places. Unlike n_hat this flag records which
-    CALCULATION is trusted (Skripnikov & Titov's A_par(229Th) < 0 over Denis's
-    +1833 MHz), not which convention the code works in -- [HAM] S9.4.3, OPEN-16.
-
-    LIVE TRAP, reported to the controller and not fixed here: thf_v2('227')'s
-    A_par_Th = +39821 MHz is a SIGNED Schmidt placeholder ([HAM] S9.6), so with
-    the default a_par_th_sign='negative' this multiplier flips it to -39821 --
-    the one case where the "magnitude in the Param" contract is not honoured by
-    the parameter set. 227Th's placeholder, not this adapter, is the thing to
-    change.
-    """
-    def wrapped(bra, ket, ctx):
-        return a_par_th_sign(ctx.conventions) * fn(bra, ket, ctx)
-    wrapped.__name__ = fn.__name__
-    wrapped.__doc__ = fn.__doc__
-    return wrapped
-
-
 hyperfine_A_par_Th = _term_c2(
     name="hyperfine_A_par_Th", param=("A_par_Th",), rules=_DIAG,
     hermitian=True, real=True,
@@ -463,10 +440,11 @@ hyperfine_A_par_Th = _term_c2(
          "in F and m_F and independent of I_F. The body IS elements_c."
          "hyperfine_A_par through the inner-pair adapter -- no new algebra. "
          "Coefficients checked against [TH] S4.1 at J = 1-4 (gate V18) and "
-         "reproduced in [HAM] S9.2's own cross-check run. The A_par_Th Param "
-         "carries the magnitude; the sign is conventions.a_par_th_sign, default "
-         "'negative' ([HAM] S9.4.3, OPEN-16). [HAM] S9.2"
-)(_with_a_par_th_sign(_inner_spin(_v1_hyperfine_A_par)))
+         "reproduced in [HAM] S9.2's own cross-check run. The A_par_Th Param is "
+         "SIGNED; the sign selects the trusted calculation via params.thf_v2"
+         "(..., a_par_th_sign=...), default 'negative' ([HAM] S9.4.3, "
+         "OPEN-16). [HAM] S9.2"
+)(_inner_spin(_v1_hyperfine_A_par))
 
 hyperfine_A_par_Th_dJ1 = _term_c2(
     name="hyperfine_A_par_Th_dJ1", param=("A_par_Th",),
@@ -481,9 +459,11 @@ hyperfine_A_par_Th_dJ1 = _term_c2(
          "against hyperfine_A_par_Th. NOT a small correction for Th: [TH] S4.2 "
          "puts the J = 1 <-> 2 element at ~2 GHz with a ~135 MHz second-order "
          "shift, five orders above the 19F analogue's ~2.6 kHz ([HAM] S2.5), so "
-         "the J truncation has to be re-tested. Sign from conventions."
-         "a_par_th_sign as for the Delta J = 0 partner. [HAM] S9.2"
-)(_with_a_par_th_sign(_inner_spin(_v1_hyperfine_A_par_dJ1)))
+         "the J truncation has to be re-tested. The A_par_Th Param is SIGNED; "
+         "the sign selects the trusted calculation via params.thf_v2(..., "
+         "a_par_th_sign=...), default 'negative' ([HAM] S9.4.3, OPEN-16). "
+         "[HAM] S9.2"
+)(_inner_spin(_v1_hyperfine_A_par_dJ1))
 
 spin_rotation_cI_Th = _term_c2(
     name="spin_rotation_cI_Th", param=("c_I_Th",), rules=_DIAG,

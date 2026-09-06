@@ -16,7 +16,8 @@ import numpy as np
 import pytest
 
 from heff import elements_c2
-from heff.conventions import Conventions, a_par_th_sign, parity_operator
+from heff.assemble import build_term_matrices, coefficients
+from heff.conventions import Conventions, parity_operator
 from heff.elements_c import _ph
 from heff.elements_c2 import REGISTRY_C2, _quadrupole_body
 from heff.params import MU_B, MU_N, thf_v2
@@ -96,13 +97,10 @@ def test_th_hyperfine_manifold_coefficients_match_the_digest():
     the wrong spacings, and no symmetry gate sees it: it is Hermitian, parity-
     even and traceless just like the right answer.
 
-    The digest tabulates the coefficients in units of the SIGNED constant
-    A_par^Th, while the package splits that constant into a magnitude (the
-    A_par_Th Param) and a sign (conventions.a_par_th_sign, [SPEC-v2] S4:
-    "applied by the element as a multiplier, exactly like n_hat_sign"). So the
-    element is divided by that multiplier here to recover the digest's units;
-    the multiplier itself is pinned by
-    test_the_a_par_th_sign_convention_multiplies_the_element.
+    The digest tabulates the coefficients in units of A_par^Th (R14: the
+    element function itself is now unsigned -- the SIGNED physical constant
+    lives entirely in the A_par_Th Param, applied at assembly, not here -- so
+    no multiplier needs to be divided out to compare against the digest).
 
     TOLERANCE. [TH] S4.1 prints four decimals, so the comparison is ABSOLUTE to
     half the last printed digit (abs = 5e-5), the same convention V19 already
@@ -113,36 +111,61 @@ def test_th_hyperfine_manifold_coefficients_match_the_digest():
     tighter than any error this gate exists to catch.
     """
     kets, ctx, _ = setup_229(J_max=4)
-    sign = a_par_th_sign(ctx.conventions)
     for J, expect in TH_HYPERFINE_MANIFOLD.items():
         got = diagonal_over_F1("hyperfine_A_par_Th", J, kets, ctx)
         assert len(got) == len(expect), f"J={J}: F1 count {sorted(got)}"
         for (F1, value), want in zip(sorted(got.items()), expect):
-            assert value / sign == pytest.approx(want, abs=5e-5), f"J={J}, F1={F1}"
+            assert value == pytest.approx(want, abs=5e-5), f"J={J}, F1={F1}"
 
 
-def test_the_a_par_th_sign_convention_multiplies_the_element():
-    """[SPEC-v2] S4 / [HAM] S9.4.3, OPEN-16: A_par_Th's Param carries the
-    MAGNITUDE and conventions.a_par_th_sign carries the sign, applied by the
-    element, so a sign never lives in two places. Default 'negative' is Arian's
-    2026-09-05 ruling on docs/lit/lookup-apar-th-sign-convention.md. Both Th
-    magnetic-hyperfine terms must respond to it; nothing else may.
+def test_th_hyperfine_is_linear_in_the_signed_A_par_Th_param():
+    """R14: A_par(Th)'s sign is no longer a conventions.py fork; it lives in
+    the SIGNED A_par_Th Param, selected by params.thf_v2(..., a_par_th_sign=).
+    The raw element functions are unsigned (previous test), so the physical
+    sign only shows up once the term matrix is scaled by the Param's value
+    (heff.assemble.coefficients) -- exactly like any other Param, and unlike
+    n_hat_sign/zeeman_sign, which the element itself still multiplies in.
     """
-    kets, _, spec = setup_229(J_max=2)
-    neg = ctx_from(spec, thf_v2("229"))
-    pos = ctx_at(2.5, conventions=Conventions(a_par_th_sign="positive"))
-    assert a_par_th_sign(neg.conventions) == -1.0
-    for name in ("hyperfine_A_par_Th", "hyperfine_A_par_Th_dJ1"):
-        M = dense(REGISTRY_C2[name].fn, kets, neg)
-        P = dense(REGISTRY_C2[name].fn, kets, pos)
-        assert np.max(np.abs(M)) > 0.0
-        assert np.max(np.abs(M + P)) < 1e-12, f"{name} ignores a_par_th_sign"
-    for name in ("spin_rotation_cI_Th", "zeeman_nuclear_Th",
-                 "quadrupole_eQq0_Th", "quadrupole_eQq2_Th"):
-        M = dense(REGISTRY_C2[name].fn, kets, neg)
-        P = dense(REGISTRY_C2[name].fn, kets, pos)
-        assert np.max(np.abs(M - P)) < 1e-12, (
-            f"{name} responds to a_par_th_sign; the flag governs A_par(Th) only")
+    kets, ctx, spec = setup_229(J_max=2)
+    tm = build_term_matrices(kets, ctx, case="c2", registry=REGISTRY_C2)
+    pset_neg = thf_v2("229")
+    pset_pos = thf_v2("229", a_par_th_sign="positive")
+    assert pset_neg.value("A_par_Th") == pytest.approx(-1510)
+    assert pset_pos.value("A_par_Th") == pytest.approx(1510)
+    c_neg = coefficients(tm, pset_neg, {})
+    c_pos = coefficients(tm, pset_pos, {})
+    for k, name in enumerate(tm.names):
+        M_neg = c_neg[k] * tm.mats[k]
+        M_pos = c_pos[k] * tm.mats[k]
+        if name in ("hyperfine_A_par_Th", "hyperfine_A_par_Th_dJ1"):
+            assert np.max(np.abs(M_neg)) > 0.0, name
+            assert np.max(np.abs(M_neg + M_pos)) < 1e-12, (
+                f"{name} does not flip sign with a_par_th_sign")
+        else:
+            assert np.max(np.abs(M_neg - M_pos)) < 1e-12, (
+                f"{name} changed between a_par_th_sign values; only A_par_Th "
+                f"should")
+
+
+def test_227_A_par_Th_diagonal_carries_the_placeholder_sign_at_J1():
+    """R14: 227ThF+'s A_par_Th = +39821 MHz is a SIGNED physical value ([HAM]
+    S9.6), not a magnitude paired with a_par_th_sign, so the actual assembled
+    J = 1 diagonal element must show the sign of a POSITIVE A_par: from the
+    closed form A_par[F1(F1+1) - J(J+1) - I(I+1)] / [2 J(J+1)] at J = 1,
+    I_Th = 1/2, the F1 = 3/2 coefficient is +0.25 and the F1 = 1/2 coefficient
+    is -0.5, so with A_par_Th > 0 the LARGER F1 (3/2) is positive and the
+    smaller F1 (1/2) is negative.
+    """
+    spec = thf_spec("227", J_max=1)
+    kets = enumerate_kets(spec)
+    ctx = ctx_from(spec, thf_v2("227"))
+    ps = thf_v2("227")
+    a_par = ps.value("A_par_Th")
+    assert a_par == pytest.approx(39821, abs=1)
+    got = diagonal_over_F1("hyperfine_A_par_Th", 1, kets, ctx)
+    signed = {F1: coeff * a_par for F1, coeff in got.items()}
+    assert signed[1.5] > 0.0, signed
+    assert signed[0.5] < 0.0, signed
 
 
 def test_V18_fails_when_F_replaces_F1_in_the_closed_form():
