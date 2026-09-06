@@ -14,7 +14,8 @@ from .assemble import (TermMatrices, active, build_term_matrices, coefficients,
 from .conventions import (Conventions, ef_label, n_hat_sign,
                           parity_operator, parity_phase, superposition_parity)
 from .elements_c import dipole_geometry
-from .elements_c2 import REGISTRY_C2, axial_geometry, outer_spin_scalar
+from .elements_c2 import (REGISTRY_C2, axial_geometry, j_convergence,
+                          outer_spin_scalar)
 from .engine import SweepResult, eigh_batch, sweep
 from .formalism import convert_formalism
 from .observe import (expectation, g_factors, multi_curvature, offdiag,
@@ -36,7 +37,8 @@ __all__ = ["wigner", "spec", "KET_C", "KET_C2", "Blocking", "ElecState",
            "convert_formalism", "dipole_geometry", "MU_B", "MU_N",
            "Param", "ParamSet", "thf_v1", "thf_v2", "terms", "Ctx", "Rules", "Term",
            "ctx_from", "term", "terms_for_case", "elements_c", "elements_c2",
-           "REGISTRY_C2", "axial_geometry", "outer_spin_scalar", "assemble",
+           "REGISTRY_C2", "axial_geometry", "outer_spin_scalar", "j_convergence",
+           "assemble",
            "TermMatrices", "build_term_matrices", "coefficients", "active",
            "hamiltonian", "hamiltonian_batch", "sweep_coefficients", "vertex",
            "engine", "SweepResult", "eigh_batch", "sweep",

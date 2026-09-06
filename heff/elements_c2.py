@@ -658,3 +658,78 @@ def quadrupole_eQq2_Th(bra, ket, ctx):
     if abs(q) != 2.0:
         return 0.0
     return _quadrupole_body(bra, ket, ctx, q)
+
+
+# --------------------------------------------------- J-truncation reporting
+
+def j_convergence(isotopologue, *, J_maxes=(2, 4, 6), mF=None, n_levels=8, knobs=None):
+    """Report how the lowest `n_levels` levels move as J_max is truncated.
+
+    A REPORTING helper (task-6 brief): it never raises on a magnitude, only
+    on a structural mismatch (an m_F the requested block does not hold). Each
+    J_max's own lowest `n_levels` eigenvalues are compared to the largest
+    J_max's (the "converged" reference), and the largest absolute difference,
+    in MHz, is what is reported -- this is what [HAM] S2.5/S9.2's Th
+    Delta-J = +-1 hyperfine (a ~2 GHz off-diagonal element, [TH] S4.2) needs a
+    convergence table for, and V23 (tests/test_assemble_c2.py) is a direct
+    demonstration of this function, not a parallel computation.
+
+    Field-free by default (knobs=None): all field knobs (E_z, B_z) are absent
+    from thf_v2's own ParamSet, so `hamiltonian`'s knob lookup defaults them
+    to 0 -- J-truncation is a Hamiltonian-structure question, not a Stark/
+    Zeeman one. Pass `knobs` to report the same convergence at a field point.
+
+    `mF` has no single value that is a level of all three isotopologues:
+    F (and so m_F) is INTEGER for 229ThF+ and 227ThF+ (I_Th half-integer + 19F
+    1/2 -> F1 half-integer -> F integer, [HAM] S9's coupling scheme) and
+    HALF-INTEGER for 232ThF+ (the v1 F = J +- 1/2 basis) -- verified
+    numerically, not assumed. The default is therefore per-isotopologue:
+    0.0 for '229'/'227', 0.5 for '232'.
+
+    '232' has no coupled Th spin (thf_spec('232').spins == ()), so it builds
+    on the v1 KET_C basis through the default (v1) registry -- gate V16
+    (tests/test_elements_c2_reduction.py) already proves every REGISTRY_C2
+    term equals its v1 twin at I_Th = 0, so this is not a second code path,
+    just the one thf_spec('232') already hands back. '229' and '227' build on
+    KET_C2 through REGISTRY_C2.
+    """
+    from .assemble import build_term_matrices, hamiltonian
+    from .params import thf_v2
+    from .spec import block_by_mF, enumerate_kets, thf_spec
+    from .terms import ctx_from
+
+    if mF is None:
+        mF = 0.0 if isotopologue in ("229", "227") else 0.5
+    knobs = dict(knobs) if knobs else {}
+    pset = thf_v2(isotopologue)
+    two_spin = isotopologue in ("229", "227")
+
+    lowest, dims = {}, {}
+    for J_max in J_maxes:
+        spec = thf_spec(isotopologue, J_max=J_max)
+        kets = enumerate_kets(spec)
+        blocks = block_by_mF(kets)
+        if mF not in blocks.index:
+            raise ValueError(
+                f"mF={mF} is not a level of {isotopologue}ThF+ at J_max={J_max} "
+                f"(available: {sorted(blocks.index)})")
+        idx = blocks.index[mF]
+        ctx = ctx_from(spec, pset)
+        if two_spin:
+            tm = build_term_matrices(kets[idx], ctx, case="c2", registry=REGISTRY_C2)
+        else:
+            tm = build_term_matrices(kets[idx], ctx)
+        w = np.linalg.eigvalsh(hamiltonian(tm, pset, knobs))
+        lowest[J_max] = np.sort(w)[:n_levels]
+        dims[J_max] = len(idx)
+
+    ref_J = max(J_maxes)
+    ref = lowest[ref_J]
+    by_J_max = {}
+    for J_max in J_maxes:
+        n = min(len(lowest[J_max]), len(ref))
+        shift = float(np.max(np.abs(lowest[J_max][:n] - ref[:n]))) if n else float("nan")
+        by_J_max[J_max] = {"dimension": dims[J_max], "max_shift_MHz": shift,
+                           "n_levels_compared": n}
+    return {"isotopologue": isotopologue, "mF": mF, "n_levels": n_levels,
+            "reference_J_max": ref_J, "field_free": not knobs, "by_J_max": by_J_max}
