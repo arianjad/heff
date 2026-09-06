@@ -318,42 +318,67 @@ structure, even though every individual eigenvalue is plotted.
 
 `A_par_Th` (²²⁹) is **ab-initio**, sign-unresolved (OPEN-16, cell 6 below).
 {STATUS_227} Both spreads below are **computed by the code**, not the [TH]
-table numbers.
+table numbers. The ²³² panel's title carries no constant statuses; `A_par`
+and `omega_ef` are both **measured** there, as §3 already said.
+
+**The ²²⁷ "J = 1" label is a dominant-component assignment, not a good
+quantum number.** Its eight selected eigenvectors carry only ~0.63–0.81 of
+their weight on J = 1 kets (median 0.81; ²²⁹ carries 0.994–0.997), because at
+the placeholder `A∥ = +39.8 GHz` the Th hyperfine ΔJ = ±1 element is 0.59 ×
+the rotational spacing ([HAM] §9.6) — and that same strong ΔJ = ±1 mixing is
+why the **eigenvalue** spread printed below (16.6 GHz) sits well below §9.6's
+**first-order** estimate of +29.9 GHz against `4B₀ = 29.1 GHz`: the two
+numbers are different quantities, and for ²²⁷ first-order perturbation theory
+in the Th hyperfine is not valid.
 """),
 
     code("""
+# Eigenvector columns whose DOMINANT basis component has J = 1, and the J = 1
+# WEIGHT each of them actually carries (sum of |amplitude|^2 over every J = 1
+# ket). The two are not the same statement: 'J = 1' below is an argmax LABEL,
+# and the weight says how much of the state that label describes.
+def dominant_J1(kets, v):
+    dom = kets['J'][np.argmax(np.abs(v), axis=0)]
+    sel = np.flatnonzero(dom == 1)
+    wt = (np.abs(v[:, sel]) ** 2)[kets['J'] == 1].sum(axis=0)
+    return sel, wt
+
+
 def level_spread_J1(iso):
     kets, blocks, ctx, tm = load(iso)
     pset = thf_v2(iso)
     H0 = hamiltonian(tm, pset, {'E_z': 0.0, 'B_z': 0.0})
     w, v = np.linalg.eigh(H0)
-    J = kets['J'][np.argmax(np.abs(v), axis=0)]
-    w1 = w[J == 1]
-    return kets, w, v, w1.min(), w1.max(), w1.max() - w1.min()
+    sel, wt = dominant_J1(kets, v)
+    w1 = w[sel]
+    return kets, w, v, sel, wt, w1.min(), w1.max(), w1.max() - w1.min()
 
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 4))
 
-_, w232b, _, lo232, hi232, spread232 = level_spread_J1('232')
+_, w232b, _, sel232, wt232, lo232, hi232, spread232 = level_spread_J1('232')
 OFF = 2 * pset232.value('B0')
-axes[0].hlines((w232b[(np.arange(len(w232b)))] - OFF)[:4], 0.8, 1.2)
-axes[0].set_title(f'232ThF+ J=1  spread = {spread232:.4f} MHz (measured A_par, omega_ef)')
+axes[0].hlines(w232b[sel232] - OFF, 0.8, 1.2)
+axes[0].set_title('232ThF+ J=1')
+print(f"232ThF+ J=1 spread = {spread232:.4f} MHz   "
+      f"J=1 weight min/median = {wt232.min():.3f}/{np.median(wt232):.3f}")
 axes[0].set_ylabel('E - 2B0 (MHz)')
 axes[0].set_xticks([1.0])
 axes[0].set_xticklabels(['232ThF+'])
 
 colors = {'229': 'C1', '227': 'C2'}
 for iso in ('229', '227'):
-    kets, w, v, lo, hi, spread = level_spread_J1(iso)
+    kets, w, v, sel, wt, lo, hi, spread = level_spread_J1(iso)
     OFFi = 2 * thf_v2(iso).value('B0')
-    J = kets['J'][np.argmax(np.abs(v), axis=0)]
-    axes[1].hlines((w[J == 1] - OFFi), 0.8 if iso == '229' else 1.2,
+    axes[1].hlines((w[sel] - OFFi), 0.8 if iso == '229' else 1.2,
                    1.2 if iso == '229' else 1.6, color=colors[iso], label=f'{iso}Th')
     status = thf_v2(iso).params['A_par_Th'].status
     print(f"{iso}ThF+ J=1 spread = {spread/1e3:.3f} GHz  "
-          f"({spread/pset229.value('B0')*100:.1f}% of B0)   A_par_Th status={status!r}")
+          f"({spread/pset229.value('B0')*100:.1f}% of B0)   "
+          f"J=1 weight min/median = {wt.min():.3f}/{np.median(wt):.3f}   "
+          f"A_par_Th status={status!r}")
 axes[1].legend()
-axes[1].set_title('229/227ThF+ J=1 (Th hyperfine, F1 centroids only at this scale)')
+axes[1].set_title('229/227ThF+ J=1 (F1 centroids)')
 axes[1].set_ylabel('E - 2B0 (MHz)')
 axes[1].set_xticks([1.0, 1.4])
 axes[1].set_xticklabels(['229ThF+', '227ThF+'])
@@ -527,20 +552,26 @@ for iso, mF in (('232', 0.5), ('229', 1.0), ('227', 1.0)):
 
 B = np.linspace(0.0, 5.0, 51)
 fig, axes = plt.subplots(1, 3, figsize=(13, 4), sharex=True)
-for ax, (iso, (kets, ctx, tm, pset, mF)) in zip(axes, gblocks.items()):
+for ax, iso in zip(axes, ISOTOPOLOGUES):
+    kets, ctx, tm, pset, mF = gblocks[iso]
     res0 = g_factors(tm, pset, {'E_z': 0.0, 'B_z': 0.0}, ctx=ctx)
-    j1 = kets['J'] == 1
+    # select EIGENVECTORS by their dominant component, not basis kets by their
+    # J field -- for 227 the two are not interchangeable (see the 4 caption).
+    _, v0 = np.linalg.eigh(hamiltonian(tm, pset, {'E_z': 0.0, 'B_z': 0.0}))
+    j1, wt1 = dominant_J1(kets, v0)
+    gblocks[iso] = gblocks[iso] + (j1, wt1)
     g_j1 = res0['g'][j1]
     g_unique = np.unique(np.round(g_j1, 6))
-    n_states, n_unique = j1.sum(), len(g_unique)
+    n_states, n_unique = len(j1), len(g_unique)
     degen_note = (f" ({n_unique} unique of {n_states} states -- "
                   f"{n_states - n_unique} exactly degenerate pair(s))"
                   if n_unique < n_states else f" ({n_states} states, all distinct)")
     print(f"{iso}ThF+ (m_F={mF:g}): g at J=1{degen_note} = {g_unique}")
     r = sweep(tm, pset, {'E_z': np.zeros_like(B), 'B_z': B})
-    for s in np.flatnonzero(j1):
+    for s in j1:
         ax.plot(B, r.evals[:, s] - r.evals[0, s], lw=1.1)
-    ax.set_title(f'{iso}ThF+  m_F={mF:g}  ({n_states} J=1 states)')
+    ax.set_title(f'{iso}ThF+  m_F={mF:g}\\n{n_states} dominant-J=1 states, '
+                 f'J-weight >= {wt1.min():.2f}', fontsize=9)
     ax.set_xlabel('B_z (G)')
 axes[0].set_ylabel('E(B) - E(0)  (MHz)')
 plt.tight_layout()
@@ -574,12 +605,12 @@ fig, axes = plt.subplots(1, 3, figsize=(13, 4), sharex=True)
 gam = lambda J, F, I=0.5: (J * (J + 1) + F * (F + 1) - I * (I + 1)) / (2 * F * (F + 1) * J * (J + 1))
 
 for ax, iso in zip(axes, ('232', '229', '227')):
-    kets, ctx, tm, pset, mF = gblocks[iso]
-    j1 = np.flatnonzero(kets['J'] == 1)
+    kets, ctx, tm, pset, mF, j1, wt1 = gblocks[iso]
     r = sweep(tm, pset, {'E_z': E, 'B_z': np.zeros_like(E)})
     for s in j1:
         ax.plot(E, r.evals[:, s] - r.evals[0, s], lw=1.1)
-    ax.set_title(f'{iso}ThF+  m_F={mF:g}  ({len(j1)} J=1 states)')
+    ax.set_title(f'{iso}ThF+  m_F={mF:g}\\n{len(j1)} dominant-J=1 states, '
+                 f'J-weight >= {wt1.min():.2f}', fontsize=9)
     ax.set_xlabel('E_z (V/cm)')
 
 axes[0].set_ylabel('E(E_z) - E(0)  (MHz)')
@@ -606,6 +637,11 @@ strengths would differ under σ⁺ or an unpolarised sum. Lines are filtered by
 exist because both `Ω = ±1` mix inside one `m_F` block) and **J = 1 ↔ 2**;
 the strongest ~6 lines per panel are printed with their full
 `(J, F₁, F, parity)` labels from `label_lines`.
+
+The `J` used to sort lines into the two rows is `label_lines`' **dominant
+component**, so on the ²²⁷ panels "J = 1" means a dominant-J=1 assignment
+carrying only ~0.63–0.81 J = 1 weight (§4), not a J eigenstate; ΔJ there is a
+label difference, not a selection rule.
 
 {STATUS_229}
 
