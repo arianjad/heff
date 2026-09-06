@@ -2,7 +2,9 @@
 
 Effective Hamiltonians for molecules, term-matrix first. v1 covers Hund's case (c)
 for ²³²Th¹⁹F⁺ X ³Δ₁: 96 states (J = 1–4, Ω = ±1, I(¹⁹F) = ½), nine Hamiltonian
-terms plus an opt-in PT-odd pair.
+terms plus an opt-in PT-odd pair. v2 adds the two-spin isotopologues ²²⁹Th¹⁹F⁺
+and ²²⁷Th¹⁹F⁺ (a second coupled nuclear spin, `I(Th) = 5/2` and `1/2`) and a
+rank-K effective two-photon (2 × E1) operator within X.
 
 ## Quickstart
 
@@ -12,11 +14,13 @@ conda run -n heff pip install -e .
 conda run -n heff python -m pytest tests/ -q
 conda run -n heff python notebooks/build_tutorial.py
 conda run -n heff jupyter execute --inplace notebooks/ThF_plus_X3Delta1_Tutorial.ipynb
+conda run -n heff python notebooks/build_isotopologues.py
+conda run -n heff jupyter execute --inplace notebooks/ThF_plus_Isotopologues.ipynb
 ```
 
-The last two lines regenerate the tutorial notebook from its generator script and
-run it on a fresh kernel. The committed notebook already carries its outputs, so
-reading it needs neither step.
+The last four lines regenerate the two notebooks from their generator scripts
+and run them on a fresh kernel. The committed notebooks already carry their
+outputs, so reading them needs neither step.
 
 ## What it is
 
@@ -42,12 +46,14 @@ assignment policy produced its labels.
 | `formalism.py` | R²↔N² conversion, lifted verbatim from Molecule-Structure |
 | `terms.py` | `Ctx`, `Rules`, the `@term` registry, and the selection-rule gate |
 | `elements_c.py` | the case-(c) matrix elements: rotation, centrifugal, Ω-doubling, hyperfine (ΔJ = 0 and ±1), `c_I`, Stark, Zeeman, nuclear Zeeman, PT-odd |
+| `elements_c2.py` | the two-spin `KET_C2` matrix elements — `axial_geometry`, the master two-spectator kernel B&C (5.172)+(5.174)×2+(5.186); the Th and ¹⁹F hyperfine/spin-rotation/quadrupole terms recoupled through it; `j_convergence` |
 | `wigner.py` | 3j/6j/9j behind an `lru_cache`; sympy is imported inside the kernels, not at module scope |
 | `assemble.py` | `build_term_matrices`, `hamiltonian`, `hamiltonian_batch`, `sweep_coefficients`, `vertex` |
 | `engine.py` | chunked batched `eigh`, `sweep`, and the `SweepResult` artifact |
 | `track.py` | eigenvector assignment and sign-gauge kernels, lifted from C2V-Molecules |
 | `observe.py` | exact derivatives, g-factors, induced dipoles, expectation values, named-pair differentials |
-| `spectra.py` | E1 dipole matrices, line strengths (sum over polarisation, then square), line labelling |
+| `spectra.py` | E1 dipole matrices, line strengths (sum over polarisation, then square), line labelling (`geometry=` keyword makes it dtype-agnostic between v1 and v2) |
+| `twophoton.py` | the rank-K effective two-photon operator (`REGISTRY_2G`, K ∈ {0, 2}), the polarisation dyad (`dyad_weights`), `two_photon_line_strengths` — a transition operator, never summed into a Hamiltonian |
 
 `import heff` pulls numpy only: sympy is lazy inside `wigner`, scipy inside
 `track`, and matplotlib is never imported by the package — plotting lives in the
@@ -75,8 +81,23 @@ Internal unit is MHz throughout; fields are `E_z` in V/cm and `B_z` in G.
 ## Validation
 
 Gated by the test suite — `conda run -n heff python -m pytest tests/ -q` passes in
-full, with the two tier-D literature comparisons skipped unless
-`HEFF_RUN_LITERATURE=1` (the opt-in tier described below).
+full: **248 passed, 2 skipped** (measured 2026-09-06), with the two tier-D
+literature comparisons skipped unless `HEFF_RUN_LITERATURE=1` (the opt-in tier
+described below).
+
+**v2 gates, V16–V28.** Two carry the most weight: **V16** (`tests/
+test_elements_c2_reduction.py`) proves every `REGISTRY_C2` term reduces to its
+v1 twin at `I_Th = 0` — the analytic collapse that makes the two-spin basis a
+strict superset of the v1 one rather than a second code path — and **V27**
+(`tests/test_twophoton_closure.py`) proves the resolved two-photon sum equals
+the rank-K closure form on a complete intermediate manifold, which is the
+result that lets `K = 1` be dropped from the registered operator (OPEN-21).
+The rest cover the dimension closed form and basis invariants for both new
+isotopologues (V17), the Th and ¹⁹F recoupled matrix elements against
+published scale estimates (V18–V20, V22–V23), the quadrupole's structural
+absence for `I_Th < 1` (V21), E1 spectra in the two-spin basis (V8-family
+extensions), and the two-photon selection rules, parity and reciprocity
+(V24–V26, V28).
 
 - **Kernel gates (A1–A8)**, none of which depend on a particular Hamiltonian:
   the resum identity and the `tensordot` fast path on random matrices, the exact
@@ -107,8 +128,14 @@ closed and the code is unchanged. Both halves of it are hard gates either way.
 ## Documentation
 
 - Physics: `docs/thf-plus-x3delta1-effective-hamiltonian.md` — every matrix
-  element in `heff/elements_c.py` cites it or the primary source it cites.
-- Design: `docs/superpowers/specs/2026-09-05-heff-design.md`.
-- Open items: `docs/open-questions.md`, and §7 of the physics document.
+  element in `heff/elements_c.py` and `heff/elements_c2.py`/`heff/twophoton.py`
+  cites it (§2 for v1, §9 for v2) or the primary source it cites.
+- Design: `docs/superpowers/specs/2026-09-05-heff-design.md` (v1),
+  `docs/superpowers/specs/2026-09-05-heff-v2-isotopologues-two-photon.md` (v2).
+- Open items: `docs/open-questions.md` (OQ-A, OPEN-16 through OPEN-23), and §7
+  of the physics document.
 - Tutorial: `notebooks/ThF_plus_X3Delta1_Tutorial.ipynb`, generated by
-  `notebooks/build_tutorial.py`.
+  `notebooks/build_tutorial.py` (v1, ²³²ThF⁺ only).
+- Isotopologues and two-photon: `notebooks/ThF_plus_Isotopologues.ipynb`,
+  generated by `notebooks/build_isotopologues.py` (v2, all three
+  isotopologues).
