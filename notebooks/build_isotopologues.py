@@ -322,8 +322,8 @@ table numbers. The ²³² panel's title carries no constant statuses; `A_par`
 and `omega_ef` are both **measured** there, as §3 already said.
 
 **The ²²⁷ "J = 1" label is a dominant-component assignment, not a good
-quantum number.** Its eight selected eigenvectors carry only ~0.63–0.81 of
-their weight on J = 1 kets (median 0.81; ²²⁹ carries 0.994–0.997), because at
+quantum number.** Its eight selected eigenvectors carry as little as 0.63 of
+their weight on J = 1 kets (median 0.81; ²²⁹ carries at least 0.994), because at
 the placeholder `A∥ = +39.8 GHz` the Th hyperfine ΔJ = ±1 element is 0.59 ×
 the rotational spacing ([HAM] §9.6) — and that same strong ΔJ = ±1 mixing is
 why the **eigenvalue** spread printed below (16.6 GHz) sits well below §9.6's
@@ -640,7 +640,7 @@ the strongest ~6 lines per panel are printed with their full
 
 The `J` used to sort lines into the two rows is `label_lines`' **dominant
 component**, so on the ²²⁷ panels "J = 1" means a dominant-J=1 assignment
-carrying only ~0.63–0.81 J = 1 weight (§4), not a J eigenstate; ΔJ there is a
+carrying as little as 0.63 J = 1 weight, median 0.81 (§4), not a J eigenstate; ΔJ there is a
 label difference, not a selection rule.
 
 {STATUS_229}
