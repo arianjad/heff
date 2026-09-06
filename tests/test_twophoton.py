@@ -341,16 +341,29 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
     either way -- only the labelling differs -- and [HAM] S9.5.1(3) is the
     source this package follows.
 
+    THE PER-COMPONENT WEIGHTS BELOW ARE FRAME-SPECIFIC (this test's coplanar
+    frame, eps1 = x, eps2 = (cos theta, sin theta, 0)); the frame-INDEPENDENT
+    statement, true in any frame for two real linear polarisations at
+    relative angle theta, is the rank-resolved sum
+
+        sum_P |w^0_P|^2 = cos^2(theta)/3
+        sum_P |w^1_P|^2 = sin^2(theta)/2
+        sum_P |w^2_P|^2 = 1/2 + cos^2(theta)/6         (the three sum to 1)
+
+    verified below in BOTH this coplanar frame and a second, z-anchored frame
+    (eps1 = z, eps2 = (sin theta, 0, cos theta)), where the per-component
+    weights differ (|w^2_{+-1}|^2 = |w^1_{+-1}|^2 = sin^2(theta)/4,
+    |w^2_0|^2 = (2/3) cos^2(theta), |w^0_0|^2 = cos^2(theta)/3) but the three
+    sums are the same functions of theta.
+
     The sin^2(theta) Cossel measured ([2g] S3.0; thesis Eq. 6.35, p.219: no
-    transfer at theta = 0, maximum at theta = pi/2) is the K = 1 weight:
-    for two linear polarisations at relative angle theta the only non-zero
-    K = 1 weight is w^1_0 = -i sin(theta)/sqrt(2). That is consistent, not
-    contradictory: Cossel's 1Sigma+(J=0) -> 3Pi_0+ -> 3Delta1(J=1) transfer has
-    dJ = 1 from J = 0, and the 3j (J' K J; ...) admits ONLY K = 1 there, so his
+    transfer at theta = 0, maximum at theta = pi/2) is the K = 1 sum:
+    sum_P |w^1_P|^2 = sin^2(theta)/2. That is consistent, not contradictory:
+    Cossel's 1Sigma+(J=0) -> 3Pi_0+ -> 3Delta1(J=1) transfer has dJ = 1 from
+    J = 0, and the 3j (J' K J; ...) admits ONLY K = 1 there, so his
     measurement is a pure-K = 1 observation -- and his single resolved
     intermediate is exactly the restricted manifold in which [HAM] S9.5.3 says
-    K = 1 survives at O(1). The K = 2 weights carry cos(theta), not sin(theta):
-    w^2_0 = -cos(theta)/sqrt(6) and |w^2_{+-2}| = 1/2.
+    K = 1 survives at O(1).
     """
     # the anchor the whole convention rests on: c[+1] = +1 for sigma+, and
     # nothing else ([HAM] S9.5.1(3))
@@ -384,6 +397,27 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
         assert w[(2, 0)] == pytest.approx(-np.cos(theta) / np.sqrt(6))
         assert abs(w[(2, 2)]) == pytest.approx(0.5)
         assert abs(w[(2, -2)]) == pytest.approx(0.5)
+        # the rank-resolved sum is frame-independent (this coplanar frame)
+        s0 = sum(abs(w[(0, P)]) ** 2 for P in (0,))
+        s1 = sum(abs(w[(1, P)]) ** 2 for P in (-1, 0, 1))
+        s2 = sum(abs(w[(2, P)]) ** 2 for P in (-2, -1, 0, 1, 2))
+        assert s0 == pytest.approx(np.cos(theta) ** 2 / 3, abs=1e-12)
+        assert s1 == pytest.approx(np.sin(theta) ** 2 / 2, abs=1e-12)
+        assert s2 == pytest.approx(0.5 + np.cos(theta) ** 2 / 6, abs=1e-12)
+
+    # the same sums, in a SECOND frame (z-anchored) -- the per-component
+    # weights differ from the coplanar frame above, but sum_P |w^K_P|^2 does
+    # not: it is a property of theta, not of the frame.
+    for theta in (0.0, np.pi / 6, np.pi / 4, np.pi / 2):
+        e1 = np.array([0.0, 0.0, 1.0])
+        e2 = np.array([np.sin(theta), 0.0, np.cos(theta)])
+        w = dyad_weights(e1, e2)
+        s0 = sum(abs(w[(0, P)]) ** 2 for P in (0,))
+        s1 = sum(abs(w[(1, P)]) ** 2 for P in (-1, 0, 1))
+        s2 = sum(abs(w[(2, P)]) ** 2 for P in (-2, -1, 0, 1, 2))
+        assert s0 == pytest.approx(np.cos(theta) ** 2 / 3, abs=1e-12)
+        assert s1 == pytest.approx(np.sin(theta) ** 2 / 2, abs=1e-12)
+        assert s2 == pytest.approx(0.5 + np.cos(theta) ** 2 / 6, abs=1e-12)
     # non-vacuous in the direction that matters: the K = 1 weight really does
     # vanish at theta = 0 and peak at pi/2
     assert abs(dyad_weights(np.array([1.0, 0, 0]), np.array([1.0, 0, 0]))[(1, 0)]) == 0.0
@@ -416,6 +450,38 @@ def test_dyad_weights_fails_if_the_two_slots_are_swapped():
 
 
 # --------------------------------------------------- registry containment
+
+def test_K2_entries_are_declared_non_hermitian_and_the_builder_accepts_the_registry():
+    """Fix round 1, finding 1: the registered fn evaluates the operator at
+    P = Delta m_F (heff.terms' fn(bra, ket, ctx) contract), and by reciprocity
+    (M_P(a, b) = (-1)^P M_{-P}(b, a), test_rank_K_sum_rule_and_reciprocity)
+    that object is antisymmetric under bra<->ket at odd Delta m_F. K = 0 stays
+    hermitian=True (Delta m_F = 0 only, so the antisymmetric part is moot);
+    K = 2 must be hermitian=False or heff.build_term_matrices raises.
+    """
+    import heff
+
+    assert REGISTRY_2G["two_photon_K0_dOm0"].hermitian is True
+    assert REGISTRY_2G["two_photon_K2_dOm0"].hermitian is False
+    assert REGISTRY_2G["two_photon_K2_dOm2"].hermitian is False
+
+    kets, ctx = setup_229(J_max=2)
+    d = len(kets)
+    devs = {}
+    for name, t in REGISTRY_2G.items():
+        M = np.zeros((d, d))
+        for i in range(d):
+            for j in range(d):
+                if not t.rules.allows(kets[i], kets[j]):
+                    continue
+                M[i, j] = t.fn(kets[i], kets[j], ctx)
+        devs[name] = float(np.max(np.abs(M - M.T)))
+    assert devs["two_photon_K0_dOm0"] == 0.0, devs
+    assert devs["two_photon_K2_dOm0"] > 0.1, devs
+    assert devs["two_photon_K2_dOm2"] > 0.1, devs
+
+    heff.build_term_matrices(kets, ctx, case="c2", registry=REGISTRY_2G)
+
 
 def test_no_two_photon_term_appears_in_a_hamiltonian_registry():
     """[SPEC-v2] S3.2: REGISTRY_2G is a THIRD registry precisely so a

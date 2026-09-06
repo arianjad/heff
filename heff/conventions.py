@@ -58,9 +58,14 @@ class Conventions:
                  two is an UNVERIFIED factor (a sqrt(2) and a sign are both
                  open) -- [HAM] S9.4, OPEN-17.
     two_photon_norm 'bc_5p142_reduced' -- alpha^K_{dOmega} multiplies the
-                 dimensionless geometry of B&C (5.142) with unit one-photon
-                 reduced elements, so a strength comes out in units of
-                 alpha^2. Recorded, not chosen.
+                 dimensionless geometry of B&C (5.142) at
+                 <eta'||alpha^K||eta> == 1 per (K, dOmega) channel -- the
+                 closure relation of [HAM] S9.5.1(1), sum_{j''}
+                 {1 1 K; j' j j''} <j||d||j''><j''||d||j'> =
+                 (-1)^(K+j+j') (2K+1)^-1/2 <j||T^K(d,d)||j'>, alpha^K =
+                 T^K(d,d)/Delta, living on the resolved side -- so a
+                 strength comes out in units of alpha^2. Recorded, not
+                 chosen.
     """
     n_hat: str = "F_to_Th"
     ef_rule: str = "brown1975"

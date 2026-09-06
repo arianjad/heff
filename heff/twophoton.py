@@ -49,17 +49,20 @@ S9.1's two-spectator chain with k -> K: the reduction is the two spectator 6j's
 {F1 F I_F; F' F1' K} and {J F1 I_Th; F1' J' K}, and BOTH are evaluated inside
 heff.elements_c2.axial_geometry -- this module writes no recoupling algebra of
 its own beyond the polarisation dyad. So the 6j patch site for a monkeypatched
-FAIL demonstration (Task 8) is `heff.elements_c2.w6j`, not `heff.twophoton.w6j`.
-The B&C (5.142) 6j {1 1 K; j' j j''} that a RESOLVED intermediate sum would
-carry is exactly what closure removes; it appears nowhere in this file, which is
-the whole content of the closure form. w3j is used here directly, for the
-Clebsch-Gordan coefficients of the dyad.
+FAIL demonstration (Task 8) is `heff.elements_c2.w6j` -- there is no
+`heff.twophoton.w6j` to patch. The B&C (5.142) 6j {1 1 K; j' j j''} that a
+RESOLVED intermediate sum would carry is exactly what closure removes; it
+appears nowhere in this file, which is the whole content of the closure form.
+w3j is used here directly, for the Clebsch-Gordan coefficients of the dyad.
 
 UNITS. The geometry is dimensionless. conventions.two_photon_norm =
 'bc_5p142_reduced': alpha^K_{dOmega} multiplies the geometry of B&C (5.142)
-with unit one-photon reduced elements, so an amplitude comes out in units of
-alpha and a strength in units of alpha^2. The alpha Params carry
-(MHz/(V/cm))^2/MHz and the two field amplitudes are the caller's, exactly as
+at <eta'||alpha^K||eta> == 1 per (K, dOmega) channel -- the closure relation
+of [HAM] S9.5.1(1), sum_{j''} {1 1 K; j' j j''} <j||d||j''><j''||d||j'> =
+(-1)^(K+j+j') (2K+1)^-1/2 <j||T^K(d,d)||j'>, alpha^K = T^K(d,d)/Delta, living
+on the resolved side -- so an amplitude comes out in units of alpha and a
+strength in units of alpha^2. The alpha Params carry (MHz/(V/cm))^2/MHz and
+the two field amplitudes are the caller's, exactly as
 heff.spectra.line_strengths leaves d_mf to the caller.
 
 VALIDITY, in the sentence [HAM] S9.5.5 writes for the notebook: the closure form
@@ -72,9 +75,7 @@ import numpy as np
 from .elements_c2 import axial_geometry
 from .spectra import _strengths_from_matrices
 from .terms import Rules, term
-from .wigner import w3j, w6j  # noqa: F401  (w6j: see the module docstring -- the
-# rank-K reduction's 6j work happens inside elements_c2.axial_geometry, and that
-# is the patch site; the name is imported here so the dependency is visible.)
+from .wigner import w3j
 
 REGISTRY_2G = {}
 
@@ -266,7 +267,11 @@ two_photon_K0_dOm0 = term(
 
 two_photon_K2_dOm0 = term(
     name="two_photon_K2_dOm0", param=("alpha_K2_dOm0",), cases=("c2",),
-    registry=REGISTRY_2G, hermitian=True, real=True,
+    # hermitian=False: fn evaluates at P = Delta m_F, and by reciprocity
+    # (M_P(a,b) = (-1)^P M_{-P}(b,a), test_rank_K_sum_rule_and_reciprocity)
+    # that object is antisymmetric at odd Delta m_F -- measured max|M-Mt| =
+    # 0.632 on the 229ThF+ J_max=2 basis (fix round 1, finding 1).
+    registry=REGISTRY_2G, hermitian=False, real=True,
     rules=Rules(dJ=_K2, dOm=(0.0,), dF1=_K2, dF=_K2, dmF=_K2),
     cite="The rank-2 channel at dOmega = 0. Selection rules as data, "
          "[HAM] S9.5.4: |dF| <= K and |dm_F| = |P| <= K from B&C (5.172)'s "
@@ -278,7 +283,9 @@ two_photon_K2_dOm0 = term(
 
 two_photon_K2_dOm2 = term(
     name="two_photon_K2_dOm2", param=("alpha_K2_dOm2",), cases=("c2",),
-    registry=REGISTRY_2G, hermitian=True, real=True,
+    # hermitian=False: same reciprocity argument as K2_dOm0 -- measured
+    # max|M-Mt| = 0.741 on the same basis (fix round 1, finding 1).
+    registry=REGISTRY_2G, hermitian=False, real=True,
     rules=Rules(dJ=_K2, dOm=(-2.0, 2.0), dF1=_K2, dF=_K2, dmF=_K2),
     cite="The |dOmega| = 2 channel, which exists at K = 2 ONLY: |q| = 2 needs "
          "K >= 2 and two E1 legs bound K <= 2 ([HAM] S9.5.2, verified there "
