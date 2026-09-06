@@ -56,7 +56,12 @@ def build_term_matrices(kets, ctx, *, case="c", registry=REGISTRY):
     """
     terms = terms_for_case(case, registry=registry)
     if not terms:
-        raise ValueError(f"no terms registered for case {case!r}; import heff.elements_c")
+        # Name the actual fix per case: the v2 two-spin terms live in their own
+        # registry and are NOT reachable by importing a module (importing
+        # heff.elements_c2 registers them into REGISTRY_C2, not the global one).
+        fix = ("pass registry=heff.elements_c2.REGISTRY_C2" if case == "c2"
+               else "import heff.elements_c")
+        raise ValueError(f"no terms registered for case {case!r}; {fix}")
     d = len(kets)
     # Refuse to block a Delta-m_F != 0 term into a single-m_F block (spec S3.1
     # "what could go wrong" (iv)): the rules mask would zero every element the

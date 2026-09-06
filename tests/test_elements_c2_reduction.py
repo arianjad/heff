@@ -25,7 +25,7 @@ from heff.assemble import build_term_matrices
 from heff.elements_c import dipole_geometry
 from heff.elements_c2 import REGISTRY_C2, axial_geometry
 from heff.params import thf_v1, thf_v2
-from heff.spec import ElecState, Spin, StateSpec, block_by_mF, enumerate_kets, thf_spec
+from heff.spec import Spin, StateSpec, block_by_mF, enumerate_kets, thf_spec
 from heff.terms import REGISTRY, ctx_from, terms_for_case
 
 # v2 name -> v1 name. The five delegating terms keep their v1 names; the four
@@ -248,6 +248,12 @@ def test_the_master_gate_catches_a_transposed_6j(monkeypatch, v1_setup, v2_setup
     break stark_z, zeeman_Gpar and hyperfine_A_par_F against their v1
     counterparts, and must leave rotation and centrifugal (which call no 6j)
     exact.
+
+    _dense is used rather than build_term_matrices only so the corruption is
+    read as a NUMBER: the masked (assembler) path fails identically -- the
+    corrupted elements all sit inside the declared selection rules, so the mask
+    never hides them -- but it raises the hermiticity check partway through
+    instead of reporting a deviation per term.
     """
     k1, c1 = v1_setup
     k2, c2 = v2_setup

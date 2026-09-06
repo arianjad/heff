@@ -150,7 +150,18 @@ def label_lines(kets, evecs, S, *, rule, ell, s):
     read off the identical `dom` index as J and F, not a separately-weighted
     group) and `"purity": float` -- |amplitude|^2 of that dominant component,
     i.e. how much of the eigenvector actually sits on the labelled (J, F1, F)
-    ket. A v1 `KET_C` basis (no `F1` field) gets neither key, so the returned
+    ket.
+
+    READ `purity` AGAINST 0.5, NOT 1.0, at zero field. A parity eigenstate of
+    this molecule is a +-Omega DOUBLET, (|+Om> +- |-Om>)/sqrt(2), and the two
+    halves are separate kets of the basis, so a perfectly clean, perfectly
+    assigned state has purity 0.5 exactly. Values near 0.5 mean a well-defined
+    (J, F1, F); values well below it mean the label is a dominant-component
+    assignment over a genuinely mixed state. Measured on the field-free m_F = 0
+    block at J_max = 3 (2026-09-06): 229ThF+ runs 0.496-0.500, i.e. at the
+    ceiling, while 227ThF+ runs 0.314-0.500 -- there the Th hyperfine is
+    comparable to the rotational spacing and J itself is not a good quantum
+    number ([HAM] S9.6). A v1 `KET_C` basis (no `F1` field) gets neither key, so the returned
     dict is unchanged from before this was added.
 
     Labels are recorded on the output for a caller to report; `line_strengths`

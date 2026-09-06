@@ -19,8 +19,12 @@ in the way and both are recorded in test_closure_fails_with_a_transposed_6j:
     "column-swapped" wrapper is a no-op. And [HAM] S9.1's own falsification
     (transpose the two UPPER entries) is structurally impossible in the
     two-spin basis: it pairs an integer with a half-integer angular momentum in
-    every triad, so every symbol vanishes and the operator is merely DEAD --
-    which V24's `max|T| > 0.1` catches first. The single parity-admissible
+    every triad, so heff.wigner.w6j REJECTS every one of them (it raises; it
+    does not return a zero). Read through a wrapper that catches the raise and
+    returns 0.0 -- which is what tests/test_elements_c2_reduction.py's own FAIL
+    demo does -- the operator is merely DEAD, which V24's `max|T| > 0.1`
+    catches first. Either way the corruption never reaches V27. The single
+    parity-admissible
     non-symmetry transposition of heff.elements_c2.axial_geometry's two
     spectator 6j's is exchanging the bra's and the ket's totals (argument slots
     2 and 4).
@@ -310,8 +314,9 @@ def test_closure_alpha_is_one_scalar_per_channel(fix):
     """[HAM] S9.5.2's channel structure, read off the closure alphas.
 
     alpha^K is the SAME number for Omega = +1 and Omega = -1 at K = 0 and
-    K = 2, and the same for q = +2 and q = -2 -- which is what entitles
-    heff.twophoton to carry one alpha per (K, |dOmega|) channel and what makes
+    K = 2, and the same for q = +2 and q = -2 -- which CORROBORATES (it does not
+    derive) heff.twophoton carrying one alpha per (K, |dOmega|) channel, and
+    makes
     [T, parity] = 0 (gate V24) true rather than assumed. At K = 1 the two
     Omega-diagonal values are OPPOSITE, an independent corroboration that a
     K = 1 term has no place in the parity-even registered set.
@@ -388,8 +393,10 @@ def test_K1_vanishes_when_the_manifold_is_complete(fix):
 
 # ------------------------------------------------------- FAIL demonstrations
 
-def _v24_v25_v26(mats=None):
-    """Re-run V24, V25 and V26's own assertions. Returns {name: True | reason}."""
+def _v24_v25_v26_v28(mats=None):
+    """Re-run V24, V25, V26 and V28's own assertions, so the header's claim
+    that V28 stays green under these patches is MEASURED and not asserted in
+    prose. Returns {name: True | reason}."""
     basis2 = V.setup_229(J_max=2)
     kets, ctx = basis2
     if mats is None:
@@ -401,7 +408,8 @@ def _v24_v25_v26(mats=None):
             (V.test_two_photon_operator_commutes_with_parity_at_zero_field,
              (basis2, mats)),
             (V.test_channel_reach, (basis2, mats)),
-            (V.test_rank_K_sum_rule_and_reciprocity, ())):
+            (V.test_rank_K_sum_rule_and_reciprocity, ()),
+            (V.test_amplitudes_are_summed_over_channels_then_squared, ())):
         try:
             fn(*args)
             out[fn.__name__] = True
@@ -423,9 +431,10 @@ def test_closure_fails_with_a_transposed_6j(fix, monkeypatch):
     changes nothing (asserted below). [HAM] S9.1's own falsification --
     transposing the two upper entries -- is not available here either: in the
     two-spin basis F1, F1' are half-integer and F, F' are integer, so that
-    swap puts an integer and a half-integer in the same triad and EVERY symbol
-    vanishes; the operator is then merely dead, which V24 catches on
-    `max|T| > 0.1` before V27 gets a say. The one parity-admissible
+    swap puts an integer and a half-integer in the same triad and w6j RAISES on
+    every symbol rather than returning one. Wrap the raise as 0.0 and the
+    operator is merely dead, which V24 catches on `max|T| > 0.1` before V27
+    gets a say. The one parity-admissible
     non-symmetry transposition is exchanging argument slots 2 and 4, i.e.
     using the bra's total where the ket's belongs:
     {F1 F I_F; F' F1' k} -> {F1 F' I_F; F F1' k}, and the same one level in
@@ -437,7 +446,11 @@ def test_closure_fails_with_a_transposed_6j(fix, monkeypatch):
     the one-photon chain, so V26 sees them. It is the (5.142) symbol that only
     V27 sees, and the next test is the demonstration for that.
     """
-    a = (1.5, 2.0, 0.5, 2.0, 1.5, 1.0)
+    # a NON-degenerate symbol: the swapped slots hold different values (1 <-> 2
+    # and 4 <-> 3), so the equality below is the 6j's column symmetry and not an
+    # identity of the arguments.
+    a = (1.0, 2.0, 3.0, 4.0, 3.0, 2.0)
+    assert a[0] != a[1] and a[3] != a[4] and w6j(*a) != 0.0
     assert w6j(a[1], a[0], a[2], a[4], a[3], a[5]) == w6j(*a)   # columns: no-op
 
     def transposed(j1, j2, j3, j4, j5, j6):
@@ -450,12 +463,13 @@ def test_closure_fails_with_a_transposed_6j(fix, monkeypatch):
             for n, e1, e2 in POLS}
     assert min(devs.values()) > 1e-3, devs
 
-    status = _v24_v25_v26()
-    print("\n  V24/V25/V26 under the transposed 6j:")
+    status = _v24_v25_v26_v28()
+    print("\n  V24/V25/V26/V28 under the transposed 6j:")
     for name, ok in status.items():
         print(f"    {name[:52]:54s} {'PASS' if ok is True else 'FAIL ' + ok}")
     assert status["test_two_photon_operator_commutes_with_parity_at_zero_field"] is True
     assert status["test_channel_reach"] is True
+    assert status["test_amplitudes_are_summed_over_channels_then_squared"] is True
     # the honest measurement: V26 is NOT blind to the spectator 6j's
     assert status["test_rank_K_sum_rule_and_reciprocity"] is not True
 
@@ -487,10 +501,10 @@ def test_closure_uniquely_catches_a_K_dependent_phase(fix, monkeypatch):
             for n, e1, e2 in POLS}
     assert min(devs.values()) > 1e-3, devs
 
-    status = _v24_v25_v26()
+    status = _v24_v25_v26_v28()
     print("\n  V27 deviation under the flipped K = 2 sign: "
           + "  ".join(f"{n} {d:.3e}" for n, d in devs.items()))
-    print("  V24/V25/V26 under the same patch: "
+    print("  V24/V25/V26/V28 under the same patch: "
           + "  ".join(f"{n[5:30]} {'PASS' if ok is True else 'FAIL'}"
                       for n, ok in status.items()))
     assert all(ok is True for ok in status.values()), status

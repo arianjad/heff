@@ -22,12 +22,11 @@ Controller rulings carried here (2026-09-05):
 import numpy as np
 import pytest
 
-from heff import elements_c2
 from heff.assemble import build_term_matrices, hamiltonian
 from heff.conventions import parity_operator
 from heff.elements_c2 import REGISTRY_C2, j_convergence
 from heff.engine import sweep
-from heff.params import Param, thf_v1, thf_v2
+from heff.params import Param, thf_v2
 from heff.spec import block_by_mF, enumerate_kets, thf_spec
 from heff.terms import check_selection_rules, ctx_from, terms_for_case
 
@@ -88,6 +87,14 @@ def test_V8_parity_commutes_at_zero_field_in_the_v2_basis():
         P = parity_operator(sub, S=ctx.S, ell=0.0, s=0.0)
         H0 = hamiltonian(tm, pset, {"E_z": 0.0, "B_z": 0.0})
         assert np.allclose(P @ P, np.eye(len(sub)))
+        # v1's V8 (tests/test_assemble.py) also asserts P's own spectrum is an
+        # even split, +1 and -1 in equal numbers -- the statement that the block
+        # really does carry both parities. Carried over here: an m_F block of
+        # the two-spin basis is built from +-Omega pairs just as v1's was, so a
+        # pairing bug that halved the -1 eigenvalues would leave [H, P] = 0
+        # while quietly making the parity label meaningless.
+        ev = np.linalg.eigvalsh(P)
+        assert sum(ev > 0) == sum(ev < 0) == len(sub) // 2, iso
         assert np.max(np.abs(H0 @ P - P @ H0)) < 1e-9, iso
         Hs = hamiltonian(tm, pset, {"E_z": 10.0, "B_z": 0.0})
         assert np.max(np.abs(Hs @ P - P @ Hs)) > 1.0, iso
@@ -117,14 +124,6 @@ def test_V9_kramers_degeneracy_at_zero_B_in_the_v2_basis():
         wa = np.linalg.eigvalsh(hamiltonian(up, pset, {"E_z": 25.0, "B_z": 1.0}))
         wb = np.linalg.eigvalsh(hamiltonian(dn, pset, {"E_z": 25.0, "B_z": 1.0}))
         assert np.max(np.abs(wa - wb)) > 1e-4, iso
-
-
-def _lowest_J1_shift(isotopologue, *, mF, n_levels, pset, two_spin):
-    """The lowest-n_levels shift between J_max = 1 and J_max = 4, via
-    j_convergence -- so V23 is a direct demonstration of the reporting
-    helper, not a parallel hand-rolled computation."""
-    report = j_convergence(isotopologue, J_maxes=(1, 4), mF=mF, n_levels=n_levels)
-    return report["by_J_max"][1]["max_shift_MHz"]
 
 
 def test_J_truncation_is_reported_and_the_report_is_non_vacuous():

@@ -14,7 +14,7 @@ from heff.assemble import build_term_matrices, hamiltonian
 from heff.elements_c import dipole_geometry
 from heff.elements_c2 import REGISTRY_C2, axial_geometry
 from heff.params import thf_v1, thf_v2
-from heff.spec import (ElecState, Spin, StateSpec, block_by_mF, enumerate_kets,
+from heff.spec import (Spin, StateSpec, block_by_mF, enumerate_kets,
                        thf_spec)
 from heff.spectra import dipole_matrix, label_lines, line_strengths
 from heff.terms import ctx_from
@@ -77,24 +77,28 @@ def test_B7_sum_rule_still_holds_in_the_two_spin_basis():
     over EVERY final state in the full basis, is exactly 1.0 (the closed
     form) and independent of which m_F sublevel of a given (J, F1, F) it is.
 
-    J = 1 is the only rung this J_max=2 truncation can close: it needs J' in
+    Run at J_max = 3 so that TWO rungs are closed, not one: J = 1 needs J' in
     {0, 1, 2} (J' = 0 does not exist in this Omega = 1 molecule, so effectively
-    {1, 2}, both present); J = 2 would need the truncated J' = 3 and is
-    deliberately excluded, exactly as v1 excluded its own top rung (J = 4 in
-    a J_max=4 basis) -- see test_J2_is_truncated_and_does_not_hit_1_0 below.
+    {1, 2}) and J = 2 needs {1, 2, 3} -- all present. Only the top rung J = 3 is
+    open, exactly as v1 excluded its own top rung (J = 4 in a J_max=4 basis);
+    test_J2_is_truncated_and_does_not_hit_1_0 below keeps the J_max = 2 basis
+    where J = 2 is the open rung, so the truncation boundary is still pinned.
+    Looping J = 2 matters because every Delta J = +-1 path out of it exists in
+    both directions, which J = 1 (no J = 0 partner) cannot test.
 
     Uniquely catches a recoupled dipole that lost its outer-spin (I_F) or
     Th-spectator (I_Th) 6j: either one breaks this exact identity, not merely
     a phase (test_spectra.py's B7b already isolates that case).
     """
-    spec = thf_spec("229", J_max=2)
+    spec = thf_spec("229", J_max=3)
     kets = enumerate_kets(spec)
     ctx = ctx_from(spec, thf_v2("229"))
 
-    for F1, F in ((1.5, 1.0), (1.5, 2.0), (2.5, 2.0)):
+    for J, F1, F in ((1, 1.5, 1.0), (1, 1.5, 2.0), (1, 2.5, 2.0),
+                     (2, 2.5, 2.0), (2, 3.5, 4.0), (2, 0.5, 1.0)):
         vals = []
         for mF in np.arange(-F, F + 0.5, 1.0):
-            sel = ((kets["J"] == 1) & (kets["F1"] == F1) & (kets["F"] == F)
+            sel = ((kets["J"] == J) & (kets["F1"] == F1) & (kets["F"] == F)
                   & (kets["mF"] == mF) & (kets["Om"] == 1.0))
             i = int(np.flatnonzero(sel)[0])
             tot = 0.0
@@ -102,9 +106,10 @@ def test_B7_sum_rule_still_holds_in_the_two_spin_basis():
                 row = dipole_matrix(kets[i:i + 1], kets, ctx, p, geometry=GEO)
                 tot += float(np.sum(np.abs(row) ** 2))
             vals.append(tot)
-        assert np.allclose(vals, vals[0], rtol=1e-10), f"F1={F1} F={F}: {vals}"
+        assert np.allclose(vals, vals[0], rtol=1e-10), f"J={J} F1={F1} F={F}: {vals}"
         assert vals[0] == pytest.approx(1.0, rel=1e-10), (
-            f"F1={F1} F={F}: sum rule = {vals[0]}, expected the closed form 1.0")
+            f"J={J} F1={F1} F={F}: sum rule = {vals[0]}, expected the closed "
+            f"form 1.0")
 
 
 def test_J2_is_truncated_and_does_not_hit_1_0():
@@ -218,9 +223,13 @@ def test_label_lines_v1_dict_is_unchanged_without_F1():
 
 def test_line_strengths_forwards_geometry_to_the_two_spin_basis():
     """`line_strengths` end to end with `geometry=` on a real two-spin block:
-    same shape/positivity contract as v1, non-vacuous, and its default
-    (`geometry=None`) differs from the v2 geometry on this basis (F1 field
-    present but the default formula never reads it)."""
+    same shape/positivity contract as v1, non-vacuous, and the default is not
+    merely different on this basis but INAPPLICABLE to it: `geometry=None`
+    keeps v1's `dipole_geometry`, which reads J, Omega, F and m_F but never
+    F1, so on the two-spin basis it feeds an INTEGER F where its 6j expects
+    J +- 1/2 and sympy rejects the triad. That is computed below (the raise is
+    asserted) rather than claimed in prose -- and it is why `geometry=` had to
+    be a keyword rather than a silently-tolerant default."""
     spec = thf_spec("229", J_max=2)
     kets = enumerate_kets(spec)
     ctx = ctx_from(spec, thf_v2("229"))
@@ -233,3 +242,6 @@ def test_line_strengths_forwards_geometry_to_the_two_spin_basis():
     assert freqs.shape == strengths.shape == (len(w), len(w))
     assert np.all(strengths >= 0.0)
     assert np.max(strengths) > 0.0
+
+    with pytest.raises(ValueError, match="triangle"):
+        line_strengths(w, v, sub, w, v, sub, ctx)
