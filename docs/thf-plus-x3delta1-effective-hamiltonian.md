@@ -889,6 +889,35 @@ Selection rules for all four: `ΔF₁ = 0`, `ΔF = 0`, `Δm_F = 0`, and the v1 �
 
 **Cross-check run** `[derived]`: at `I_Th = 5/2` the diagonal (9.50) coefficients over F₁ at J = 1 are `−1.7500, −0.5000, +1.2500`, reproducing [TH] §4.1 exactly.
 
+#### 9.2.1 The Th nuclear Zeeman: the one lab-frame Th operator
+
+The substitution rule above is a statement about **scalars**. `H = −g_N^Th μ_N T¹(I_Th)·T¹(B)` is not one: `T¹(B)` is a lab-frame constant, so what acts on the molecule is a lab-frame **rank-1** operator on the inner spin. B&C (5.176) does not apply, there is no v1 formula with `F → F₁` to reach for, and the element has to be built. It is the only Th term in the package with `ΔF₁ = 0, ±1` and `ΔF = 0, ±1`. `[derived]`
+
+Four cited steps, primes on the bra as everywhere in §9, `B ∥ ẑ` so `p = 0`:
+
+```
+<J,Om,F1',F',m'| T^1_0(I_Th) |J,Om,F1,F,m>
+  = (-1)^(F'-m') ( F'  1  F ; -m'  0  m )                                    <- B&C (5.172), PDF p.205 / book p.173
+  x (-1)^(F + F1' + 1 + I_F) sqrt((2F'+1)(2F+1)) { F1  F  I_F ;  F'  F1'  1 } <- B&C (5.174), I_F spectator, same pages
+  x (-1)^(F1' + J + I_Th + 1) sqrt((2F1'+1)(2F1+1)) { I_Th  F1'  J ;  F1  I_Th  1 }  <- B&C (5.175), J spectator, same pages
+  x sqrt(I_Th(I_Th+1)(2I_Th+1))                                              <- B&C (5.179), PDF p.206 / book p.174
+```
+
+Line 2 is **exactly** `axial_geometry`'s line 2 at `k = 1` (§9.1). Line 3 is **exactly** the recoupler `zeeman_nuclear_F` uses, with `(F₁, I_F) → (J, I_Th)`: `I_Th` is the *second* constituent of `F₁ = J + I_Th`, which is what makes (5.175) the right equation there and (5.174) the right one on the line above — the same "operator on the first vs the second constituent" distinction §9.1 turns on. The sign convention is v1's, `−g_N μ_N`.
+
+**Verification `[derived]`, because the bra-vs-ket `F₁` in line 3's phase is invisible to Hermiticity — the same trap §9.3 hit on the (5.173) phase.** `T¹_0(I_Th) = I_Th,z` was rebuilt in the fully decoupled `|J,m_J⟩|I_Th,m₁⟩|I_F,m₂⟩` basis at `J = 1, I_Th = 5/2, I_F = 1/2` (36 states), transformed to the coupled basis with two layers of Clebsch–Gordan coefficients — a route using neither (5.174) nor (5.175) — and compared element by element:
+
+```
+  CG unitarity                          max |U U^T - 1|          = 6.661e-16
+  zeeman_nuclear_Th  (bra F1 in line 3) max |formula - rebuild|  = 2.385e-18
+  zeeman_nuclear_F   (same fixture)     max |formula - rebuild|  = 2.711e-19
+  FAIL variant: ket F1 in line 3's phase
+                                        max |M - rebuild| / mu_N = 1.4967
+                                        max |M - M^T|            = 0.000e+00
+```
+
+**Line 3's phase carries the BRA's F₁.** The ket-F₁ variant is symmetric, so no Hermiticity, parity or A5 check can see it, and it is wrong by 1.5 μ_N on `ΔF₁ = ±1` elements. Note this is the *opposite* reading from §9.3's (5.173) phase, which carries the **ket**'s F₁ — the two equations are different equations, and neither convention transfers to the other. The gate is `tests/test_elements_c2_th.py::test_R13_th_nuclear_zeeman_matches_a_decoupled_basis_rebuild`.
+
 ---
 
 ### 9.3 The ¹⁹F operators, recoupled

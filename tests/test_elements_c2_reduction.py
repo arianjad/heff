@@ -51,7 +51,10 @@ V2_TO_V1 = {
 # one of them is identically zero at I_Th = 0 (asserted in
 # tests/test_elements_c2_th.py::test_every_th_term_vanishes_at_I_Th_zero),
 # which is why V16 is unaffected by their arrival.
-EXPECTED_NO_V1_COUNTERPART = set()
+EXPECTED_NO_V1_COUNTERPART = {
+    "hyperfine_A_par_Th", "hyperfine_A_par_Th_dJ1", "spin_rotation_cI_Th",
+    "zeeman_nuclear_Th", "quadrupole_eQq0_Th", "quadrupole_eQq2_Th",
+}
 
 
 def spec_with_I_Th_zero(J_max=4):

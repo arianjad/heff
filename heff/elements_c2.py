@@ -20,15 +20,20 @@ Registry: this module registers into REGISTRY_C2, NOT into heff.terms.REGISTRY.
 The v1 registry and heff/elements_c.py are untouched, so a v1 session behaves
 identically whether or not this module was imported.
 """
+from dataclasses import replace
+
 import numpy as np
 
-from .conventions import n_hat_sign
+from .conventions import a_par_th_sign, n_hat_sign
 from .elements_c import _ph, _same
 from .elements_c import (centrifugal as _v1_centrifugal,
+                         hyperfine_A_par as _v1_hyperfine_A_par,
+                         hyperfine_A_par_dJ1 as _v1_hyperfine_A_par_dJ1,
                          omega_doubling as _v1_omega_doubling,
                          pt_odd_edm as _v1_pt_odd_edm,
                          pt_odd_scalar_pseudoscalar as _v1_pt_odd_sps,
-                         rotation as _v1_rotation)
+                         rotation as _v1_rotation,
+                         spin_rotation_cI as _v1_spin_rotation_cI)
 from .terms import Rules, term
 from .wigner import w3j, w6j
 
@@ -383,3 +388,293 @@ def zeeman_Gpar(bra, ket, ctx):
     sign = 1.0 if ctx.conventions.zeeman_sign == "plus_Gpar" else -1.0
     return sign * ctx.mu_B * float(ket["Om"]) * axial_geometry(
         bra, ket, ctx, k=1, q=0, p=0)
+
+
+# --------------- the Th operators: S9.2's three scalars, then the S9.2.1 Zeeman
+
+def _inner_view(row):
+    """A KET_C2 row seen as the one-spin ket |J, Omega, I_Th, F1>.
+
+    A plain dict, because every v1 element reads its ket by field name and
+    nothing else: handing it F1 where it looks for F, and (through _inner_spin)
+    I_Th where it looks for ctx.I, IS the whole substitution [HAM] S9.2 licenses.
+    """
+    return {"J": row["J"], "Om": row["Om"], "F": row["F1"], "mF": row["mF"]}
+
+
+def _inner_spin(fn):
+    """Field adapter: run a v1 one-spin element on the INNER pair (J, I_Th, F1).
+
+    The mirror image of _delegate. _delegate keeps the v1 (J, Omega, F, m_F)
+    reading and only adds delta_{F1 F1'}; this one REPLACES the v1 (I, F) pair by
+    (I_Th, F1) and adds delta_{F F'} delta_{m_F m_F'}.
+
+    That is exactly B&C Eq. (5.176), PDF p.205 / book p.173 ([HAM] S9.2): a
+    scalar built from the rotational/electronic degrees of freedom and I_Th alone
+    acts on the INNER part j1 = F1 of |((J I_Th) F1, I_F) F, m_F>, so its element
+    is diagonal in F and m_F, independent of them and of I_F, and equal to the
+    one-spin element evaluated inside |J, Omega, I_Th, F1>. One indirection, and
+    NO NEW ALGEBRA is written for any term built through it -- [HAM] S9.2's
+    substitution table is the derivation, and it is why S9.3, not S9.2, is where
+    the v2 work was.
+    """
+    def wrapped(bra, ket, ctx):
+        if not _same(bra, ket, "F", "mF"):
+            return 0.0
+        I_Th, _ = _spins(ctx)
+        return fn(_inner_view(bra), _inner_view(ket), replace(ctx, I=I_Th))
+    wrapped.__name__ = f"{fn.__name__}_Th"
+    wrapped.__doc__ = (f"Inner-pair adapter over elements_c.{fn.__name__}: the "
+                       "v1 closed form with (I, F) -> (I_Th, F1). [HAM] S9.2.")
+    return wrapped
+
+
+def _with_a_par_th_sign(fn):
+    """Apply conventions.a_par_th_sign to a Th magnetic-hyperfine element.
+
+    [SPEC-v2] S4: the A_par_Th Param carries the MAGNITUDE and the flag carries
+    the sign, "applied by the element as a multiplier, exactly like n_hat_sign",
+    so a sign never lives in two places. Unlike n_hat this flag records which
+    CALCULATION is trusted (Skripnikov & Titov's A_par(229Th) < 0 over Denis's
+    +1833 MHz), not which convention the code works in -- [HAM] S9.4.3, OPEN-16.
+
+    LIVE TRAP, reported to the controller and not fixed here: thf_v2('227')'s
+    A_par_Th = +39821 MHz is a SIGNED Schmidt placeholder ([HAM] S9.6), so with
+    the default a_par_th_sign='negative' this multiplier flips it to -39821 --
+    the one case where the "magnitude in the Param" contract is not honoured by
+    the parameter set. 227Th's placeholder, not this adapter, is the thing to
+    change.
+    """
+    def wrapped(bra, ket, ctx):
+        return a_par_th_sign(ctx.conventions) * fn(bra, ket, ctx)
+    wrapped.__name__ = fn.__name__
+    wrapped.__doc__ = fn.__doc__
+    return wrapped
+
+
+hyperfine_A_par_Th = _term_c2(
+    name="hyperfine_A_par_Th", param=("A_par_Th",), rules=_DIAG,
+    hermitian=True, real=True,
+    cite="[HAM] S9.2 substitution table row 1: B&C Eq. (9.50) PDF p.636 / book "
+         "p.604 with I -> I_Th and F -> F1, A_par^Th [F1(F1+1) - J(J+1) - "
+         "I_Th(I_Th+1)] / [2 J(J+1)], times delta_{FF'} delta_{mm'}. Exact, not "
+         "approximate: B&C Eq. (5.176) PDF p.205 / book p.173 makes a scalar "
+         "built from the rotational degrees of freedom and I_Th alone diagonal "
+         "in F and m_F and independent of I_F. The body IS elements_c."
+         "hyperfine_A_par through the inner-pair adapter -- no new algebra. "
+         "Coefficients checked against [TH] S4.1 at J = 1-4 (gate V18) and "
+         "reproduced in [HAM] S9.2's own cross-check run. The A_par_Th Param "
+         "carries the magnitude; the sign is conventions.a_par_th_sign, default "
+         "'negative' ([HAM] S9.4.3, OPEN-16). [HAM] S9.2"
+)(_with_a_par_th_sign(_inner_spin(_v1_hyperfine_A_par)))
+
+hyperfine_A_par_Th_dJ1 = _term_c2(
+    name="hyperfine_A_par_Th_dJ1", param=("A_par_Th",),
+    rules=Rules(dJ=(-1, 1), dOm=(0.0,), dF1=(0,), dF=(0,), dmF=(0,)),
+    hermitian=True, real=True,
+    cite="[HAM] S9.2 substitution table row 2: B&C Eq. (9.51) PDF p.636 / book "
+         "p.604 with I -> I_Th and F -> F1, J the LARGER of the two and the "
+         "brace = A_par^Th / Omega; diagonal in F1, F, m_F by B&C Eq. (5.176) "
+         "PDF p.205 / book p.173. The body IS elements_c.hyperfine_A_par_dJ1 "
+         "through the inner-pair adapter -- no new algebra -- and that function "
+         "already excludes Delta J = 0 itself, so there is no double counting "
+         "against hyperfine_A_par_Th. NOT a small correction for Th: [TH] S4.2 "
+         "puts the J = 1 <-> 2 element at ~2 GHz with a ~135 MHz second-order "
+         "shift, five orders above the 19F analogue's ~2.6 kHz ([HAM] S2.5), so "
+         "the J truncation has to be re-tested. Sign from conventions."
+         "a_par_th_sign as for the Delta J = 0 partner. [HAM] S9.2"
+)(_with_a_par_th_sign(_inner_spin(_v1_hyperfine_A_par_dJ1)))
+
+spin_rotation_cI_Th = _term_c2(
+    name="spin_rotation_cI_Th", param=("c_I_Th",), rules=_DIAG,
+    hermitian=True, real=True,
+    cite="[HAM] S9.2 substitution table row 3: B&C Eq. (8.7) PDF p.410 / book "
+         "p.378, H_nsr = c_I T1(J).T1(I), with its coupled-basis element Eq. "
+         "(8.20) PDF p.414 / book p.382 read with I -> I_Th and F -> F1, "
+         "c_I^Th [F1(F1+1) - I_Th(I_Th+1) - J(J+1)] / 2; diagonal in F1, F, m_F "
+         "by B&C Eq. (5.176) PDF p.205 / book p.173. The body IS elements_c."
+         "spin_rotation_cI through the inner-pair adapter -- no new algebra. "
+         "c_I_Th has NO value in any source: [TH] S4.6 declines to pick one and "
+         "brackets it at ~1 kHz to ~1 MHz, so the Param is held at 0 (gap G3, "
+         "OPEN-19). [HAM] S9.2"
+)(_inner_spin(_v1_spin_rotation_cI))
+
+
+@_term_c2(name="zeeman_nuclear_Th", param=("g_N_Th", "B_z"),
+          rules=Rules(dJ=(0,), dOm=(0.0,), dF1=(-1, 0, 1), dF=(-1, 0, 1),
+                      dmF=(0,)),
+          hermitian=True, real=True,
+          cite="H = -g_N^Th mu_N T1(I_Th).T1(B), the ONE Th operator B&C Eq. "
+               "(5.176) does not cover: it is a LAB-frame rank-1 operator on "
+               "the inner spin, not a scalar, so [HAM] S9.2's substitution rule "
+               "does not apply and the element is a two-step recoupling written "
+               "out in [HAM] S9.2.1 -- B&C Eq. (5.172) PDF p.205 / book p.173 "
+               "in F and m_F; Eq. (5.174) same pages with I_F a spectator "
+               "(identical to axial_geometry's line 2 at k = 1); Eq. (5.175) "
+               "same pages with I_Th the SECOND constituent of F1 = J + I_Th "
+               "and J the spectator (zeeman_nuclear_F's recoupler with "
+               "(F1, I_F) -> (J, I_Th), i.e. elements_c.zeeman_nuclear's "
+               "structure); and Eq. (5.179) PDF p.206 / book p.174 for "
+               "<I_Th||T1(I_Th)||I_Th> = [I(I+1)(2I+1)]^(1/2). Same sign "
+               "convention as zeeman_nuclear_F, -g_N mu_N. Delta F1 = 0, +-1 "
+               "and Delta F = 0, +-1 from the two rank-1 6j triangles. Pinned "
+               "element by element against a decoupled-basis rebuild in "
+               "tests/test_elements_c2_th.py (controller ruling R13); the "
+               "bra/ket-F1 phase swap is invisible to Hermiticity and is caught "
+               "there. [HAM] S9.2.1, S2.8")
+def zeeman_nuclear_Th(bra, ket, ctx):
+    if not _same(bra, ket, "J", "Om", "mF"):
+        return 0.0
+    I_Th, I_F = _spins(ctx)
+    J = float(ket["J"])
+    G1, F1, m1 = float(ket["F1"]), float(ket["F"]), float(ket["mF"])
+    G2, F2, m2 = float(bra["F1"]), float(bra["F"]), float(bra["mF"])
+    six_F = w6j(G1, F1, I_F, F2, G2, 1)
+    if six_F == 0.0:
+        return 0.0
+    six_Th = w6j(I_Th, G2, J, G1, I_Th, 1)
+    if six_Th == 0.0:
+        return 0.0
+    line1 = _ph(F2 - m2) * w3j(F2, 1, F1, -m2, 0, m1)
+    line2 = (_ph(F1 + G2 + 1.0 + I_F)
+             * np.sqrt((2 * F2 + 1.0) * (2 * F1 + 1.0)) * six_F)
+    line3 = (_ph(G2 + J + I_Th + 1.0)
+             * np.sqrt((2 * G2 + 1.0) * (2 * G1 + 1.0)) * six_Th
+             * np.sqrt(I_Th * (I_Th + 1.0) * (2 * I_Th + 1.0)))
+    return -ctx.mu_N * line1 * line2 * line3
+
+
+# ------------------------------------------------------ the Th quadrupole
+
+# The explicit -1 that encodes conventions.quadrupole_convention =
+# 'bc_q0_is_negative_efg'. B&C (9.52) prints the prefactor -(1/2) eQ
+# <T2_q(grad E)>; their constant is defined by "q0 is the negative of the
+# electric field gradient", i.e. eq_qQ = -2 eQ <T2_q(grad E)> ([HAM] S9.4.1,
+# read off by comparing (9.52) at q = 0 with (9.53)). Read with the OPPOSITE
+# convention (q0 = +EFG) the element would be -eq_qQ/4; B&C's convention turns
+# that into +eq_qQ/4, and this factor is that turn, written out instead of
+# folded into a +1/4 literal. Drop it and every quadrupole splitting flips
+# sign: gate V20's uniform ratio of -1 against the textbook Casimir function
+# becomes +1 ([HAM] S9.4.2, [TH] S3.4).
+_Q0_IS_NEGATIVE_EFG = -1.0
+
+
+def _quadrupole_body(bra, ket, ctx, q):
+    """B&C Eq. (9.52) at molecule-frame component q, in units of the constant.
+
+    [HAM] S9.4.1, copied with the primes moved onto the bra so that q =
+    Om_bra - Om_ket as everywhere else in S9, and with I -> I_Th, F -> F1 (S9.2,
+    B&C Eq. (5.176)):
+
+      <J',Om',F1',F',m'| H_Q |J,Om,F1,F,m>
+        = (e q_q Q / 4) (-1)^(J + I_Th + F1' + J' - Om')                <- (9.53) phase
+          x sqrt((2J'+1)(2J+1)) { J  I_Th  F1' ;  I_Th  J'  2 }
+          x ( J'  2  J ;  -Om'  q  Om )
+          x ( I_Th  2  I_Th ;  -I_Th  0  I_Th )^(-1)
+          x delta_{F1 F1'} delta_{F F'} delta_{m m'}
+
+    (primes = bra throughout, so B&C's own unprimed labels are the bra's here).
+    Returns the geometry in units of eq_qQ; the caller's `param` supplies the
+    constant. Delta J = 0, +-1, +-2 and q = Om_bra - Om_ket, both read straight
+    off the (J' 2 J) 3j -- B&C say so themselves in the sentence under (9.53).
+
+    THE I < 1 GUARD IS PHYSICS, NOT DEFENSIVE CODING ([HAM] S9.4.1, [TH] S1.4).
+    A nucleus with I < 1 has no quadrupole moment at all: the moment is the
+    rank-2 element <I||T2(Q)||I>, which needs the triangle (I, 2, I), so eQ = 0
+    and H_Q = 0 identically. The (I 2 I; -I 0 I) in the DENOMINATOR vanishes on
+    that same triangle, so the printed expression at I <= 1/2 is 0/0 -- singular,
+    not zero -- and a literal transcription divides by zero. Reading the
+    vanishing denominator as the reason for the vanishing element is backwards.
+    So 227ThF+ (I_Th = 1/2) has no Th quadrupole, exactly as 19F has none
+    ([HAM] S2.11), and 232ThF+ has none because I_Th = 0. Gate V21.
+    """
+    if not _same(bra, ket, "F1", "F", "mF"):
+        return 0.0
+    I_Th, _ = _spins(ctx)
+    if I_Th < 1.0:
+        return 0.0
+    J1, Om1 = float(ket["J"]), float(ket["Om"])
+    J2, Om2 = float(bra["J"]), float(bra["Om"])
+    if abs(Om2 - Om1 - float(q)) > 1e-9:
+        return 0.0
+    G = float(ket["F1"])
+    den = w3j(I_Th, 2, I_Th, -I_Th, 0, I_Th)
+    return (_Q0_IS_NEGATIVE_EFG * -0.25
+            * _ph(J1 + I_Th + G + J2 - Om2)
+            * np.sqrt((2 * J2 + 1.0) * (2 * J1 + 1.0))
+            * w6j(J1, I_Th, G, I_Th, J2, 2)
+            * w3j(J2, 2, J1, -Om2, float(q), Om1) / den)
+
+
+@_term_c2(name="quadrupole_eQq0_Th", param=("eQq0_Th",),
+          rules=Rules(dJ=(-2, -1, 0, 1, 2), dOm=(0.0,), dF1=(0,), dF=(0,),
+                      dmF=(0,)),
+          hermitian=True, real=True,
+          cite="B&C Eq. (9.53) PDF p.637 / book p.605, the q = 0 specialisation "
+               "of (9.52), with I -> I_Th and F -> F1 ([HAM] S9.2, B&C Eq. "
+               "(5.176) PDF p.205 / book p.173) -- see _quadrupole_body for the "
+               "transcription. Delta J = 0, +-1, +-2 (B&C's own sentence under "
+               "(9.53)), Delta Omega = 0, Delta F1 = Delta F = Delta m_F = 0. "
+               "The explicit -1 of conventions.quadrupole_convention = "
+               "'bc_q0_is_negative_efg' is in _quadrupole_body: at Omega = 0, "
+               "J' = J this element is MINUS the textbook Casimir function, "
+               "uniformly, which is B&C's stated q0 sign ([HAM] S9.4.2, [TH] "
+               "S3.4, gate V20). Third source for the same rank-2 case-(c) "
+               "skeleton: Skripnikov, Petrov, Titov & Flambaum arXiv:1408.5368 "
+               "Eq. (5). eQq0_Th has no published ThF+ value at all -- the "
+               "-2600(1000) MHz Param is an HfF+ anchor estimate ([TH] S4.3, "
+               "gap G2). [HAM] S9.4.1")
+def quadrupole_eQq0_Th(bra, ket, ctx):
+    return _quadrupole_body(bra, ket, ctx, 0.0)
+
+
+@_term_c2(name="quadrupole_eQq2_Th", param=("eQq2_Th",),
+          rules=Rules(dJ=(-2, -1, 0, 1, 2), dOm=(-2.0, 2.0), dF1=(0,), dF=(0,),
+                      dmF=(0,)),
+          hermitian=True, real=True,
+          cite="B&C Eq. (9.52) PDF p.636 / book p.604 at q = Om_bra - Om_ket = "
+               "-+2, with I -> I_Th and F -> F1 ([HAM] S9.2, B&C Eq. (5.176)). "
+               "Inside the Omega = +-1 block of 3Delta1 this is the Omega = +1 "
+               "<-> Omega = -1 element: parity-EVEN, Delta F1 = Delta F = "
+               "Delta m_F = 0, Delta J = 0, +-1, +-2, sitting in the same matrix "
+               "position as omega_doubling with a different (J, F1) law -- which "
+               "is what gate V22 discriminates. At [TH] S4.4's ~200-400 MHz it "
+               "would be 13-30x the Omega-doubling operator and would set the "
+               "parity-doublet structure of 229ThF+, the behaviour Petrov 2018 "
+               "SV reports in 177HfF+. "
+               "NORMALISATION, OPEN-17: this computes in B&C (9.52)'s own "
+               "q = +-2 normalisation, where the constant is eq2Q = -2 eQ "
+               "<eta,Lam|T2_(+-2)(grad E)|eta,Lam'> -- [HAM] S9.4.4's [derived] "
+               "extension of B&C's own eq0Q definition, since B&C print no "
+               "eq2Q. That is conventions.eqq2_norm = 'bc_9p52_q2', the only "
+               "implemented value. The bridge to Petrov 2018 Eq. (23) is NOT "
+               "resolved: an unresolved sqrt(2) (whether Petrov's sqrt(2 pi/5) "
+               "is intended or is a typo for sqrt(4 pi/5) = C^2_q) and an "
+               "unresolved sign leave two candidate factors, -1/sqrt(3) and "
+               "-1/sqrt(6), that the printed equations do not discriminate, so "
+               "'petrov2018_eq23' raises rather than guessing a branch. What IS "
+               "pinned is the RELATIVE bridge: a Petrov-style eQq0 entered into "
+               "(9.53) as-is requires eQq2/sqrt(6) entered here. [HAM] S9.4.4")
+def quadrupole_eQq2_Th(bra, ket, ctx):
+    norm = ctx.conventions.eqq2_norm
+    if norm != "bc_9p52_q2":
+        raise NotImplementedError(
+            f"eqq2_norm={norm!r} is not implemented: OPEN-17, the eQq2 "
+            "normalisation bridge between B&C Eq. (9.52) at q = +-2 and Petrov "
+            "2018 PRA 98 042502 Eq. (23), is NOT resolved. An unresolved "
+            "sqrt(2) (is the sqrt(2 pi/5) of Petrov's Eqs. (19), (22), (23) "
+            "intended, or a typo for sqrt(4 pi/5) = Racah's C^2_q?) and an "
+            "unresolved sign leave two candidate factors, -1/sqrt(3) and "
+            "-1/sqrt(6); the printed equations do not discriminate and "
+            "[HAM] S9.4.4's probe of Petrov's own Eq. (24) prefactor was "
+            "inconclusive. A guessed factor is a stop-work condition. Use "
+            "eqq2_norm='bc_9p52_q2' and read eQq2_Th as B&C's eq2Q, or supply "
+            "the answer to either question in [HAM] S9.4.4's OPEN-17.")
+    q = float(bra["Om"]) - float(ket["Om"])
+    # |q| = 2 ONLY: at Delta Omega = 0 the same body is the eQq0 element, and
+    # returning it here would double-count it under the wrong constant (and put
+    # non-zero elements outside this term's declared Delta Omega = +-2, which is
+    # what gate A5 measures).
+    if abs(q) != 2.0:
+        return 0.0
+    return _quadrupole_body(bra, ket, ctx, q)
