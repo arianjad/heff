@@ -362,6 +362,13 @@ same way `'MHz/(V/cm)'` and `'MHz/(e cm)'` already work.
 are `thf_v1()`'s, plus the Th knobs at zero, plus the two-photon α's — and a gate requires
 `thf_v2('232')` and `thf_v1()` to agree on every v1 symbol.
 
+For 229/227, the shared measured/derived constants are unscaled transfers from
+232ThF+, not measurements of the selected isotope. They retain their numerical
+values but carry `status="estimate"` and no target-isotope uncertainty; the source
+measurement uncertainty is retained in the note. In particular B0 should change
+with reduced mass (B&C Eq.7.199), so these transfers are not precision isotope
+predictions. See the 2026-09-08 parameter estimate audit.
+
 ### 5.2 ²²⁹Th¹⁹F⁺ (I_Th = 5/2)
 
 | symbol | value | unit | uncert. | status | source / note |

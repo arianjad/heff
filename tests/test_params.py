@@ -185,3 +185,15 @@ def test_thf_v2_229_a_par_th_sign_keyword_selects_the_trusted_calculation():
         pytest.approx(39821, abs=1)
     with pytest.raises(ValueError, match="a_par_th_sign"):
         thf_v2("229", a_par_th_sign="sideways")
+
+
+def test_odd_thorium_transfers_do_not_claim_target_isotope_measurements():
+    # A source-isotope error bar cannot be used as a transfer error bar.
+    for isotope in ('229', '227'):
+        ps = thf_v2(isotope)
+        for name in ('B0', 'D0', 'omega_ef', 'A_par', 'd_mf', 'G_par'):
+            p = ps.params[name]
+            assert p.status == 'estimate'
+            assert p.uncertainty is None
+            assert p.value == thf_v1().params[name].value
+            assert p.isotopologue == isotope + 'Th19F+'

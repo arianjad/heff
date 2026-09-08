@@ -259,7 +259,7 @@ So this term shifts J = 1 F = 3/2 by −2.6 kHz relative to F = 1/2, changing th
 
 **Estimate `[estimate, method: empirical ¹⁹F anchor + linear-in-B scaling]`.** No ThF⁺ value exists in any source read. B&C Table 8.12 (PDF p. 513 / book p. 481) gives the ¹⁹F spin–rotation constant in **CsF X¹Σ⁺**: `c₂ = 15.1 kHz at B_v = 0.183782 cm⁻¹` (v = 0; 15.0 at v = 1, 14.7 at v = 2). CsF is the closest available analogue: an essentially ionic heavy-metal fluoride, F⁻-like, with a rotational constant within 35 % of ThF⁺'s. The rotational magnetic field at the nucleus scales with the rotation rate, so scaling linearly in B:
 
-`c_I(ThF⁺) ≈ 15.1 kHz × (0.242646 / 0.183782) ≈ 20 kHz`, **assign 20 kHz with a factor-of-3 uncertainty** (the electronic/paramagnetic part of c_I is the dominant and the least transferable piece; B&C p. 453 notes it "contains both first- and second-order parts which are opposite in sign"). ThF⁺ is also open-shell, which CsF is not.
+`c_I(ThF⁺) ≈ 15.1 kHz × (0.242646 / 0.183782) = 19.94 kHz`. Keep 20 kHz as an order-of-magnitude sensitivity value. The CsF anchor and arithmetic are verified, but neither the ThF⁺ sign nor a factor-of-three uncertainty bound is established by this analogy. B&C printed p.421 / PDF p.453 discusses opposite-sign first- and second-order contributions; its Table 8.12 is printed p.481 / PDF p.513. CsF is closed-shell and ThF⁺ is open-shell. A molecule-specific calculation or fit is needed for a quantitative uncertainty.
 
 **Sizes at c_I = 20 kHz** `[derived]`: hyperfine splitting contribution `c_I(2J+1)/2` = 30, 50, 70, 90 kHz for J = 1, 2, 3, 4; largest single-eigenvalue shift over J ≤ 4 is 50 kHz (numerically confirmed).
 
@@ -502,7 +502,7 @@ Isotopologue ²³²Th¹⁹F⁺, X ³Δ₁, v = 0 throughout. Conversion factors 
 | E_eff (JILA adopts) | ≈ 35 | GV/cm | — | Ng thesis Eq. C.8 discussion p. 322 | ab initio |
 | W_{T,P} | 50 (±7 %) | kHz | shift = W_{T,P} k_{T,P} | Skripnikov & Titov 2015 Table II p. 8 | ab initio |
 | W_{T,P} | 48.4 | kHz | — | Denis 2015 abstract | ab initio |
-| **c_I (¹⁹F spin–rotation)** | ~20 (factor 3) | kHz | splitting c_I(2J+1)/2 = 30–90 kHz for J = 1–4 | `[estimate, method: B&C Table 8.12 PDF p.513 gives c₂(¹⁹F, CsF) = 15.1 kHz at B_v = 0.183782 cm⁻¹; scaled linearly in B to ThF⁺]` | **estimate** |
+| **c_I (¹⁹F spin–rotation)** | ~20 (unquantified transfer uncertainty) | kHz | splitting c_I(2J+1)/2 = 30–90 kHz for J = 1–4 | `[estimate, method: B&C Table 8.12 PDF p.513 gives c₂(¹⁹F, CsF) = 15.1 kHz at B_v = 0.183782 cm⁻¹; scaled linearly in B to ThF⁺]` | **estimate** |
 | **g_r (rotational)** | ~0.47 μ_N = 2.6 × 10⁻⁴ μ_B (floor) | — | contributes −g_r/3 = −8.5 × 10⁻⁵ to g_{J=1,F=3/2} | `[estimate, method: rigid-rotor nuclear-charge term g_r^nuc = m_p(Z_Th m_F² + Z_F m_Th²)/(M m_Th m_F); electronic part omitted]` | **estimate** |
 | **e_Δ (hyperfine Ω-doubling)** | ~4 kHz (order of magnitude) | kHz | ω_ef acquires an F dependence of order 1–10 kHz | `[estimate, method: e_Δ/õ_Δ ~ A∥/B₀ = 2.8 × 10⁻³ applied to õ_Δ = ω_ef/4]` | **estimate** |
 | A (³Δ spin–orbit) | ≈ 787.5 | cm⁻¹ | — | `[derived]` from T₀(³Δ₂)−T₀(³Δ₁) = 1052.5 and T₀(³Δ₃)−T₀(³Δ₂) = 2097.5 (Gresh 2016 Table 2) with E = 2AΣ + (2/3)λ(3Σ²−S²) | derived, T2 only |
@@ -635,7 +635,7 @@ Explicitly **not** a check: any comparison to a stored spectrum for one paramete
 
 **OPEN-5 — the microscopic ¹⁹F hyperfine constants a, b_F, c.** Only the combination `A∥ = 2a − b_F − (2/3)c` is known. No source read gives them separately for ThF⁺, and no ab initio calculation of them exists. This matters only if you ever want the perpendicular/d-type hyperfine or the ΔΩ = ±1 elements; for the Ω = ±1 block A∥ is sufficient.
 
-**OPEN-6 — c_I, and the A∥ bias it implies.** My estimate is ~20 kHz with a factor-3 uncertainty, from CsF. Two questions: (a) do you want c_I as a free knob (my recommendation) or fixed at 0 to match Ng? (b) Should the parameter table carry the caveat that Ng's `A∥ = −20.1(1) MHz` may absorb `2c_I`–`6c_I` ≈ 40–120 kHz, comparable to its own error bar? An ab initio c_I from L. Cheng or the Skripnikov group would settle it; it is a much easier calculation than G∥.
+**OPEN-6 — c_I and bias in A∥.** The 20 kHz default is a CsF-scaled sensitivity estimate with unquantified uncertainty and unestablished sign. A molecule-specific calculation or a joint hyperfine/spin-rotation fit is needed. The existing A∥ fit omitted c_I, so its stated error is not a bound on the effect of adding this term; the algebraic 2c_I–6c_I bias examples above remain sensitivity calculations, not a statistical limit extracted from the experimental covariance.
 
 **OPEN-7 — g_r.** Not measured, not computed, absorbed into the fitted G∥. My rigid-rotor nuclear-charge estimate (0.47 μ_N) is a floor: the electronic part has the opposite sign and in a heavy molecule can dominate. Consequence: predicted g-factors at J = 2, 3, 4 carry an unquantified ~1 % error. Ng 2022 flags this as worth computing.
 

@@ -162,7 +162,12 @@ def thf_v1():
         "c_I": P(20.0, "kHz", status="estimate",
                  source="[HAM] S2.6: B&C Table 8.12 c2(19F, CsF) = 15.1 kHz at "
                         "B_v = 0.183782 cm-1, scaled linearly in B",
-                 note="factor-of-3 uncertainty; ThF+ is open-shell, CsF is not"),
+                 note="Order-of-magnitude analogy only. The 15.1 kHz CsF anchor gives "
+                      "19.94 kHz after B scaling; neither the ThF+ sign nor a "
+                      "factor-of-three error bound is established. CsF is closed-shell; "
+                      "ThF+ is open-shell. B&C printed p.421/PDF p.453 discusses "
+                      "opposite-sign first/second-order contributions. Sweep this "
+                      "parameter rather than treating 20 kHz as a precision prediction"),
         "d_mf": P(3.37, "D", uncertainty=0.09, status="measured",
                   convention="center_of_mass",
                   source="Ng 2022 Table I p.5",
@@ -205,7 +210,9 @@ def thf_v2(isotopologue, *, a_par_th_sign="negative"):
 
     `isotopologue` is one of '232' | '229' | '227'. Every isotopologue
     carries thf_v1()'s shared 19F/rotational/Stark/EDM knobs unchanged (S5.1)
-    plus the two-photon alphas (S5.4); '232' is spin-0 so its Th knobs are
+    plus the two-photon alphas (S5.4). For odd isotopes the transferred
+    measured/derived inputs are marked estimates with unquantified transfer
+    uncertainty (the source-isotope error bars remain in their notes); '232' is spin-0 so its Th knobs are
     held at zero (a gate requires thf_v2('232') to agree with thf_v1() on
     every v1 symbol); '229' and '227' add the isotope-specific Th hyperfine/
     quadrupole knobs. eQq0_Th/eQq2_Th are STRUCTURALLY ABSENT for 227ThF+
@@ -351,5 +358,16 @@ def thf_v2(isotopologue, *, a_par_th_sign="negative"):
             # not zero-valued ([SPEC-v2] S5.3, [TH] S1.4).
         }
 
-    params = {**thf_v1().params, **th, **two_photon}
+    shared = dict(thf_v1().params)
+    if isotopologue != "232":
+        for name in ("B0", "D0", "omega_ef", "A_par", "d_mf", "G_par"):
+            p = shared[name]
+            note = (f"Transferred unchanged from 232Th19F+ to {isotopologue}Th19F+; "
+                    "not measured for the target isotope and not mass-scaled. "
+                    f"Source-isotope uncertainty: {p.uncertainty} {p.unit}; "
+                    "target-isotope transfer uncertainty is unquantified. "
+                    + (p.note or ""))
+            shared[name] = replace(p, status="estimate", uncertainty=None,
+                                   isotopologue=f"{isotopologue}Th19F+", note=note)
+    params = {**shared, **th, **two_photon}
     return ParamSet(params, Conventions(version="thf-v2"))

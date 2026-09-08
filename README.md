@@ -43,7 +43,9 @@ print(model.describe())  # includes parameter status and provenance
 
 The default remains `232Th19F`. The odd-thorium models use the existing
 `case_c2` operators in the order `J + I_Th = F1`, `F1 + I_F = F`.
-Their TOML records preserve the native `thf_v2` values and metadata: 229Th
+Their TOML records preserve the native `thf_v2` values and metadata. Shared
+232Th constants transferred to an odd isotope are labeled estimates with
+unquantified transfer uncertainty; source measurement errors remain in notes: 229Th
 includes estimated quadrupole constants and an unresolved hyperfine-sign choice;
 227Th uses the existing explicitly labeled moment/hyperfine placeholders.
 The 227Th model omits nuclear quadrupole terms. These are the existing model
