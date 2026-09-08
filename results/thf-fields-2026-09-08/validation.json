@@ -1,0 +1,50 @@
+[
+  {
+    "isotope": "232",
+    "states": 60,
+    "max_cutoff_error_Hz": 0.013722456060349941,
+    "min_zero_J_weight": 0.999999910523759,
+    "min_tracking_overlap": 0.984195765299456,
+    "stark_10kV_cm_range_GHz": [
+      -9.705845941529692,
+      6.708566517238261
+    ],
+    "zeeman_100G_range_MHz": [
+      -3.1288374589857995,
+      3.1283805974180723
+    ],
+    "time_reversal_error_MHz": 6.402842700481415e-10
+  },
+  {
+    "isotope": "229",
+    "states": 360,
+    "max_cutoff_error_Hz": 0.09612995199859142,
+    "min_zero_J_weight": 0.9935192382996713,
+    "min_tracking_overlap": 0.9005995609670248,
+    "stark_10kV_cm_range_GHz": [
+      -10.157500596249413,
+      7.50476370255992
+    ],
+    "zeeman_100G_range_MHz": [
+      -3.5453963771251438,
+      3.5799856971862027
+    ],
+    "time_reversal_error_MHz": 9.313225746154785e-10
+  },
+  {
+    "isotope": "227",
+    "states": 120,
+    "max_cutoff_error_Hz": 0.020081643015146255,
+    "min_zero_J_weight": 0.9992397553776673,
+    "min_tracking_overlap": 0.9120169022849945,
+    "stark_10kV_cm_range_GHz": [
+      -9.582431290852753,
+      6.500774531204401
+    ],
+    "zeeman_100G_range_MHz": [
+      -3.071148472596178,
+      3.070677685243936
+    ],
+    "time_reversal_error_MHz": 1.1641532182693481e-09
+  }
+]

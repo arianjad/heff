@@ -7,8 +7,8 @@ from pathlib import Path
 import sys
 import json
 import argparse
+import csv
 from dataclasses import asdict, replace
-import time
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -18,6 +18,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.backends.backend_pdf import PdfPages
 
 from heff import load_model, parity_operator
 from heff.assemble import build_term_matrices, hamiltonian
@@ -86,41 +87,59 @@ def labels(k, v):
     return js, weights.max(axis=0), fs
 
 
-def track(h0, op, grid, initial=None):
+def track(h0, op, grid, selected, initial=None):
     """Exact eigenvalues, stepwise character continuation (not dynamical adiabaticity)."""
     w0, v0 = np.linalg.eigh(h0) if initial is None else initial
     energies = [w0]
     prev = v0
     worst = np.ones(len(w0))
-    final = prev
-    for x in grid[1:]:
+    probes = set(grid[::32]) | {0., 10., 100., 1000., 5000., 10000.}
+    snapshots = {0.: (w0[selected], v0[:, selected])}
+    refinements = 0
+
+    def advance(x0, reference, x, depth=0):
+        nonlocal refinements, worst
         w, v = np.linalg.eigh(h0 + x * op)
-        overlap = abs(prev.conj().T @ v)**2
+        overlap = abs(reference.conj().T @ v)**2
         _, idx = linear_sum_assignment(-overlap)
-        worst = np.minimum(worst, overlap[np.arange(len(idx)), idx])
-        energies.append(w[idx])
-        prev = v[:, idx]
-        final = prev
-    return np.array(energies), final, worst
+        fidelity = overlap[np.arange(len(idx)), idx]
+        if np.min(fidelity[selected]) < .90 and depth < 16:
+            refinements += 1
+            mid = (x0+x)/2
+            _, vm = advance(x0, reference, mid, depth+1)
+            return advance(mid, vm, x, depth+1)
+        if np.min(fidelity[selected]) < .85:
+            raise RuntimeError(f"Unresolved state tracking at E={x:g} V/cm")
+        worst = np.minimum(worst, fidelity)
+        return w[idx], v[:, idx]
+
+    for x0, x in zip(grid[:-1], grid[1:]):
+        w, prev = advance(x0, prev, x)
+        energies.append(w)
+        if x in probes:
+            snapshots[float(x)] = (w[selected], prev[:, selected])
+    return np.array(energies), prev, worst, snapshots, refinements
 
 
-def convergence(k, h0, he, hb, target_vectors, target_energies, egrid):
+def convergence(k, h0, he, hb, target_vectors, snapshots):
     """Overlap-match embedded J<=7 states to the J<=8 plotted subspace."""
     mask = k["J"] <= 7
     low = np.flatnonzero(mask)
     max_error = 0.
     min_overlap = 1.
-    for e, b in [(0, 0), (10, 0), (100, 0), (1000, 0), (5000, 0), (10000, 0),
-                 (0, 1), (0, 10), (0, 100)]:
+    for e, b in [(e, 0) for e in sorted(snapshots)] + [(0, 1), (0, 10), (0, 100)]:
         h = h0 + e * he + b * hb
-        w, v = np.linalg.eigh(h)
-        # Match the zero-field selected subspace as a whole; include every J1-3 state.
         n = target_vectors.shape[1]
-        _, high_idx = linear_sum_assignment(-abs(target_vectors.conj().T @ v)**2)
+        if b == 0:
+            wt, vt = snapshots[e]
+        else:
+            w, v = np.linalg.eigh(h)
+            _, high_idx = linear_sum_assignment(-abs(target_vectors.conj().T @ v)**2)
+            wt, vt = w[high_idx], v[:, high_idx]
         ws, vs = np.linalg.eigh(h[np.ix_(low, low)])
-        ov = abs(v[low][:, high_idx].conj().T @ vs)**2
+        ov = abs(vt[low].conj().T @ vs)**2
         _, idx = linear_sum_assignment(-ov)
-        max_error = max(max_error, float(np.max(abs(w[high_idx] - ws[idx]))))
+        max_error = max(max_error, float(np.max(abs(wt - ws[idx]))))
         min_overlap = min(min_overlap, float(np.min(ov[np.arange(n), idx])))
     return max_error, min_overlap
 
@@ -147,13 +166,15 @@ def run_case(iso, scenario="baseline", jmax=8):
         js, weight, fs = labels(k, v0)
         ix = np.flatnonzero(js <= 3)
         assert len(ix) == np.sum(k["J"] <= 3), "Parent subspace is ambiguous"
-        es, ve, overlap = track(h0, he, EGRID, (w0, v0))
-        err, conv_overlap = convergence(k, h0, he, hb, v0[:, ix], w0[ix], EGRID)
+        es, ve, overlap, snapshots, refinements = track(h0, he, EGRID, ix, (w0, v0))
+        err, conv_overlap = convergence(k, h0, he, hb, v0[:, ix], snapshots)
         assert err < .001, f"J cutoff error {err} MHz exceeds the 1 kHz plot target"
         info = dict(mF=float(m), dimension=len(k), parents=len(ix),
                     min_zero_J_weight=float(weight[ix].min()),
                     min_stark_step_overlap=float(overlap[ix].min()),
-                    max_J7_to_J8_error_MHz=err, min_cutoff_overlap=conv_overlap)
+                    max_J7_to_J8_error_MHz=err, min_cutoff_overlap=conv_overlap,
+                    adaptive_tracking_bisections=refinements,
+                    convergence_E_V_cm=sorted(snapshots), convergence_B_G=[0, 1, 10, 100])
         rec["blocks"].append(info)
         key = f"m{m:g}"
         dataset[key+"_stark_MHz"] = es[:, ix]
@@ -201,7 +222,7 @@ def run_case(iso, scenario="baseline", jmax=8):
     return dataset, rec
 
 
-def draw_case(data, rec):
+def draw_case(data, rec, combined=None):
     iso = rec["isotope"]
     plt.rcParams.update({"font.size": 10, "axes.spines.top": False, "axes.spines.right": False,
                          "savefig.facecolor": "white"})
@@ -227,7 +248,10 @@ def draw_case(data, rec):
             m=float(stem.split("_p")[0][1:]); pick=data[stem+"_J0"] == j
             ax[row,2].plot(data["B_G"], (data[key]-data[stem+"_E0_MHz"])[:,pick],
                            color=cmap(abs(m)/mmax), lw=.8, alpha=.85, ls="--" if m<0 else "-")
-        ax[row,0].set(ylabel=f"J₀ = {j}   •   E − E_rot / h (MHz)", xlabel="Zero-field F")
+        ax[row,0].set(ylabel=f"J₀ = {j}   •   (E − E_rot) / h (MHz)", xlabel="Zero-field F")
+        f_ticks=sorted({round(2*level["F"])/2 for level in rec["levels"] if level["J"]==j})
+        ax[row,0].set_xticks(f_ticks)
+        ax[row,0].set_xlim(min(f_ticks)-.3,max(f_ticks)+.3)
         ax[row,1].set(ylabel="Stark shift ΔE / h (GHz)", xlabel="Electric field (kV/cm)")
         ax[row,2].set(ylabel="Zeeman shift ΔE / h (MHz)", xlabel="Magnetic field (G)")
         for a in ax[row]: a.grid(alpha=.15)
@@ -238,16 +262,21 @@ def draw_case(data, rec):
                             Line2D([],[],color="#D55E00",label="p = −1")], fontsize=8)
     cbar=fig.colorbar(plt.cm.ScalarMappable(norm=plt.Normalize(0,mmax),cmap=cmap), ax=ax[:,1:], shrink=.65)
     cbar.set_label("|mF|  (negative-mF Zeeman curves dashed)")
-    fig.suptitle(TITLES[iso]+"\nX ³Δ₁ · levels correlated with J = 1–3 · basis J ≤ 8",fontsize=17)
+    title = TITLES[iso] if rec["scenario"] == "baseline" else "²²⁹Th¹⁹F⁺ · UNVALIDATED quadrupole sensitivity case"
+    fig.suptitle(title+"\nX ³Δ₁ · levels correlated with J = 1–3 · basis J ≤ 8",fontsize=17)
     note="Exploratory model; uncertainty not shown. Zero-field J labels; J mixes in E. Stark: stepwise character tracking; Zeeman: energy order within (mF,p)."
+    if iso != "232":
+        note += "\nMolecular constants transferred unscaled from ²³²ThF⁺; unknown Th spin rotation omitted; no physical uncertainty band."
     fig.supxlabel(note, fontsize=9)
     tag=f"thf-{iso}-{rec['scenario']}"
     fig.savefig(OUT/f"{tag}.png",dpi=180)
     fig.savefig(OUT/f"{tag}.pdf")
+    if combined is not None:
+        combined.savefig(fig)
     plt.close(fig)
 
 
-def draw_overview(records):
+def draw_overview(records, combined=None):
     fig, axs=plt.subplots(1,3,figsize=(12,7),layout="constrained",sharey=True)
     colors={1:"#0072B2",2:"#D55E00",3:"#009E73"}
     for ax,rec in zip(axs,records):
@@ -258,23 +287,59 @@ def draw_overview(records):
         ax.grid(axis="y",alpha=.2)
     axs[0].set_ylabel("Energy above lowest level / h (GHz)")
     fig.suptitle("ThF⁺ X ³Δ₁ · zero-field rotational structure",fontsize=17)
-    fig.supxlabel("Each isotope has its own zero. Hyperfine/parity detail is resolved in the individual isotope figures.",fontsize=10)
+    fig.supxlabel("Each isotope has its own zero. Odd-isotope molecular constants are unscaled transfers from ²³²ThF⁺.\n"
+                  "Unknown Th spin rotation omitted; ²²⁹Th quadrupole omitted. Exploratory models without physical uncertainty bands.",fontsize=10)
     for ext in ("png","pdf"): fig.savefig(OUT/f"thf-level-overview.{ext}",dpi=180)
+    if combined is not None:
+        combined.savefig(fig)
     plt.close(fig)
+
+
+def export_tables(cases):
+    summaries=[]
+    with (OUT/"parameters.csv").open("w",newline="",encoding="utf-8") as f:
+        fields=["value","unit","status","uncertainty","source","note"]
+        writer=csv.writer(f);writer.writerow(["isotope","scenario","parameter"]+fields)
+        for data,rec in cases:
+            if rec["scenario"] != "baseline": continue
+            for name,q in rec["parameters"].items():
+                writer.writerow([rec["isotope"],rec["scenario"],name]+[q.get(k) for k in fields])
+            with (OUT/f"{rec['isotope']}-zero-field-levels.csv").open("w",newline="") as levels:
+                table=csv.DictWriter(levels,fieldnames=["J","F","parity","energy_MHz","J_weight"])
+                table.writeheader();table.writerows(rec["levels"])
+            shifts={}
+            for field in ("stark","zeeman"):
+                values=[]
+                suffix=f"_{field}_MHz"
+                for key in data:
+                    if key.endswith(suffix):
+                        values.extend(data[key][-1]-data[key.removesuffix(suffix)+"_E0_MHz"])
+                shifts[field]=[min(values),max(values)]
+            summaries.append(dict(isotope=rec["isotope"],
+                states=sum(b["parents"]*(1 if b["mF"]==0 else 2) for b in rec["blocks"]),
+                max_cutoff_error_Hz=1e6*max(b["max_J7_to_J8_error_MHz"] for b in rec["blocks"]),
+                min_zero_J_weight=min(b["min_zero_J_weight"] for b in rec["blocks"]),
+                min_tracking_overlap=min(b["min_stark_step_overlap"] for b in rec["blocks"]),
+                stark_10kV_cm_range_GHz=[x/1000 for x in shifts["stark"]],
+                zeeman_100G_range_MHz=shifts["zeeman"],
+                time_reversal_error_MHz=rec["time_reversal_error_MHz"]))
+    (OUT/"validation.json").write_text(json.dumps(summaries,indent=2),encoding="utf-8")
 
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument("--render-only",action="store_true")
     args=parser.parse_args();OUT.mkdir(parents=True,exist_ok=True);CACHE.mkdir(parents=True,exist_ok=True)
-    records=[]
+    cases=[]
     for iso,scenario in [(x,"baseline") for x in ISOS]+[("229","legacy-quadrupole")]:
         if args.render_only:
             with np.load(OUT/f"{iso}-{scenario}.npz") as z: data=dict(z)
             rec=json.loads((OUT/f"{iso}-{scenario}.json").read_text())
         else: data,rec=run_case(iso,scenario)
-        if scenario=="baseline": records.append(rec)
-        draw_case(data,rec)
-    draw_overview(records)
+        cases.append((data,rec))
+    export_tables(cases)
+    with PdfPages(OUT/"thf-isotopes-levels-stark-zeeman.pdf") as combined:
+        draw_overview([rec for data,rec in cases if rec["scenario"]=="baseline"],combined)
+        for data,rec in cases: draw_case(data,rec,combined)
     print("Finished", OUT, flush=True)
 
 

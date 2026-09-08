@@ -53,6 +53,10 @@ assumptions, not new spectroscopy fits; choosing J_max=2 above demonstrates the
 API and does not establish rotational convergence. Two-photon transition
 operators remain on the separate low-level API. The [parameter audit](docs/superpowers/reports/2026-09-08-thf-estimate-audit.md) records which estimates are supported, the newly located 227Th nuclear-theory alternative, and the limits on precision claims.
 
+The [three-isotope field plots](results/thf-fields-2026-09-08/README.md) cover
+J = 1–3, Stark shifts to 10 kV/cm, and Zeeman shifts to 100 G, using separately
+documented exploratory parameter sets and a larger converged rotational basis.
+
 In a custom file, `[isotopologues.<id>.manifolds.<manifold>]` may override
 `backend`, `terms`, `parameters`, and `conventions`. Parameter and convention
 tables merge by name; backend and terms replace the shared values. Electronic
