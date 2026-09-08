@@ -169,6 +169,38 @@ def read_model_toml(path) -> ModelDefinition:
     )
 
 
+def select_manifold(definition, manifold_id, isotope_id):
+    """Apply a selected isotope's execution overrides to a shared manifold.
+
+    Parameters and conventions merge by name; backend and terms replace the
+    base values. The immutable base definition remains unchanged.
+    """
+    base = definition.manifolds[manifold_id]
+    path = f"isotopologues.{isotope_id}.manifolds"
+    overrides = _mapping(definition.isotopologues[isotope_id].metadata.get(
+        "manifolds", {}), path)
+    for key in overrides:
+        if key not in definition.manifolds:
+            raise ValueError(f"{path}.{key}: unknown manifold")
+    raw = _mapping(overrides.get(manifold_id, {}), f"{path}.{manifold_id}")
+    allowed = {"backend", "terms", "parameters", "conventions"}
+    unknown = set(raw) - allowed
+    if unknown:
+        raise ValueError(f"{path}.{manifold_id}: unknown override fields {sorted(unknown)}")
+    params = dict(base.parameters)
+    params.update({key: _loaded_parameter(value) for key, value in _mapping(
+        raw.get("parameters", {}), f"{path}.{manifold_id}.parameters").items()})
+    conv = _mapping(raw.get("conventions", {}), f"{path}.{manifold_id}.conventions")
+    metadata = dict(base.metadata)
+    if "terms" in raw:
+        metadata["terms"] = raw["terms"]
+    return replace(base, backend=raw.get("backend", base.backend),
+                   parameters=_freeze(params), metadata=_freeze(metadata),
+                   conventions=_freeze(dict(base.conventions) | dict(conv)),
+                   convention_paths=_freeze(dict(base.convention_paths) | {
+                       key: f"{path}.{manifold_id}.conventions.{key}" for key in conv}))
+
+
 def list_bundled_models() -> tuple[str, ...]:
     """Return packaged model IDs without requiring backend initialization."""
     models = resources.files("heff").joinpath("models")

@@ -8,7 +8,7 @@ from .assemble import build_term_matrices, hamiltonian as _hamiltonian
 from .backend_registry import get_backend
 from .engine import sweep as _sweep
 from .model_io import (list_bundled_models, read_bundled_model,
-                       read_model_toml, resolve_param_set)
+                       read_model_toml, resolve_param_set, select_manifold)
 from .spec import enumerate_kets
 from .terms import ctx_from, terms_for_case
 
@@ -180,7 +180,10 @@ def load_model(model_or_path, *, manifold=None, isotope=None) -> MoleculeModel:
         definition.isotopologues,
         definition.default_isotopologue if isotope is None else isotope,
         kind="isotopologue", source=source)
-    manifold_definition = definition.manifolds[manifold_id]
+    try:
+        manifold_definition = select_manifold(definition, manifold_id, isotope_id)
+    except ValueError as exc:
+        raise ValueError(f"{source}: {exc}") from exc
 
     from .backends import load_bundled_backends
     load_bundled_backends()

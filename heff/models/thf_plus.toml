@@ -46,3 +46,77 @@ E_eff = { value = 35.0, unit = "GV/cm" }
 W_TP = { value = 50.0, unit = "kHz" }
 d_e = 0.0
 k_TP = 0.0
+
+# Native thf_v2(229) inputs; estimates/placeholders retain their provenance.
+
+[[isotopologues."229Th19F".spins]]
+label = "229Th"
+I = 2.5
+couple_to = "J"
+
+[[isotopologues."229Th19F".spins]]
+label = "19F"
+I = 0.5
+couple_to = "F1"
+
+[isotopologues."229Th19F".manifolds.X3Delta1]
+backend = "case_c2"
+terms = ["centrifugal", "hyperfine_A_par_F", "hyperfine_A_par_F_dJ1", "hyperfine_A_par_Th", "hyperfine_A_par_Th_dJ1", "omega_doubling", "pt_odd_edm", "pt_odd_scalar_pseudoscalar", "quadrupole_eQq0_Th", "quadrupole_eQq2_Th", "rotation", "spin_rotation_cI_F", "spin_rotation_cI_Th", "stark_z", "zeeman_Gpar", "zeeman_nuclear_F", "zeeman_nuclear_Th"]
+
+[isotopologues."229Th19F".manifolds.X3Delta1.conventions]
+version = "thf-v2"
+
+[isotopologues."229Th19F".manifolds.X3Delta1.parameters]
+A_par = { value = -20.1, unit = "MHz", uncertainty = 0.1, source = "Ng 2022 Table I p.5", status = "measured", note = "may absorb 2 c_I .. 6 c_I ~ 40-120 kHz of unmodelled nuclear spin-rotation -- [HAM] S2.6, OPEN-6" }
+A_par_Th = { value = -1510, unit = "MHz", uncertainty = 60, source = "Skripnikov & Titov 2015 Table II FINAL(ThF+) -4163 (mu/mu_N) MHz and Denis 2015 +1833 MHz, both rescaled to mu = 0.366(6) mu_N => -1524 / +1491 MHz; mean of the two rescalings with a spread-based uncertainty ([TH] S2.2)", status = "ab-initio", note = "This value is SIGNED. sign UNVERIFIED, gap G4; add the authors' 7 % in quadrature for a hard bar. The sign selects which ab initio calculation is trusted: 'negative' (default) trusts Skripnikov & Titov 2015, recommended by docs/lit/lookup-apar-th-sign-convention.md; 'positive' trusts Denis 2015" }
+B0 = { value = 7274.3325, unit = "MHz", uncertainty = 0.001, source = "Ng 2022 SII B p.2 (4B = 29.09733(4) GHz); Ng thesis S4.1.1 p.78", status = "measured", isotopologue = "232Th19F+" }
+D0 = { value = 3.897, unit = "kHz", uncertainty = 0.12, source = "Gresh 2016 Table 1, X3Delta1 D'' column (1.30(4)e-7 cm-1)", status = "measured" }
+E_eff = { value = 35.0, unit = "GV/cm", uncertainty = 2.45, source = "Ng thesis Eq. C.8 discussion p.322 (JILA adopts ~35); Skripnikov & Titov 2015 give 37.3(7 %), Denis 2015 35.2", status = "ab-initio", note = "OPEN-14: 35.2 vs 37.3 GV/cm. Uncertainty is the quoted +-7 % of the adopted value (2.45 GV/cm), not a spread over the three calculations" }
+G_par = { value = 0.04756, unit = "", uncertainty = 0.002, source = "Ng thesis p.87 (0.048(2) for g_F < 0); reproduces |g_F=3/2| = 0.0149 exactly -- [HAM] S3", status = "derived", note = "sign of g_F is NOT measured; theory forces g_F < 0. OPEN-4" }
+W_TP = { value = 50.0, unit = "kHz", uncertainty = 3.5, source = "Skripnikov & Titov 2015 Table II p.8 (+-7 %)", status = "ab-initio", note = "uncertainty is that quoted +-7 % of 50 kHz" }
+c_I = { value = 20.0, unit = "kHz", source = "[HAM] S2.6: B&C Table 8.12 c2(19F, CsF) = 15.1 kHz at B_v = 0.183782 cm-1, scaled linearly in B", status = "estimate", note = "factor-of-3 uncertainty; ThF+ is open-shell, CsF is not" }
+c_I_Th = { value = 0.0, unit = "kHz", source = "No value anywhere -- gap G3", status = "held-fixed", note = "[TH] S4.6 declines to pick one and brackets it at ~1 kHz to ~1 MHz: g_N(Th)/g_N(F) = 0.0279 pushes down, the 2700x larger electronic hyperfine factor on Th pushes up. OPEN-19" }
+d_e = { value = 0.0, unit = "", status = "held-fixed", note = "electron EDM in e.cm; 0 turns the PT-odd block off" }
+d_mf = { value = 3.37, unit = "D", uncertainty = 0.09, source = "Ng 2022 Table I p.5", status = "measured", convention = "center_of_mass", note = "ORIGIN-DEPENDENT for an ion: 2.74 D w.r.t. the Th nucleus (Skripnikov & Titov 2015 Table II) = 3.46 D at c.m." }
+eQq0_Th = { value = -2600, unit = "MHz", uncertainty = 1000, source = "HfF+ anchor: eQq0(177HfF+) = -2100 MHz (Petrov 2018, CCSD(T)) x Q(229Th)/Q(177Hf) = 3.11/3.365 x R_el in [1, 1.65] => -2 to -3.3 GHz ([TH] S4.3)", status = "estimate", note = "No ThF+ or ThO eQq0 is published, for any isotope or state -- gap G2" }
+eQq2_Th = { value = 300, unit = "MHz", uncertainty = 100, source = "Petrov 2018 Eqs. (24)-(25) route with w(ThF+) = G_par + 0.002319 = 0.0499 against w(HfF+) = 0.014 => ~200-400 MHz ([TH] S4.4)", status = "estimate", note = "Inherits the UNVERIFIED normalisation bridge of [TH] S4/S9.4 (OPEN-17): the value inherits an unresolved factor sqrt(2) AND a sign between the B&C (9.52) q = +-2 normalisation and Petrov 2018 Eq. (23)" }
+g_N = { value = 5.25773, unit = "", source = "19F nuclear g-factor, Petrov et al. arXiv:1704.06631 Eq. 3", status = "held-fixed" }
+g_N_Th = { value = 0.1464, unit = "", uncertainty = 0.0024, source = "mu(229Th)/I = 0.366(6)/(5/2) ([TH] S1.2, Porsev 2021 arXiv:2107.14723)", status = "derived", note = "the 1974 value 0.46(4) still in ENSDF is superseded and must never be used to rescale a published A_par" }
+k_TP = { value = 0.0, unit = "", status = "held-fixed", note = "scalar-pseudoscalar coupling, dimensionless; 0 turns it off" }
+omega_ef = { value = 5.29, unit = "MHz", uncertainty = 0.05, source = "Ng 2022 Table I p.5; Ng thesis Table 4.1 p.87", status = "measured" }
+
+# Native thf_v2(227) inputs; estimates/placeholders retain their provenance.
+
+[[isotopologues."227Th19F".spins]]
+label = "227Th"
+I = 0.5
+couple_to = "J"
+
+[[isotopologues."227Th19F".spins]]
+label = "19F"
+I = 0.5
+couple_to = "F1"
+
+[isotopologues."227Th19F".manifolds.X3Delta1]
+backend = "case_c2"
+terms = ["centrifugal", "hyperfine_A_par_F", "hyperfine_A_par_F_dJ1", "hyperfine_A_par_Th", "hyperfine_A_par_Th_dJ1", "omega_doubling", "pt_odd_edm", "pt_odd_scalar_pseudoscalar", "rotation", "spin_rotation_cI_F", "spin_rotation_cI_Th", "stark_z", "zeeman_Gpar", "zeeman_nuclear_F", "zeeman_nuclear_Th"]
+
+[isotopologues."227Th19F".manifolds.X3Delta1.conventions]
+version = "thf-v2"
+
+[isotopologues."227Th19F".manifolds.X3Delta1.parameters]
+A_par = { value = -20.1, unit = "MHz", uncertainty = 0.1, source = "Ng 2022 Table I p.5", status = "measured", note = "may absorb 2 c_I .. 6 c_I ~ 40-120 kHz of unmodelled nuclear spin-rotation -- [HAM] S2.6, OPEN-6" }
+A_par_Th = { value = 39821, unit = "MHz", source = "[HAM] S9.6; docs/lit/lookup-227th-nuclear-moment.md", status = "placeholder", note = "PLACEHOLDER, Arian's ruling 2026-09-05 ([HAM] S9.6, OPEN-20): the Schmidt single-particle moment for the tentative ENSDF (1/2+) odd-neutron ground state, an s1/2 orbital (j = l + 1/2, l = 0), gives g_s(n) = -3.826 and mu_Schmidt = 1/2 g_s(n) = -1.913 mu_N, so g_N = mu/I = -3.826 and A_par = G_el x g_N = (-10408 MHz) x (-3.826) = +39821 MHz. Two RULES OF THUMB, UNCITED -- labelled here exactly as [HAM] S9.6 labels them, because no source giving either number for the actinides was read: Schmidt values for deformed actinides are said to be wrong by a factor ~2, and the commonly quoted quenched range is g_s^eff ~ 0.6-0.7 g_s^free (which would move A_par to ~+24 to +28 GHz). They are the SIZE of the effect, not a corrected value; the one MEASURED quenching read (the Ca isotopes, Fan & Zamick arXiv:2201.13247 S2.2) is a factor ~0.73. The (1/2+) spin assignment is itself tentative (the 5/2+ level sits only 9.3 keV away). Recorded for comparison: the alternative mu(227Th) = mu(229Th) = 0.366 mu_N assumption gives g_N = 0.732 and A_par = -7619 MHz (~-7.62 GHz) -- opposite sign, 5x smaller. See docs/lit/lookup-227th-nuclear-moment.md: no measured or estimated mu(227Th) exists in Stone's compilations or the IAEA NDS moments database." }
+B0 = { value = 7274.3325, unit = "MHz", uncertainty = 0.001, source = "Ng 2022 SII B p.2 (4B = 29.09733(4) GHz); Ng thesis S4.1.1 p.78", status = "measured", isotopologue = "232Th19F+" }
+D0 = { value = 3.897, unit = "kHz", uncertainty = 0.12, source = "Gresh 2016 Table 1, X3Delta1 D'' column (1.30(4)e-7 cm-1)", status = "measured" }
+E_eff = { value = 35.0, unit = "GV/cm", uncertainty = 2.45, source = "Ng thesis Eq. C.8 discussion p.322 (JILA adopts ~35); Skripnikov & Titov 2015 give 37.3(7 %), Denis 2015 35.2", status = "ab-initio", note = "OPEN-14: 35.2 vs 37.3 GV/cm. Uncertainty is the quoted +-7 % of the adopted value (2.45 GV/cm), not a spread over the three calculations" }
+G_par = { value = 0.04756, unit = "", uncertainty = 0.002, source = "Ng thesis p.87 (0.048(2) for g_F < 0); reproduces |g_F=3/2| = 0.0149 exactly -- [HAM] S3", status = "derived", note = "sign of g_F is NOT measured; theory forces g_F < 0. OPEN-4" }
+W_TP = { value = 50.0, unit = "kHz", uncertainty = 3.5, source = "Skripnikov & Titov 2015 Table II p.8 (+-7 %)", status = "ab-initio", note = "uncertainty is that quoted +-7 % of 50 kHz" }
+c_I = { value = 20.0, unit = "kHz", source = "[HAM] S2.6: B&C Table 8.12 c2(19F, CsF) = 15.1 kHz at B_v = 0.183782 cm-1, scaled linearly in B", status = "estimate", note = "factor-of-3 uncertainty; ThF+ is open-shell, CsF is not" }
+c_I_Th = { value = 0.0, unit = "kHz", source = "gap G3, as for 229Th ([TH] S4.6)", status = "held-fixed", note = "[TH] S4.6 brackets it at ~1 kHz to ~1 MHz, as for 229Th. OPEN-19" }
+d_e = { value = 0.0, unit = "", status = "held-fixed", note = "electron EDM in e.cm; 0 turns the PT-odd block off" }
+d_mf = { value = 3.37, unit = "D", uncertainty = 0.09, source = "Ng 2022 Table I p.5", status = "measured", convention = "center_of_mass", note = "ORIGIN-DEPENDENT for an ion: 2.74 D w.r.t. the Th nucleus (Skripnikov & Titov 2015 Table II) = 3.46 D at c.m." }
+g_N = { value = 5.25773, unit = "", source = "19F nuclear g-factor, Petrov et al. arXiv:1704.06631 Eq. 3", status = "held-fixed" }
+g_N_Th = { value = -3.826, unit = "", source = "[HAM] S9.6; docs/lit/lookup-227th-nuclear-moment.md", status = "placeholder", note = "PLACEHOLDER, Arian's ruling 2026-09-05 ([HAM] S9.6, OPEN-20): the Schmidt single-particle moment for the tentative ENSDF (1/2+) odd-neutron ground state, an s1/2 orbital (j = l + 1/2, l = 0), gives g_s(n) = -3.826 and mu_Schmidt = 1/2 g_s(n) = -1.913 mu_N, so g_N = mu/I = -3.826 and A_par = G_el x g_N = (-10408 MHz) x (-3.826) = +39821 MHz. Two RULES OF THUMB, UNCITED -- labelled here exactly as [HAM] S9.6 labels them, because no source giving either number for the actinides was read: Schmidt values for deformed actinides are said to be wrong by a factor ~2, and the commonly quoted quenched range is g_s^eff ~ 0.6-0.7 g_s^free (which would move A_par to ~+24 to +28 GHz). They are the SIZE of the effect, not a corrected value; the one MEASURED quenching read (the Ca isotopes, Fan & Zamick arXiv:2201.13247 S2.2) is a factor ~0.73. The (1/2+) spin assignment is itself tentative (the 5/2+ level sits only 9.3 keV away). Recorded for comparison: the alternative mu(227Th) = mu(229Th) = 0.366 mu_N assumption gives g_N = 0.732 and A_par = -7619 MHz (~-7.62 GHz) -- opposite sign, 5x smaller. See docs/lit/lookup-227th-nuclear-moment.md: no measured or estimated mu(227Th) exists in Stone's compilations or the IAEA NDS moments database." }
+k_TP = { value = 0.0, unit = "", status = "held-fixed", note = "scalar-pseudoscalar coupling, dimensionless; 0 turns it off" }
+omega_ef = { value = 5.29, unit = "MHz", uncertainty = 0.05, source = "Ng 2022 Table I p.5; Ng thesis Table 4.1 p.87", status = "measured" }

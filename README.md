@@ -32,6 +32,31 @@ problem = model.problem(J_max=2)
 H = problem.hamiltonian(E_z=20.0, B_z=0.01)
 ```
 
+Select any existing isotope with the same interface:
+
+```python
+model = heff.load_model("thf_plus", isotope="229Th19F")  # or 232Th19F / 227Th19F
+problem = model.problem(J_max=2)
+H = problem.hamiltonian(E_z=20.0, B_z=0.01)
+print(model.describe())  # includes parameter status and provenance
+```
+
+The default remains `232Th19F`. The odd-thorium models use the existing
+`case_c2` operators in the order `J + I_Th = F1`, `F1 + I_F = F`.
+Their TOML records preserve the native `thf_v2` values and metadata: 229Th
+includes estimated quadrupole constants and an unresolved hyperfine-sign choice;
+227Th uses the existing explicitly labeled moment/hyperfine placeholders.
+The 227Th model omits nuclear quadrupole terms. These are the existing model
+assumptions, not new spectroscopy fits; choosing J_max=2 above demonstrates the
+API and does not establish rotational convergence. Two-photon transition
+operators remain on the separate low-level API.
+
+In a custom file, `[isotopologues.<id>.manifolds.<manifold>]` may override
+`backend`, `terms`, `parameters`, and `conventions`. Parameter and convention
+tables merge by name; backend and terms replace the shared values. Electronic
+and basis definitions remain in the shared manifold. A selected parameter record
+replaces the whole base record, preserving its own units and provenance.
+
 Bare TOML parameter values use the selected backend's canonical units. Sources
 may be recorded in comments or optional rich metadata; they are not required
 to load a model.
