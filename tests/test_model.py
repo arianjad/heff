@@ -78,6 +78,47 @@ def _replace(path, old, new):
     path.write_text(text.replace(old, new), encoding="utf-8")
 
 
+def _write_two_spin_model(tmp_path):
+    path = tmp_path / "two-spin.toml"
+    path.write_text('''schema_version = 1
+model_id = "two_spin"
+default_manifold = "X3Delta1"
+default_isotopologue = "229Th19F"
+
+[isotopologues."229Th19F"]
+
+[[isotopologues."229Th19F".spins]]
+label = "229Th"
+I = 2.5
+couple_to = "J"
+
+[[isotopologues."229Th19F".spins]]
+label = "19F"
+I = 0.5
+couple_to = "F1"
+
+[manifolds.X3Delta1]
+backend = "case_c"
+terms = ["hyperfine_A_par"]
+
+[manifolds.X3Delta1.electronic]
+label = "X3Delta1"
+Omega = 1.0
+S = 1.0
+Lambda = 2.0
+
+[manifolds.X3Delta1.basis]
+J_min = 1
+J_max = 1
+M = "blocks"
+frame = "rotating"
+
+[manifolds.X3Delta1.parameters]
+A_par = -20.1
+''', encoding="utf-8")
+    return path
+
+
 def test_loaded_thf_problem_matches_the_low_level_hamiltonian(tmp_path):
     """Catches composition that changes basis order, terms, or coefficients."""
     path = _write_thf_model(tmp_path)
@@ -138,6 +179,19 @@ def test_validate_checks_structure_without_building_term_matrices(tmp_path, monk
 
     monkeypatch.setattr(model_module, "build_term_matrices", forbidden_build)
     assert model.validate() is None
+
+
+def test_high_level_case_c_rejects_two_spin_composition_with_spin_path(tmp_path):
+    """Catches a KET_C2 basis being evaluated with the one-spin registry."""
+    path = _write_two_spin_model(tmp_path)
+
+    with pytest.raises(ValueError) as caught:
+        load_model(path).validate()
+
+    message = str(caught.value)
+    assert str(path.resolve()) in message
+    assert "isotopologues.229Th19F.spins[1]" in message
+    assert "supports at most one spin" in message
 
 
 def test_validate_accepts_runtime_knobs_and_absent_optional_zero_parameters(tmp_path):
@@ -210,16 +264,37 @@ def test_invalid_runtime_basis_range_names_both_endpoints(tmp_path):
     assert "manifolds.X3Delta1.basis.J_max" in message
 
 
-def test_incomparable_runtime_basis_range_names_both_endpoints(tmp_path):
-    """Catches a range comparison TypeError falling back to backend."""
+def test_invalid_runtime_basis_endpoint_names_the_failing_key(tmp_path):
+    """Catches an invalid range endpoint falling back to backend."""
     model = load_model(_write_thf_model(tmp_path))
 
     with pytest.raises(ValueError) as caught:
         model.problem(J_max="two")
 
     message = str(caught.value)
-    assert "manifolds.X3Delta1.basis.J_min" in message
     assert "manifolds.X3Delta1.basis.J_max" in message
+    assert "must be a non-boolean integer" in message
+    assert "manifolds.X3Delta1.backend" not in message
+
+
+@pytest.mark.parametrize(
+    ("key", "toml_value"),
+    (("J_min", "1.0"), ("J_max", "4.0"),
+     ("J_min", "true"), ("J_max", "false")),
+)
+def test_validate_rejects_noninteger_basis_endpoints_with_key_path(
+        tmp_path, key, toml_value):
+    """Catches validate accepting values that range() cannot use as endpoints."""
+    path = _write_thf_model(tmp_path)
+    original = "1" if key == "J_min" else "4"
+    _replace(path, f"{key} = {original}", f"{key} = {toml_value}")
+
+    with pytest.raises(ValueError) as caught:
+        load_model(path).validate()
+
+    message = str(caught.value)
+    assert f"manifolds.X3Delta1.basis.{key}" in message
+    assert "must be a non-boolean integer" in message
     assert "manifolds.X3Delta1.backend" not in message
 
 
@@ -259,6 +334,22 @@ def test_unknown_selected_term_names_its_full_path(tmp_path):
 
     with pytest.raises(
             ValueError, match=r"manifolds\.X3Delta1\.terms.*rotatoin"):
+        load_model(path).validate()
+
+
+@pytest.mark.parametrize(
+    "term_value", ("1", '"rotation"', '["rotation", 1]'))
+def test_validate_requires_terms_to_be_an_array_of_strings(tmp_path, term_value):
+    """Catches scalar or non-string term selectors escaping structural validation."""
+    path = _write_thf_model(tmp_path)
+    _replace(
+        path,
+        '[manifolds.X3Delta1]\nbackend = "case_c"',
+        f'[manifolds.X3Delta1]\nbackend = "case_c"\nterms = {term_value}')
+
+    with pytest.raises(
+            ValueError,
+            match=r"manifolds\.X3Delta1\.terms.*array of strings"):
         load_model(path).validate()
 
 

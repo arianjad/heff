@@ -98,7 +98,12 @@ class MoleculeModel:
             raise ValueError(_with_source(self.source, str(exc))) from exc
 
         selected = self.manifold.metadata.get("terms", self.backend.default_terms)
-        term_names = tuple(selected)
+        if (not isinstance(selected, tuple)
+                or not all(isinstance(name, str) for name in selected)):
+            path = f"manifolds.{self.manifold.id}.terms"
+            raise ValueError(_with_source(
+                self.source, f"{path}: must be an array of strings"))
+        term_names = selected
         try:
             terms = terms_for_case(
                 self.backend.case, names=term_names, registry=self.backend.registry)

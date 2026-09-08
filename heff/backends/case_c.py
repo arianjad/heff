@@ -1,5 +1,6 @@
 """Adapter for heff's native Hund's case-(c) implementation."""
 from collections.abc import Mapping
+from operator import index as integer_index
 
 from .. import elements_c as _elements_c  # populate the native term registry
 from ..backend_registry import Backend
@@ -64,10 +65,17 @@ def make_spec(basis, electronic, spins):
             ("manifold", "basis", key))
     range_paths = (("manifold", "basis", "J_min"),
                    ("manifold", "basis", "J_max"))
-    try:
-        reversed_range = basis["J_min"] > basis["J_max"]
-    except TypeError as exc:
-        raise _InputValidationError(str(exc), *range_paths) from exc
+    for key in ("J_min", "J_max"):
+        value = basis[key]
+        try:
+            if isinstance(value, bool):
+                raise TypeError
+            integer_index(value)
+        except TypeError as exc:
+            raise _InputValidationError(
+                f"{key} must be a non-boolean integer usable as a range endpoint",
+                ("manifold", "basis", key)) from exc
+    reversed_range = basis["J_min"] > basis["J_max"]
     if reversed_range:
         raise _InputValidationError(
             "J_min must be less than or equal to J_max", *range_paths)
@@ -83,6 +91,11 @@ def make_spec(basis, electronic, spins):
                            S=_required(electronic_record, "S", electronic_path),
                            Lam=_required(electronic_record, "Lambda", electronic_path),
                            T0=electronic_record.get("T0", 0.0))
+
+    if len(spins) > 1:
+        raise _InputValidationError(
+            "high-level case-c foundation supports at most one spin",
+            ("isotopologue", "spins", 1))
 
     spin_chain = []
     for index, record in enumerate(spins):
@@ -103,9 +116,8 @@ def make_spec(basis, electronic, spins):
         spin_chain.append(spin)
     spin_chain = tuple(spin_chain)
 
-    # The native v1 representation carries exactly one nuclear spin through I.
-    # Multiple spins use the existing explicit, inner-first StateSpec chain.
-    state_spins = () if len(spin_chain) == 1 else spin_chain
+    # The native v1 representation carries one nuclear spin through I.
+    state_spins = ()
     I = spin_chain[-1].I if spin_chain else 0.0
     try:
         return StateSpec(case="c", electronic=(elec_state,), I=I,

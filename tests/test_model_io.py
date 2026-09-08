@@ -148,6 +148,89 @@ dipole_origin = "heavy_nucleus"
     assert params.conventions.dipole_origin == "heavy_nucleus"
 
 
+@pytest.mark.parametrize(
+    ("table", "expected_path"),
+    (("[conventions]", "conventions.dipole_orgin"),
+     ("[manifolds.X.conventions]",
+      "manifolds.X.conventions.dipole_orgin")),
+)
+def test_unknown_explicit_convention_key_raises_at_its_actual_path(
+        tmp_path, table, expected_path):
+    path = tmp_path / "unknown-convention.toml"
+    path.write_text(
+        _minimal_model("B0 = 1.0")
+        + f'\n{table}\ndipole_orgin = "heavy_nucleus"\n',
+        encoding="utf-8")
+    definition = read_model_toml(path)
+    load_bundled_backends()
+
+    with pytest.raises(ValueError) as caught:
+        resolve_param_set(definition.manifolds["X"], get_backend("case_c"))
+
+    message = str(caught.value)
+    assert expected_path in message
+    assert "unknown convention key" in message
+
+
+@pytest.mark.parametrize(
+    ("table", "expected_path"),
+    (("[conventions]", "conventions.dipole_origin"),
+     ("[manifolds.X.conventions]",
+      "manifolds.X.conventions.dipole_origin")),
+)
+def test_invalid_recognized_convention_value_raises_at_its_actual_path(
+        tmp_path, table, expected_path):
+    path = tmp_path / "invalid-convention.toml"
+    path.write_text(
+        _minimal_model("B0 = 1.0")
+        + f'\n{table}\ndipole_origin = "moon"\n',
+        encoding="utf-8")
+    definition = read_model_toml(path)
+    load_bundled_backends()
+
+    with pytest.raises(ValueError) as caught:
+        resolve_param_set(definition.manifolds["X"], get_backend("case_c"))
+
+    assert expected_path in str(caught.value)
+
+
+def test_untagged_dipole_error_names_parameter_and_effective_convention_paths(
+        tmp_path):
+    path = tmp_path / "untagged-dipole.toml"
+    path.write_text(
+        _minimal_model('d_mf = { value = 3.37, unit = "D" }'),
+        encoding="utf-8")
+    definition = read_model_toml(path)
+    load_bundled_backends()
+
+    with pytest.raises(ValueError) as caught:
+        resolve_param_set(definition.manifolds["X"], get_backend("case_c"))
+
+    message = str(caught.value)
+    assert "manifolds.X.parameters.d_mf" in message
+    assert "conventions.dipole_origin" in message
+
+
+def test_dipole_origin_mismatch_names_manifold_convention_override_path(tmp_path):
+    path = tmp_path / "mismatched-dipole.toml"
+    path.write_text(
+        _minimal_model(
+            'd_mf = { value = 3.37, unit = "D", convention = "center_of_mass" }')
+        + '''
+[manifolds.X.conventions]
+dipole_origin = "heavy_nucleus"
+''', encoding="utf-8")
+    definition = read_model_toml(path)
+    load_bundled_backends()
+
+    with pytest.raises(ValueError) as caught:
+        resolve_param_set(definition.manifolds["X"], get_backend("case_c"))
+
+    message = str(caught.value)
+    assert "manifolds.X.parameters.d_mf" in message
+    assert "manifolds.X.conventions.dipole_origin" in message
+
+
 def test_unknown_top_level_descriptive_metadata_is_retained_and_does_not_block_load(tmp_path):
     path = tmp_path / "display-name.toml"
     path.write_text(
@@ -157,6 +240,18 @@ def test_unknown_top_level_descriptive_metadata_is_retained_and_does_not_block_l
     definition = read_model_toml(path)
 
     assert definition.metadata["display_name"] == "Minimal model"
+
+
+def test_missing_top_level_key_has_no_leading_dot(tmp_path):
+    path = tmp_path / "missing-schema.toml"
+    path.write_text(
+        _minimal_model("B0 = 1.0").replace("schema_version = 1\n", ""),
+        encoding="utf-8")
+
+    with pytest.raises(ValueError) as caught:
+        read_model_toml(path)
+
+    assert str(caught.value) == "missing required key schema_version"
 
 
 def test_missing_case_c_basis_key_names_its_toml_path(tmp_path):

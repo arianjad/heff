@@ -44,6 +44,7 @@ class ManifoldDefinition:
     basis: Mapping
     parameters: Mapping[str, LoadedParameter]
     conventions: Mapping = field(default_factory=_empty_mapping)
+    convention_paths: Mapping = field(default_factory=_empty_mapping)
     metadata: Mapping = field(default_factory=_empty_mapping)
 
 
@@ -69,7 +70,8 @@ _MANIFOLD_KEYS = frozenset({
 
 def _required(record, key, path):
     if key not in record:
-        raise ValueError(f"missing required key {path}.{key}")
+        location = f"{path}.{key}" if path else key
+        raise ValueError(f"missing required key {location}")
     return record[key]
 
 
@@ -102,6 +104,9 @@ def read_model_toml(path) -> ModelDefinition:
     default_isotopologue = _required(document, "default_isotopologue", "")
 
     global_conventions = _mapping(document.get("conventions", {}), "conventions")
+    global_convention_paths = {
+        key: f"conventions.{key}" for key in global_conventions
+    }
     isotopologue_records = _mapping(
         _required(document, "isotopologues", ""), "isotopologues")
     isotopologues = {}
@@ -134,6 +139,11 @@ def read_model_toml(path) -> ModelDefinition:
         manifold_conventions = _mapping(manifold.get("conventions", {}),
                                         f"{manifold_path}.conventions")
         conventions = dict(global_conventions) | dict(manifold_conventions)
+        convention_paths = dict(global_convention_paths)
+        convention_paths.update({
+            key: f"{manifold_path}.conventions.{key}"
+            for key in manifold_conventions
+        })
         manifolds[manifold_id] = ManifoldDefinition(
             id=manifold_id,
             backend=backend,
@@ -142,6 +152,7 @@ def read_model_toml(path) -> ModelDefinition:
             parameters=_freeze({symbol: _loaded_parameter(raw)
                                 for symbol, raw in parameter_records.items()}),
             conventions=_freeze(conventions),
+            convention_paths=_freeze(convention_paths),
             metadata=_freeze({key: value for key, value in manifold.items()
                               if key not in _MANIFOLD_KEYS}),
         )
@@ -217,13 +228,33 @@ def resolve_param_set(manifold, backend) -> ParamSet:
             f"manifolds.{manifold.id}.backend is {manifold.backend!r}, not {backend.id!r}")
     defaults = backend.default_conventions()
     recognized = {item.name for item in fields(defaults)}
-    conventions = replace(defaults, **{
-        key: value for key, value in manifold.conventions.items() if key in recognized
-    })
+    unknown = sorted(set(manifold.conventions) - recognized)
+    if unknown:
+        key = unknown[0]
+        path = manifold.convention_paths.get(
+            key, f"manifolds.{manifold.id}.conventions.{key}")
+        raise ValueError(f"{path}: unknown convention key {key!r}")
+    conventions = defaults
+    for key, value in manifold.conventions.items():
+        path = manifold.convention_paths.get(
+            key, f"manifolds.{manifold.id}.conventions.{key}")
+        try:
+            conventions = replace(conventions, **{key: value})
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{path}: {exc}") from exc
     params = {
         symbol: _parameter(loaded.raw,
                            path=f"manifolds.{manifold.id}.parameters.{symbol}",
                            canonical_unit=backend.canonical_units.get(symbol, "MHz"))
         for symbol, loaded in manifold.parameters.items()
     }
-    return ParamSet(params, conventions)
+    try:
+        return ParamSet(params, conventions)
+    except ValueError as exc:
+        if "d_mf" in params:
+            parameter_path = f"manifolds.{manifold.id}.parameters.d_mf"
+            convention_path = manifold.convention_paths.get(
+                "dipole_origin", "conventions.dipole_origin")
+            raise ValueError(
+                f"{parameter_path}, {convention_path}: {exc}") from exc
+        raise ValueError(f"manifolds.{manifold.id}.parameters: {exc}") from exc
