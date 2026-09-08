@@ -39,9 +39,17 @@ the Stark and Zeeman structure, extracts g-factors, induced dipoles and the
 Ω-doublet Δg, shows the PT-odd shift, lists the J = 1 → 2 E1 lines, and closes
 with a 200-point parameter-set sweep done as one resum and one batched `eigh`.
 
-Physics source: `docs/thf-plus-x3delta1-effective-hamiltonian.md` ([HAM]).
-Every matrix element carries its citation in `term.cite`. Nothing in this
-notebook asserts a physics result — the test suite does that; here we display.
+This is an advanced, native-API tutorial: it exposes the basis, term matrices,
+and observables used by `heff`, rather than hiding them behind a convenience
+wrapper. Start with the repository [README](../README.md), including its TOML
+model quickstart, and use the separate [three-isotope field plots](../results/thf-fields-2026-09-08/README.md)
+for the broader J = 1–3 exploratory scans.
+
+Physics source: [HAM](../docs/thf-plus-x3delta1-effective-hamiltonian.md).
+Every matrix element carries its citation in `term.cite`. The calculations
+illustrate the selected effective Hamiltonian and its inputs. Software tests
+check implementation identities and regressions; they do not establish the
+physical truth or completeness of this model.
 
 Conventions in force (all defaults, all documented forks): n̂ from F to Th
 (JILA), e/f by Brown 1975, Zeeman `+G∥ μ_B (J·n̂)(n̂·B)`, `E = −g μ_B B m_F`,
@@ -683,8 +691,9 @@ nuclear Zeeman; then `pt_odd_edm` and `pt_odd_scalar_pseudoscalar`.
 - Rotating-frame `ħω_rot F_x`: not a static-field term, and it breaks m_F
   blocking.
 
-**Statuses that matter.** `c_I` is an estimate with a factor-3 uncertainty and
-may bias the fitted A∥ by 40–120 kHz (**OPEN-6**); the sign of g_F is not
+**Statuses that matter.** `c_I = 20 kHz` is an analogy-based sensitivity
+estimate: its sign and accuracy in ThF⁺ are not established, and no universal
+numeric uncertainty bound is assigned (**OPEN-6**). The sign of g_F is not
 measured, only |g| (**OPEN-4**); E_eff is 35 vs 37.3 GV/cm across sources
 (**OPEN-14**).
 
@@ -697,9 +706,10 @@ measured, only |g| (**OPEN-4**); E_eff is 35 vs 37.3 GV/cm across sources
   which is what the document's own numerical confirmation line and the measured
   |g| = 0.0149 require; §11 above shows that agreement.
 
-Where the physics is gated rather than displayed: `tests/`. Kernel checks and
-symmetry identities run by default; comparisons to published numbers are
-opt-in behind `HEFF_RUN_LITERATURE=1`. Design: `docs/superpowers/specs/2026-09-05-heff-design.md`.
+`tests/` check kernel behavior and symmetry identities; comparisons to
+published numbers are opt-in behind `HEFF_RUN_LITERATURE=1`. These checks
+support software consistency, not a claim that the effective Hamiltonian is
+physically complete. Design: [v1 specification](../docs/superpowers/specs/2026-09-05-heff-design.md).
 """),
 ]
 

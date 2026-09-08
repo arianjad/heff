@@ -30,22 +30,20 @@ def code(text):
 STATUS_229 = (
     "**Status behind every number above**: `A_par_Th` is **ab-initio**, sign "
     "unresolved between two calculations that agree in magnitude (OPEN-16); "
-    "`eQq0_Th` and `eQq2_Th` are both **estimates** transferred from "
-    "isoelectronic ¹⁷⁷HfF⁺ (OPEN-18, OPEN-17); `c_I(Th)` is "
-    "held at **0** by default, unconstrained over three decades (OPEN-19)."
+    "`eQq0_Th` and `eQq2_Th` are **uncalibrated placeholders** used for "
+    "sensitivity calculations, not estimates or uncertainty bounds (OPEN-18, "
+    "OPEN-17); `c_I(Th)` is held at **0** because an input is missing "
+    "(OPEN-19)."
 )
 STATUS_227 = (
     "**Status behind every ²²⁷ number above**: `A_par_Th` = "
-    "**+39.8 GHz** is a **Schmidt single-particle placeholder** for a "
-    "tentative **(1/2⁺)** ground-state spin assignment — no "
-    "measured or estimated μ(²²⁷Th) exists in any "
-    "compilation checked; real deformed-actinide moments are typically "
-    "**~2× smaller** than the Schmidt value; the "
-    "μ(²²⁷Th)=μ(²²⁹Th)-scaled "
-    "alternative is **−7.6 GHz, the opposite sign**; ²²⁷Th "
-    "(I = 1/2) has **no quadrupole moment at all** — structurally "
-    "absent, not merely small ([HAM] §9.6, "
-    "`docs/lit/lookup-227th-nuclear-moment.md`, OPEN-20)."
+    "**+39.8 GHz** is the native model's **Schmidt stress-test placeholder** "
+    "for a tentative **(1/2⁺)** assignment. It is not a calibrated moment "
+    "prediction. The separate [field-plot study](../results/thf-fields-2026-09-08/README.md) "
+    "uses the Minkov et al. nuclear-theory alternative, **+1.79 GHz**, and "
+    "does not change this notebook's native parameters. ²²⁷Th (I = 1/2) "
+    "has no quadrupole moment — structurally absent, not merely small "
+    "([HAM] §9.6, OPEN-20)."
 )
 
 CELLS = [
@@ -61,6 +59,12 @@ from ¹⁹F alone). ²²⁹Th (I = 5/2) and ²²⁷Th (I = 1/2) each add a secon
 nuclear spin, giving the two-spin basis `|((J I_Th) F₁, I_F) F, m_F⟩`
 (`KET_C2`, integer `F`/`m_F`).
 
+This is an advanced, native-API notebook: it constructs the coupled bases and
+term matrices directly so the model choices remain visible. Start with the
+repository [README](../README.md), including its TOML model quickstart. The
+separate [three-isotope field plots](../results/thf-fields-2026-09-08/README.md)
+use larger exploratory bases and document their own parameter sets.
+
 **Conventions in force**, stamped from `pset.conventions.stamp()` — printed
 below. The v1 tutorial (`ThF_plus_X3Delta1_Tutorial.ipynb`) already fixes
 `n_hat`, `ef_rule`, `zeeman_sign`, `zeeman_energy`, `dg_def`, `edm_factor`,
@@ -71,24 +75,21 @@ implemented value; `'petrov2018_eq23'` raises, OPEN-17), `two_photon_norm`
 (`'bc_5p142_reduced'`, unit reduced one-photon elements per channel), and the
 `version` tag itself, `'thf-v2'`.
 
-**Standing caveat, read this before any ²²⁹/²²⁷ number below**: **no Th
-hyperfine constant has ever been measured for any ThF⁺ isotopologue**
-([TH] §2.1, gap G5 — every Th hyperfine constant used here is ab initio, an
-estimate, or a Schmidt-moment placeholder). Every figure that carries a
-²²⁹ or ²²⁷ number states which of those three statuses is behind it, because
-the three read very differently: an *ab initio* number (`A_par_Th` for ²²⁹)
-comes from an actual electronic-structure calculation of ThF⁺; an *estimate*
-(`eQq0_Th`, `eQq2_Th`) is transferred from the isoelectronic ¹⁷⁷HfF⁺ ion by a
-scaling argument; a *placeholder* (all of ²²⁷Th's Th constants) is a
-single-particle nuclear-shell-model number standing in for a moment nobody has
-measured or calculated for that nucleus.
+**Standing caveat, read this before any ²²⁹/²²⁷ number below**: no Th
+hyperfine constant has been measured for a ThF⁺ isotopologue ([TH] §2.1,
+gap G5). The ²²⁹ magnetic hyperfine value is an ab-initio scale with an
+unresolved sign choice; its quadrupole values are uncalibrated sensitivity
+placeholders. The native ²²⁷ value is a Schmidt stress test, while the field
+plots separately show the Minkov nuclear-theory alternative. These statuses
+limit the physical interpretation of the figures. Software tests exercise
+code identities and regressions; they do not prove the physical truth of any
+placeholder or of the selected effective Hamiltonian.
 
 Physics sources cited throughout: [HAM] = `docs/thf-plus-x3delta1-effective-
 hamiltonian.md`, [TH] = `docs/digest-literature-th-hyperfine.md`,
 [2γ] = `docs/digest-literature-two-photon.md`, [SPEC-v2] = `docs/superpowers/
-specs/2026-09-05-heff-v2-isotopologues-two-photon.md`. Nothing in this
-notebook asserts a physics result — `tests/` does that; here we display, and
-every non-trivial number is computed by the code on screen, not transcribed.
+specs/2026-09-05-heff-v2-isotopologues-two-photon.md`. Every non-trivial
+number shown below is computed by the code on screen, rather than transcribed.
 """),
 
     # ------------------------------------------------------------- 2 -----
@@ -143,7 +144,8 @@ def load(iso, J_max=J_MAX, mF=None):
     matrices for it, and the Blocking of the FULL basis (so a caller can look
     up dimensions of other blocks too). '229'/'227' build on KET_C2 through
     REGISTRY_C2; '232' builds on the v1 KET_C basis through the default
-    registry -- the same helper handles both dtypes (controller ruling).
+    registry. The same helper handles both dtypes so the later cells can make
+    like-for-like comparisons.
     \"\"\"
     spec = thf_spec(iso, J_max=J_max)
     kets = enumerate_kets(spec)
@@ -431,13 +433,12 @@ print("Alternative branch: thf_v2('229', a_par_th_sign='positive') trusts Denis 
 
     # ------------------------------------------------------------- 7 -----
     md("""
-## 6. The eQq₂ versus ω_ef competition (no parameter sweep — Arian's ruling)
+## 6. The eQq₂ versus ω_ef scale comparison
 
 `eQq2_Th` mixes `Ω = +1 ↔ −1` at fixed `(J, F₁, F, m_F)`, in the same matrix
 slot as `omega_doubling` ([HAM] §9.4.4, [TH] §4.4). Tabulated below at the
-**default eQq2_Th = 300 MHz estimate** (`status='estimate'`, band **200–400
-MHz**, OPEN-17: the bridge to Petrov 2018's normalisation carries an
-unresolved `√2` and an unresolved sign) against two reference scales: the
+**native eQq2_Th = 300 MHz placeholder** (`status='placeholder'`, OPEN-17:
+the signed normalization and magnitude are uncalibrated) against two reference scales: the
 Ω-doubling off-diagonal element `ω_ef J(J+1)/4 = 2.65 MHz` at J = 1, and the
 fully-polarised Stark shift `γ_F m_F d_mf E = 50.9 MHz` at F = 3/2, m_F = 3/2,
 E = 60 V/cm (the JILA operating field, [HAM] §2.7) — the **²³²-basis**
@@ -478,20 +479,19 @@ stark_60 = gam(1, 1.5) * 1.5 * d_mf * 60.0
 fig, ax = plt.subplots(figsize=(6, 4))
 labels = [f"F1={F1:g}" for F1, F, om, q2 in rows]
 ax.bar(np.arange(len(rows)) - 0.2, [abs(om) for *_, om, q2 in rows], width=0.4, label='omega_doubling')
-ax.bar(np.arange(len(rows)) + 0.2, [abs(q2) for *_, om, q2 in rows], width=0.4, label='eQq2_Th (300 MHz est.)')
+ax.bar(np.arange(len(rows)) + 0.2, [abs(q2) for *_, om, q2 in rows], width=0.4, label='eQq2_Th (300 MHz placeholder)')
 ax.axhline(stark_60, ls='--', c='k', label=f'Stark @ 60 V/cm = {stark_60:.1f} MHz')
 ax.set_xticks(range(len(rows)))
 ax.set_xticklabels(labels)
 ax.set_ylabel('|Omega=+1 <-> -1 element| (MHz)')
-ax.set_title('eQq2_Th [estimate, 200-400 MHz band, OPEN-17] vs omega_ef [measured] vs Stark')
+ax.set_title('eQq2_Th [uncalibrated placeholder, OPEN-17] vs omega_ef [measured] vs Stark')
 ax.legend()
 plt.tight_layout()
 plt.show()
 
 print(f"\\nomega_ef J(J+1)/4 at J=1 = {pset229.value('omega_ef') * 2 / 4:.3f} MHz  [omega_ef: measured]")
 print(f"eQq2_Th is {min(abs(q2/om) for *_, om, q2 in rows):.1f}-{max(abs(q2/om) for *_, om, q2 in rows):.1f}x "
-      "the omega-doubling element at its 300 MHz default -- 20x for two of the three F1 branches, "
-      "smaller for the third.")
+      "the omega-doubling element for this 300 MHz placeholder scenario; this ratio is not a physical bound.")
 """),
 
     # ------------------------------------------------------------- 8 -----
@@ -522,7 +522,7 @@ for iso, mF in (('229', 0.0), ('227', 0.0)):
     n1 = len(blocks1.index[mF])
     r = j_convergence(iso, J_maxes=(1, 4), mF=mF, n_levels=n1)
     print(f"  {iso}ThF+: {r['by_J_max'][1]['max_shift_MHz']/1e3:.3f} GHz "
-          f"({'placeholder-driven, A_par_Th = +39.8 GHz' if iso == '227' else 'ab-initio A_par_Th'})")
+          f"({'Schmidt stress test, A_par_Th = +39.8 GHz' if iso == '227' else 'ab-initio A_par_Th'})")
 """),
 
     # ------------------------------------------------------------- 9 -----
@@ -869,7 +869,7 @@ for col, (label, (eps1, eps2, dmF)) in enumerate(TWOP_PAIRS.items()):
             # dmF=0 reuses the SAME mF block for bra and ket, so i==j is the
             # literal same eigenstate: a diagonal alpha^K=0 "light shift"
             # element, not a transition. Excluded from the transition panels
-            # (controller ruling, item 9) -- reported separately below.
+            # Reported separately below because it is a light shift, not a transition.
             n_diag = sum(1 for i, j in sel if i == j)
             sel = [(i, j) for i, j in sel if i != j]
         f0 = 0.0 if Ja == Jb else 4 * pset229.value('B0')
@@ -942,13 +942,12 @@ plt.show()
 
 - `A∥(Th)` for ²²⁹Th: **ab-initio**, sign unresolved between two
   calculations that agree in magnitude — **OPEN-16**.
-- `eQq₂_Th` for ²²⁹Th: **estimate**, 200–400 MHz band, inherits an
-  unresolved normalisation factor between B&C and Petrov 2018 — **OPEN-17**.
-- `eQq₀_Th` for ²²⁹Th: **estimate**, no published ThF⁺ or ThO quadrupole
-  constant exists at all — **OPEN-18**.
-- `c_I(Th)`: held at 0, unconstrained over three decades (~1 kHz–1 MHz) —
-  **OPEN-19**.
-- Every ²²⁷Th constant: **placeholder**. {STATUS_227}
+- `eQq₂_Th` and `eQq₀_Th` for ²²⁹Th: **uncalibrated placeholders** for
+  sensitivity cases. Their signs, conversion, and magnitudes are not
+  validated, and the displayed values are not uncertainty bounds —
+  **OPEN-17/OPEN-18**.
+- `c_I(Th)`: held at 0 because an input is missing — **OPEN-19**.
+- ²²⁷Th uses the native **Schmidt stress-test placeholder**. {STATUS_227}
 - The two-photon `K = 1` channel: **resolved**, not registered — exact
   closure makes it identically zero — **OPEN-21** (this notebook, §11).
 - `J_max`: a `StateSpec` knob, this notebook uses 4 throughout with a
@@ -956,10 +955,10 @@ plt.show()
 - The two-photon closure form: valid at `Δ ≫ 7 GHz`, JILA runs at
   0.16–1.5 GHz — **OPEN-23**.
 
-Where the physics is gated rather than displayed: `tests/`. `docs/open-
-questions.md` carries OPEN-16 through OPEN-23 in full, each with its
-citation. Design: [SPEC-v2] `docs/superpowers/specs/2026-09-05-heff-v2-
-isotopologues-two-photon.md`.
+`tests/` exercise code behavior and selected identities; they do not turn the
+model inputs into physical measurements or predictions. `docs/open-
+questions.md` carries OPEN-16 through OPEN-23 in full, each with its citation.
+Design: [SPEC-v2](../docs/superpowers/specs/2026-09-05-heff-v2-isotopologues-two-photon.md).
 """),
 ]
 
