@@ -46,12 +46,12 @@ The default remains `232Th19F`. The odd-thorium models use the existing
 Their TOML records preserve the native `thf_v2` values and metadata. Shared
 232Th constants transferred to an odd isotope are labeled estimates with
 unquantified transfer uncertainty; source measurement errors remain in notes: 229Th
-includes estimated quadrupole constants and an unresolved hyperfine-sign choice;
+includes uncalibrated quadrupole sensitivity placeholders and an unresolved hyperfine-sign choice;
 227Th uses the existing explicitly labeled moment/hyperfine placeholders.
 The 227Th model omits nuclear quadrupole terms. These are the existing model
 assumptions, not new spectroscopy fits; choosing J_max=2 above demonstrates the
 API and does not establish rotational convergence. Two-photon transition
-operators remain on the separate low-level API.
+operators remain on the separate low-level API. The [parameter audit](docs/superpowers/reports/2026-09-08-thf-estimate-audit.md) records which estimates are supported, the newly located 227Th nuclear-theory alternative, and the limits on precision claims.
 
 In a custom file, `[isotopologues.<id>.manifolds.<manifold>]` may override
 `backend`, `terms`, `parameters`, and `conventions`. Parameter and convention

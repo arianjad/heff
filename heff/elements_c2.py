@@ -635,7 +635,7 @@ def _quadrupole_body(bra, ket, ctx, q):
                "S3.4, gate V20). Third source for the same rank-2 case-(c) "
                "skeleton: Skripnikov, Petrov, Titov & Flambaum arXiv:1408.5368 "
                "Eq. (5). eQq0_Th has no published ThF+ value at all -- the "
-               "-2600(1000) MHz Param is an HfF+ anchor estimate ([TH] S4.3, "
+               "-2600 MHz Param is an uncalibrated sensitivity placeholder ([TH] S4.3, "
                "gap G2). [HAM] S9.4.1")
 def quadrupole_eQq0_Th(bra, ket, ctx):
     return _quadrupole_body(bra, ket, ctx, 0.0)

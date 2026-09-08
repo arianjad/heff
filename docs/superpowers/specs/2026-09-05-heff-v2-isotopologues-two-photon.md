@@ -373,12 +373,12 @@ predictions. See the 2026-09-08 parameter estimate audit.
 
 | symbol | value | unit | uncert. | status | source / note |
 |---|---|---|---|---|---|
-| `A_par_Th` | −1510 (signed; `thf_v2(..., a_par_th_sign=)` selects the trusted calculation) | MHz | 60 | `ab-initio` | Skripnikov & Titov 2015 Table II FINAL(ThF⁺) −4163 (μ/μ_N) MHz and Denis 2015 +1833 MHz, both rescaled to μ = 0.366(6) μ_N ⇒ −1524 / +1491 MHz; mean of the two rescalings with a spread-based uncertainty ([TH] §2.2). Note: **sign UNVERIFIED, gap G4**; add the authors' 7 % in quadrature for a hard bar |
+| `A_par_Th` | −1510 (signed; `thf_v2(..., a_par_th_sign=)` selects the trusted calculation) | MHz | unquantified combined error | `ab-initio` | Skripnikov & Titov 2015 Table II FINAL(ThF⁺) −4163 (μ/μ_N) MHz and Denis 2015 +1833 MHz, both rescaled to μ = 0.366(6) μ_N ⇒ −1524 / +1491 MHz; mean of the two rescalings ([TH] §2.2). The historical 60 MHz spread is not a complete bound; the source gives a separate 7% theory-error scale. Note: **sign UNVERIFIED, gap G4** |
 
 R14 (fix round 1): `A_par_Th`'s value is SIGNED, not a magnitude paired with a `conventions.a_par_th_sign` fork -- `params.thf_v2(isotopologue, *, a_par_th_sign="negative")` picks which ab initio calculation (Skripnikov & Titov 2015 vs Denis 2015) the sign comes from; this is a parameter choice, not a convention, so it does not appear in §4's table.
 | `g_N_Th` | 0.1464 | — | 0.0024 | `derived` | μ(²²⁹Th)/I = 0.366(6)/(5/2) ([TH] §1.2, Porsev 2021 arXiv:2107.14723). Note: the 1974 value 0.46(4) still in ENSDF is superseded and must never be used to rescale a published A∥ |
-| `eQq0_Th` | −2600 | MHz | 1000 | `estimate` | HfF⁺ anchor: eQq₀(¹⁷⁷HfF⁺) = −2100 MHz (Petrov 2018, CCSD(T)) × Q(²²⁹Th)/Q(¹⁷⁷Hf) = 3.11/3.365 × R_el ∈ [1, 1.65] ⇒ −2 to −3.3 GHz ([TH] §4.3). **No ThF⁺ or ThO eQq₀ is published, for any isotope or state — gap G2** |
-| `eQq2_Th` | 300 | MHz | 100 | `estimate` | Petrov 2018 Eqs. (24)–(25) route with w(ThF⁺) = G∥ + 0.002319 = 0.0499 against w(HfF⁺) = 0.014 ⇒ ~200–400 MHz ([TH] §4.4). Inherits the **UNVERIFIED normalisation bridge** of §4 |
+| `eQq0_Th` | −2600 | MHz | unquantified | `placeholder` | HfF+ magnitude anchor only. Electronic EFG transfer bracket and signed Petrov-to-B&C conversion are not validated. See the 2026-09-08 quadrupole estimate audit; no calibrated ±1000 MHz error bar. |
+| `eQq2_Th` | +300 | MHz | unquantified | `placeholder` | Hf-specific orbital/radial estimate transferred without a Th calibration; signed Petrov-to-B&C normalization remains unresolved. No calibrated ±100 MHz error bar. |
 | `c_I_Th` | 0.0 | kHz | — | `held-fixed` | **No value anywhere — gap G3.** [TH] §4.6 declines to pick one and brackets it at **~1 kHz to ~1 MHz**: g_N(Th)/g_N(F) = 0.0279 pushes down, the 2700× larger electronic hyperfine factor on Th pushes up. The bracket is in the `note`, not in the value. **OPEN-19** |
 | `Q_Th` | 3.11 | e·b | 0.02 | `measured` | Porsev 2021, weighted average over four Th³⁺ states ([TH] §1.3). Carried for provenance; the Hamiltonian consumes `eQq0_Th`/`eQq2_Th`, not Q |
 

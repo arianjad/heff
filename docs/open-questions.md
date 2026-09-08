@@ -132,13 +132,13 @@ feature of every ²²⁹ThF⁺ figure? [Controller ruling, task 10: the notebook
 draws the default `negative` branch only, and names the `a_par_th_sign=`
 alternative in one sentence — pending Arian's answer to (b).]
 
-### OPEN-17 — the eQq₂ normalisation bridge
+### OPEN-17 — the eQq₀/eQq₂ normalisation bridge
 
 Source: [SPEC-v2] §7, [TH] §3.2, [HAM] §9.4.4.
 
 B&C's (9.52) at q = ±2 versus Petrov 2018 Eq. (23), with its √6 and Y₂₂.
 [TH] §3.2 flags this **UNVERIFIED** and says every eQq₂-derived number
-inherits the caveat. Two things are not pinned by the printed equations: the
+inherits the caveat; the q=0 transfer also has an unresolved signed normalization. Two things are not pinned by the printed equations: the
 scalar-product pairing in Petrov's Eq. (19), and whether the `√(2π/5)` there
 is intended or a typo for `√(4π/5) = C²_q`. The package computes in B&C's own
 normalisation (`eqq2_norm='bc_9p52_q2'`, the only implemented value);
@@ -152,17 +152,11 @@ as order-of-magnitude?
 
 ### OPEN-18 — eQq₀ and eQq₂ defaults
 
-Source: [SPEC-v2] §7, [TH] §4.3–4.4 (gap G2).
-
-There is no published ThF⁺ or ThO quadrupole coupling constant and no EFG at
-Th, for any isotope or state. `thf_v2('229')` defaults `eQq0_Th` and
-`eQq2_Th` to HfF⁺-anchored estimates (`status='estimate'`) because a zero
-default would hide a term that [TH] §4.4 argues dominates the Ω-doublet
-structure of ²²⁹ThF⁺.
-
-**Question:** estimate-by-default, or zero-by-default with the estimate as
-an opt-in knob? (v1 precedent points to estimate-by-default with
-`status='estimate'`: that is how `c_I` ships.)
+Current decision (2026-09-08): retain −2600 and +300 MHz as explicit
+`status='placeholder'` sensitivity points with no numeric uncertainty. The
+Hf-to-Th electronic transfer and signed normalization are unvalidated for both
+components. See the [estimate audit](superpowers/reports/2026-09-08-thf-estimate-audit.md).
+A direct Th EFG calculation in matched conventions is the missing physical input.
 
 ### OPEN-19 — c_I(Th)
 
@@ -181,21 +175,17 @@ prose only, per the controller's no-parameter-sweep ruling.]
 Source: [SPEC-v2] §7, [TH] §1.4, `docs/lit/lookup-227th-nuclear-moment.md`,
 [HAM] §9.6.
 
-I = (1/2⁺) is a tentative ENSDF assignment with a 5/2⁺ level 9.3 keV above
-it, and no magnetic moment exists in any of the three compilations checked
-(Stone INDC(NDS)-0794 (2019), the earlier Stone compilation, the IAEA NDS
-live moments database — all three skip A = 227 at Z = 90 entirely). Arian's
-ruling (2026-09-05): use the Schmidt single-particle moment
-(`A_par_Th = +39821 MHz`, `status='placeholder'`), not `μ(²²⁷Th) = μ(²²⁹Th)`
-— the Schmidt value for a tentative s₁/₂ odd-neutron ground state, with the
-alternative μ(²²⁷Th) = μ(²²⁹Th) assumption (−7619 MHz, opposite sign, ~5×
-smaller) recorded for comparison, and real deformed-actinide moments
-typically ~2× smaller than Schmidt.
+I = (1/2⁺) remains a tentative ENSDF assignment. [Minkov et al., Phys. Rev. C 110, 034327 (2024), Table IV](https://arxiv.org/abs/2408.11010) predicts μ(²²⁷Th) = −0.0860 μ_N for its octupole-deformed 1/2 ground solution. With I = 1/2 and the existing molecular factor −10408 MHz, this gives g_N = −0.1720 and A∥ = +1790.176 MHz. This is a model prediction without a calibrated uncertainty, not a measurement.
 
-**Question:** (a) is the Schmidt assumption the one you want, or a different
-one (scaled from a neighbouring odd-A actinide)? (b) should the notebook
-also draw the I = 5/2 alternative, since it is one keyword argument and it
-changes the whole level structure?
+Arian's 2026-09-05 choice of the Schmidt default remains in force:
+`A_par_Th = +39821 MHz`, `g_N_Th = -3.826`, both placeholders. The spherical
+s₁/₂ assumption is not implied by deformed I = 1/2. The direct 2024 prediction
+is now an available alternative, and no factor-two error bound is established
+for the Schmidt value. See the [source audit](superpowers/reports/2026-09-08-thf-nuclear-estimate-audit.md).
+
+The remaining issue is the nuclear-model uncertainty and eventual parameter-model
+choice, not a lack of any published estimate. No spin assignment or default
+central value was changed by this audit.
 
 ### OPEN-21 — does the K = 1 two-photon channel exist? RESOLVED
 

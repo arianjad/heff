@@ -18,7 +18,7 @@ perturbative logic of [HAM]: the ΔJ = ±1 Th hyperfine term, a 2 kHz nicety for
 a ΔΩ = ±2 component (`eQq₂`) which, by the ¹⁷⁷HfF⁺ precedent, is expected to
 exceed ω_ef by an order of magnitude and to dominate the Ω-doublet mixing.
 For ²²⁷Th (I = 1/2, tentative) there is no quadrupole at all and no measured
-magnetic moment, so no Th hyperfine constant can be predicted.
+magnetic moment located in the checked sources. A 2024 nuclear-theory moment now supplies a model-dependent hyperfine alternative; see §1.4 and the current audit.
 
 ---
 
@@ -28,7 +28,7 @@ magnetic moment, so no Th hyperfine constant can be predicted.
 
 | nuclide | Iᵖ | T₁/₂ | μ (μ_N) | Q (e·b) | source |
 |---|---|---|---|---|---|
-| ²²⁷Th | (1/2⁺) *tentative* | 18.697(7) d | **no value** | **0 by symmetry** (I = ½) | IAEA Live Chart `ground_states`, ENSDF cut-off 15-Jan-2016, ICTP-2014 Workshop Group; retrieved 2026-09-05 |
+| ²²⁷Th | (1/2⁺) *tentative* | 18.697(7) d | −0.0860 [2024 theory; §1.4], no measured value located | **0 by symmetry** (I = ½) | IAEA Live Chart `ground_states`, ENSDF cut-off 15-Jan-2016, ICTP-2014 Workshop Group; retrieved 2026-09-05 |
 | ²²⁹Th | 5/2⁺ | 7880(120) y | 0.46(4) | 3.11(6) | IAEA Live Chart `ground_states`, ENSDF cut-off 1-Jun-2008, Browne & Tuli; retrieved 2026-09-05 |
 | ²²⁹Th | 5/2⁺ | — | **0.360(7)** | **3.11(6)** | Safronova, Safronova, Radnaev, Campbell, Kuzmich, PRA 88, 060501(R) (2013) = arXiv:1305.0667, abstract |
 | ²²⁹Th | 5/2⁺ | (7917 y quoted) | **0.366(6)** | **3.11(2)** | Porsev, Safronova, Kozlov, arXiv:2107.14723, abstract + Tables 3–4 |
@@ -86,7 +86,7 @@ From the IAEA Live Chart `levels` query (ENSDF cut-off 15-Jan-2016, retrieved
   ground state or for those excited states (the `magnetic_dipole` and
   `electric_quadrupole` fields are empty).
 
-Consequences, both `[derived]` from I = 1/2:
+Consequences and current input status:
 
 1. **²²⁷ThF⁺ has no Th electric quadrupole term.** A rank-2 nuclear operator
    vanishes for I ≤ 1/2 — the 3j symbol (I 2 I; −I 0 I) in the denominator of
@@ -94,11 +94,10 @@ Consequences, both `[derived]` from I = 1/2:
    exactly as for ¹⁹F ([HAM] §2.11). Only the Th magnetic dipole and Th
    spin–rotation survive, and the Th hyperfine has the *same algebraic shape* as
    the ¹⁹F structure already coded, with I_Th = 1/2.
-2. **The Th magnetic dipole constant cannot be predicted.** A∥ ∝ g_N = μ/I
-   (§2.2) and μ(²²⁷Th) is unmeasured. See §5, gap G1.
+2. **A model-dependent hyperfine estimate is available.** [Minkov et al., Phys. Rev. C 110, 034327 (2024), Table IV](https://arxiv.org/abs/2408.11010) predicts μ(²²⁷Th) = −0.0860 μ_N for its octupole-deformed 1/2 ground solution. With I = 1/2 and the existing molecular factor −10408 MHz, this gives g_N = −0.1720 and A∥ = +1790.176 MHz. This is a model prediction without a calibrated uncertainty, not a measurement. See the [current audit](superpowers/reports/2026-09-08-thf-nuclear-estimate-audit.md); the selected Schmidt default is retained separately.
 
 If the tentative 1/2⁺ assignment is wrong (the 9.3 keV 5/2⁺ is only 9 keV away),
-both conclusions change. The ENSDF parentheses are a live caveat.
+the quadrupole conclusion and moment-to-g conversion change. The ENSDF parentheses are a live caveat.
 
 ---
 
@@ -116,7 +115,7 @@ both conclusions change. The ENSDF parentheses are a live caveat.
 | eQq₂(Th) | ThF⁺ or ThO, any isotope | **no value found** | — | see §5 gap G2 |
 | EFG at Th | ThF⁺ or ThO | **no value found** | — | see §5 gap G2 |
 | c_I(Th) | ThF⁺, any isotope | **no value found** | — | see §5 gap G3 |
-| A∥(Th), eQq | ²²⁷ThF⁺ | **no value possible** (μ unmeasured, I = ½ ⇒ Q ≡ 0) | — | §1.4 |
+| A∥(Th), eQq | ²²⁷ThF⁺ | A∥ ≈ +1.790 GHz from 2024 nuclear theory and the chosen molecular factor; Q ≡ 0 at I = ½ | — | §1.4 |
 
 Nothing here is measured. **No ThF⁺ Th hyperfine constant of any kind has been
 measured**, for any isotope; JILA's spectroscopy (Gresh 2016, Ng 2022) is on
@@ -589,22 +588,14 @@ shifts ≲ 25 kHz. **F₁ is a good quantum number**, as §3.1 assumed.
 
 ---
 
-## 5. Gaps — what has no source anywhere
+## 5. Gaps within the searched sources
 
 **G1. μ(²²⁷Th) and the ²²⁷Th ground-state spin.**
-No source found for the magnetic dipole moment. ENSDF gives no value; the spin
-assignment (1/2⁺) is itself tentative.
-Queries run: IAEA Live Chart `fields=ground_states&nuclides=227th` and
-`fields=levels&nuclides=227th` (both return empty `magnetic_dipole` /
-`electric_quadrupole` columns); arXiv API `all:"227Th" AND all:"magnetic moment"`
-→ 0 results; arXiv API `all:"227Th"` → 1 result, an unrelated ²²⁵Ac/²²³Ra
-production cross-section paper. **Not checked: Stone's IAEA nuclear-moments
-compilation INDC(NDS)-0794 as a PDF** (would need PDF extraction; pdf-mcp was
-down this session). That is the single highest-value next lookup for G1 — if a
-value exists anywhere, it is there.
-Consequence: no ²²⁷ThF⁺ hyperfine constant can be predicted. `heff` can carry the
-²²⁷Th terms with A∥ as a free parameter, which is arguably the right thing
-anyway.
+The earlier search missed a published nuclear-theory calculation. [Minkov et al., Phys. Rev. C 110, 034327 (2024), Table IV](https://arxiv.org/abs/2408.11010) predicts μ(²²⁷Th) = −0.0860 μ_N for its octupole-deformed 1/2 ground solution. With I = 1/2 and the existing molecular factor −10408 MHz, this gives g_N = −0.1720 and A∥ = +1790.176 MHz. This is a model prediction without a calibrated uncertainty, not a measurement.
+The 2026-09-05 compilation/API queries are preserved in
+[the lookup record](lit/lookup-227th-nuclear-moment.md); no experimental moment
+was located there. The spin assignment (1/2⁺) remains tentative. Nuclear-model
+uncertainty, rather than the existence of any estimate, is the unresolved input.
 
 **G2. eQq₀ and eQq₂ for ThF⁺ (or ThO), and the EFG / ⟨1/r³⟩ at Th.**
 No published value, for any Th isotope or state.

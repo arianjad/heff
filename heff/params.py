@@ -148,9 +148,13 @@ def thf_v1():
 
     P = Param
     params = {
-        "B0": P(7274.3325, "MHz", uncertainty=0.0010, status="measured",
+        "B0": P(7274.3325, "MHz", uncertainty=0.0100, status="derived",
                 isotopologue="232Th19F+",
-                source="Ng 2022 SII B p.2 (4B = 29.09733(4) GHz); Ng thesis S4.1.1 p.78"),
+                source="Ng 2022 SII B p.2 (interval = 29.09733(4) GHz); Ng thesis S4.1.1 p.78",
+                note="Interval/4 approximation, not a refit with D0 and extra hyperfine terms. "
+                     "Propagated measurement uncertainty is 0.010 MHz. With the current "
+                     "B J(J+1)-D[J(J+1)]^2 terms, the rotational interval is 4B-32D, "
+                     "124.704 kHz below the source interval; a consistent refit is unresolved"),
         "D0": P(3.897, "kHz", uncertainty=0.120, status="measured",
                 source="Gresh 2016 Table 1, X3Delta1 D'' column (1.30(4)e-7 cm-1)"),
         "omega_ef": P(5.29, "MHz", uncertainty=0.05, status="measured",
@@ -276,14 +280,17 @@ def thf_v2(isotopologue, *, a_par_th_sign="negative"):
     elif isotopologue == "229":
         th = {
             "A_par_Th": P(-1510 if a_par_th_sign == "negative" else 1510,
-                "MHz", uncertainty=60, status="ab-initio",
+                "MHz", status="ab-initio",
                 source="Skripnikov & Titov 2015 Table II FINAL(ThF+) -4163 "
                        "(mu/mu_N) MHz and Denis 2015 +1833 MHz, both rescaled "
                        "to mu = 0.366(6) mu_N => -1524 / +1491 MHz; mean of "
-                       "the two rescalings with a spread-based uncertainty "
+                       "the two rescalings with a historical 60 MHz spread scale "
                        "([TH] S2.2)",
-                note="This value is SIGNED. sign UNVERIFIED, gap G4; add the "
-                     "authors' 7 % in quadrature for a hard bar. The sign "
+                note="This value is SIGNED. sign UNVERIFIED, gap G4. The former "
+                     "60 MHz uncertainty was not a complete error bound. "
+                     "Skripnikov & Titov state a 7% theoretical uncertainty "
+                     "(about 106 MHz here), additional to nuclear-input error. "
+                     "No statistically calibrated combined interval is supplied. The sign "
                      "selects which ab initio calculation is trusted: "
                      "'negative' (default) trusts Skripnikov & Titov 2015, "
                      "recommended by docs/lit/lookup-apar-th-sign-"
@@ -291,19 +298,27 @@ def thf_v2(isotopologue, *, a_par_th_sign="negative"):
             "g_N_Th": P(0.1464, "", uncertainty=0.0024, status="derived",
                 source="mu(229Th)/I = 0.366(6)/(5/2) ([TH] S1.2, Porsev 2021 "
                        "arXiv:2107.14723)",
-                note="the 1974 value 0.46(4) still in ENSDF is superseded and "
+                note="Retains the 2021 input for continuity. Zitzer et al., "
+                     "PRA 111, L050802 (2025), Table I gives mu=0.365(3) mu_N, "
+                     "hence g_N=0.1460(12), consistent with this older value. "
+                     "The 1974 value 0.46(4) still in ENSDF is superseded and "
                      "must never be used to rescale a published A_par"),
-            "eQq0_Th": P(-2600, "MHz", uncertainty=1000, status="estimate",
+            "eQq0_Th": P(-2600, "MHz", status="placeholder",
                 source="HfF+ anchor: eQq0(177HfF+) = -2100 MHz (Petrov 2018, "
                        "CCSD(T)) x Q(229Th)/Q(177Hf) = 3.11/3.365 x R_el in "
                        "[1, 1.65] => -2 to -3.3 GHz ([TH] S4.3)",
-                note="No ThF+ or ThO eQq0 is published, for any isotope or "
-                     "state -- gap G2"),
-            "eQq2_Th": P(300, "MHz", uncertainty=100, status="estimate",
+                note="Sensitivity placeholder only: the electronic EFG transfer factor R_el "
+                     "and former +/-1000 MHz range are not source-calibrated. "
+                     "The signed Petrov-to-B&C normalization is unresolved, including q=0. "
+                     "Do not treat this as a convention-validated ThF+ quadrupole prediction. "
+                     "See docs/superpowers/reports/2026-09-08-thf-quadrupole-estimate-audit.md"),
+            "eQq2_Th": P(300, "MHz", status="placeholder",
                 source="Petrov 2018 Eqs. (24)-(25) route with w(ThF+) = "
                        "G_par + 0.002319 = 0.0499 against w(HfF+) = 0.014 "
                        "=> ~200-400 MHz ([TH] S4.4)",
-                note="Inherits the UNVERIFIED normalisation bridge of [TH] "
+                note="Sensitivity placeholder only; the former +/-100 MHz range is not "
+                     "source-calibrated and the signed value is not a validated B&C input. "
+                     "Inherits the UNVERIFIED normalisation bridge of [TH] "
                      "S4/S9.4 (OPEN-17): the value inherits an unresolved "
                      "factor sqrt(2) AND a sign between the B&C (9.52) "
                      "q = +-2 normalisation and Petrov 2018 Eq. (23)"),
@@ -323,8 +338,9 @@ def thf_v2(isotopologue, *, a_par_th_sign="negative"):
         schmidt_note = (
             "PLACEHOLDER, Arian's ruling 2026-09-05 ([HAM] S9.6, OPEN-20): "
             "the Schmidt single-particle moment for the tentative ENSDF "
-            "(1/2+) odd-neutron ground state, an s1/2 orbital (j = l + 1/2, "
-            "l = 0), gives g_s(n) = -3.826 and mu_Schmidt = 1/2 g_s(n) = "
+            "(1/2+) odd-neutron ground state, ASSUMING a spherical s1/2 "
+            "orbital (not implied by deformed I=1/2), gives g_s(n) = -3.826 "
+            "and mu_Schmidt = 1/2 g_s(n) = "
             "-1.913 mu_N, so g_N = mu/I = -3.826 and A_par = G_el x g_N = "
             "(-10408 MHz) x (-3.826) = +39821 MHz. Two RULES OF THUMB, "
             "UNCITED -- labelled here exactly as [HAM] S9.6 labels them, "
@@ -340,8 +356,14 @@ def thf_v2(isotopologue, *, a_par_th_sign="negative"):
             "alternative mu(227Th) = mu(229Th) = 0.366 mu_N assumption gives "
             "g_N = 0.732 and A_par = -7619 MHz (~-7.62 GHz) -- opposite "
             "sign, 5x smaller. See docs/lit/lookup-227th-nuclear-moment.md: "
-            "no measured or estimated mu(227Th) exists in Stone's "
-            "compilations or the IAEA NDS moments database.")
+            "the checked compilations supply no measured mu(227Th). "
+            "A published deformed-nucleus calculation DOES exist: Minkov "
+            "et al., PRC 110, 034327 (2024), arXiv:2408.11010 Table IV, "
+            "predicts mu=-0.0860 mu_N for its octupole 1/2 ground solution. "
+            "With I=1/2 and the same G_el this implies g_N=-0.1720 and "
+            "A_par=+1790.176 MHz. No calibrated uncertainty is provided; "
+            "this alternative is not silently substituted for the chosen "
+            "Schmidt stress-test default.")
         th = {
             "A_par_Th": P(39821, "MHz", status="placeholder",
                 source="[HAM] S9.6; docs/lit/lookup-227th-nuclear-moment.md",

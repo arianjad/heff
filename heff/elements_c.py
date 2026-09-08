@@ -44,8 +44,9 @@ def _same(bra, ket, *fields):
       hermitian=True, real=True,
       cite="Ng thesis Eq. C.7c p.322: H_rot = B_v J(J+1). Case (c), NO -Omega^2 "
            "term (Ng Ch. 2.4 Eq. 2.2a p.37) -- the Omega-dependent constant is "
-           "absorbed into the band origin, which is why 4B = 29.09733(4) GHz is a "
-           "literal statement about the J = 1 -> 2 interval. [HAM] S2.1")
+           "absorbed into the band origin. 4B is the rotational-only J=1->2 interval; "
+           "with the centrifugal term it is 4B-32D. The stored B is interval/4 "
+           "from Ng, not a joint refit; see the 2026-09-08 estimate audit. [HAM] S2.1")
 def rotation(bra, ket, ctx):
     if not _same(bra, ket, "J", "Om", "F", "mF"):
         return 0.0

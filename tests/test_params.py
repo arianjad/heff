@@ -139,8 +139,8 @@ def test_thf_v2_229_carries_the_documented_values_and_statuses():
     expect = {
         "A_par_Th": (-1510, "MHz", "ab-initio"),
         "g_N_Th": (0.1464, "", "derived"),
-        "eQq0_Th": (-2600, "MHz", "estimate"),
-        "eQq2_Th": (300, "MHz", "estimate"),
+        "eQq0_Th": (-2600, "MHz", "placeholder"),
+        "eQq2_Th": (300, "MHz", "placeholder"),
         "c_I_Th": (0.0, "kHz", "held-fixed"),
         "Q_Th": (3.11, "e*b", "measured"),
     }
@@ -197,3 +197,17 @@ def test_odd_thorium_transfers_do_not_claim_target_isotope_measurements():
             assert p.uncertainty is None
             assert p.value == thf_v1().params[name].value
             assert p.isotopologue == isotope + 'Th19F+'
+
+
+def test_interval_uncertainty_propagates_to_B0_in_MHz():
+    # Ng 2022 reports a 29.09733(4) GHz interval; dividing by four also divides sigma.
+    assert thf_v1().params['B0'].uncertainty == pytest.approx(.00004 * 1000 / 4)
+
+
+def test_unvalidated_quadrupole_transfer_has_no_calibrated_error_bar():
+    for name in ('eQq0_Th', 'eQq2_Th'):
+        assert thf_v2('229').params[name].uncertainty is None
+
+
+def test_thorium_hyperfine_spread_is_not_a_complete_uncertainty():
+    assert thf_v2("229").params["A_par_Th"].uncertainty is None

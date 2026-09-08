@@ -104,9 +104,9 @@ def thf_spec(isotopologue=None, *, J_max=4):
 
     The 227Th value is the ENSDF-tentative (1/2+) ground-state assignment. It
     rests on decay-scheme systematics, not on any moment or hyperfine
-    measurement -- no measured or estimated mu(227Th) exists in Stone's
-    compilations or the IAEA NDS moments database
-    (docs/lit/lookup-227th-nuclear-moment.md). The 9.3 keV level, 5/2+, is the
+    measurement in the checked compilations. A published deformed-nucleus
+    moment prediction exists (Minkov et al. 2024, Table IV); see
+    docs/lit/lookup-227th-nuclear-moment.md. The 9.3 keV level, 5/2+, is the
     live alternative: if the assignment moves there, I_Th = 2.5 here.
 
     `J_max` is a keyword because the truncation is a physics choice -- the Th

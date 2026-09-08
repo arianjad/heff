@@ -1,8 +1,12 @@
 # Lookup: ground-state magnetic dipole moment of ²²⁷Th
 
-Retrieved 2026-09-05. Question: does any compilation or paper give a measured/estimated
-μ(²²⁷Th) and confirm the ENSDF-tentative (1/2⁺) ground state? Answer: **no** — three
-independent nuclear-moment sources were queried and all three omit ²²⁷Th entirely.
+Updated 2026-09-08. **A published theoretical estimate exists.** [Minkov et al., Phys. Rev. C 110, 034327 (2024), Table IV](https://arxiv.org/abs/2408.11010) predicts μ(²²⁷Th) = −0.0860 μ_N for its octupole-deformed 1/2 ground solution. With I = 1/2 and the existing molecular factor −10408 MHz, this gives g_N = −0.1720 and A∥ = +1790.176 MHz. This is a model prediction without a calibrated uncertainty, not a measurement.
+The earlier compilation search below did not locate an experimental moment;
+its absence result cannot establish absence of nuclear theory. See the
+[current audit](../superpowers/reports/2026-09-08-thf-nuclear-estimate-audit.md).
+The selected Schmidt default remains a separate stress-test model.
+
+The following source queries and excerpts preserve the 2026-09-05 search evidence.
 
 ## Sources reached
 
@@ -203,19 +207,8 @@ absence question this lookup answers.)
 
 ## Conclusion
 
-**No measured or estimated magnetic dipole moment for ²²⁷Th exists in the
-literature as of the 2019 (INDC(NDS)-0794) and the earlier (~1998-cutoff)
-Stone compilations, nor in the IAEA NDS live nuclear-moments database.** All
-three sources place a Z=90 electromagnetic-moment entry at ²²⁹Th (μ =
-+0.46(4) μ_N, 5/2⁺, ref. Gerstenkorn et al. 1974) and at ²³²Th (g-factor,
-0⁺ ground state), with nothing at all for A=227 — the Z=90 row set jumps
-directly over it. Four targeted WebSearch queries for a ²²⁷Th magnetic
-moment or hyperfine-derived estimate returned no numeric hit; the one
-plausibly relevant paper (Kälber et al. 1989, collinear laser spectroscopy of
-stored Th⁺ ions across ²²⁷–²³²Th) could not be read in full this session
-(Springer paywall, pdf-mcp/zotero both down) and is flagged, not resolved —
-its abstract synopsis suggests hyperfine analysis was reported for ²²⁹Th
-only. This corroborates and formally sources the existing repo statement
-(`docs/digest-literature-th-hyperfine.md` §1.1, "no value") that ²²⁷ThF⁺
-hyperfine work has no Th magnetic hyperfine constant available to predict, for
-lack of any nuclear μ input.
+The three checked compilations omitted a 227Th ground-state moment. No
+experimental moment was located in the scoped searches; Kälber et al. (1989)
+remains unread in full. Those searches missed the published 2024 nuclear-theory
+prediction linked above. A model-dependent ThF+ hyperfine estimate is possible;
+a measured or quantitatively calibrated prediction remains unavailable here.
