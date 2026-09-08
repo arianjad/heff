@@ -1,0 +1,40 @@
+# Synthetic coefficients for exercising the backend; not isotope data.
+schema_version = 1
+model_id = "amide_synthetic"
+default_manifold = "X"
+default_isotopologue = "test"
+
+[[isotopologues.test.spins]]
+label = "nitrogen"
+I = 1.0
+couple_to = "J"
+[[isotopologues.test.spins]]
+label = "protons"
+I = 0.5
+equivalent_count = 2
+couple_to = "F_N"
+[[isotopologues.test.spins]]
+label = "metal"
+I = 0.5
+couple_to = "F_core"
+
+[manifolds.X]
+backend = "amide_c2v"
+terms = ["rotation_A", "rotation_B", "rotation_C", "hyperfine_M_contact", "stark_z", "zeeman_electron", "zeeman_metal"]
+[manifolds.X.electronic]
+S = 0.5
+vibronic_sign = 1
+[manifolds.X.basis]
+N_min = 0
+N_max = 1
+K = [0, 1]
+M = "all"
+frame = "lab"
+[manifolds.X.parameters]
+A = 10.0
+B = 4.0
+C = 3.0
+a_M = 0.1
+d_0 = 0.5
+g_s = 2.0
+g_M = 1.0

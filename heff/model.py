@@ -45,12 +45,14 @@ class Problem:
 
     @cached_property
     def kets(self):
-        return enumerate_kets(self.spec)
+        enumerate_basis = self.backend.enumerate_kets or enumerate_kets
+        return enumerate_basis(self.spec)
 
     @cached_property
     def term_matrices(self):
+        make_context = self.backend.make_context or ctx_from
         return build_term_matrices(
-            self.kets, ctx_from(self.spec, self.params),
+            self.kets, make_context(self.spec, self.params),
             case=self.backend.case, registry=self.backend.registry,
             term_names=self.term_names)
 

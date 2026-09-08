@@ -92,6 +92,41 @@ the literature; the alternative is available and documented in
 
 Internal unit is MHz throughout; fields are `E_z` in V/cm and `B_z` in G.
 
+## Equivalent-proton amides
+
+The `amide_c2v` TOML backend supports nitrogen, two equivalent protons combined
+into pair spin `I_T`, and an optional metal nuclear spin. Its coupling order is
+`N+S=J`, `J+I_N=F_N`, `F_N+I_T=F_core`, `F_core+I_M=F`.
+Thus a spinful metal gives three nuclear angular momenta and four physical nuclei.
+For vibronic sign +1, even K admits I_T=0 and odd K admits I_T=1; sign -1 reverses
+this exchange filter. K entries are magnitudes and include both signs.
+
+```python
+from heff import load_model
+problem = load_model("examples/models/amide_synthetic.toml").problem()
+H = problem.hamiltonian(E_z=1.0, B_z=0.1)
+```
+
+The [example](examples/models/amide_synthetic.toml) uses synthetic coefficients.
+Set metal `I=0` or omit its record for a spinless metal. Core operators include
+asymmetric rotation, spin rotation, nitrogen/proton hyperfine, nitrogen quadrupole
+(I_N=1), and axial Stark/Zeeman terms, ported from C2V-Molecules. New metal
+operators are isotropic contact `a_M` and nuclear Zeeman `g_M`. Metal anisotropic
+hyperfine and quadrupole are not implemented. Proton hyperfine preserves I_T;
+singlet/triplet mixing is not included. This restricted operator model is not a
+fitted or complete precision model for 226RaNH2, 87SrNH2, or 43CaNH2.
+
+Anisotropic electron Zeeman uses spherical tensor parameters `g_l_00`, `g_l_20`,
+and `g_l_22`, the last populating both q=+2 and q=-2. Select terms
+`zeeman_anisotropic_00`, `_20`, and `_22`. These use the source's body-a convention
+and are not Cartesian g components. Selected parameters require explicit values,
+including zeros. Units: MHz, E_z in V/cm, B_z in G, d_0 in MHz/(V/cm).
+Existing ThF-specific observable helpers are not generalized by this backend.
+
+See the [physics note](docs/superpowers/reports/three-spin-physics-note.md) and
+[implementation record](docs/superpowers/plans/2026-09-08-three-nuclear-spins.md).
+The `_EIGH` hook remains for the planned PyTorch change.
+
 ## Validation
 
 Gated by the test suite — `conda run -n heff python -m pytest tests/ -q` passes in
@@ -133,7 +168,7 @@ extensions), and the two-photon selection rules, parity and reciprocity
   Each names the convention block it assumes.
 
 Every gate's docstring names the failure mode it uniquely catches, and both PASS
-and FAIL are reachable. There are no snapshot, hash or pinned-spectrum tests, and
+and FAIL are reachable. The amide port additionally uses source-evaluated matrix-element fixtures;
 no constant or tolerance was tuned to make a gate pass. One physics question
 surfaced during implementation — the parity ordering of the Ω doublet, OQ-A in
 `docs/open-questions.md` — and was confirmed by Arian on 2026-09-05; OQ-A is

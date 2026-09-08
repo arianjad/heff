@@ -17,6 +17,8 @@ class Backend:
     optional_zero_parameters: frozenset[str]
     make_spec: Callable
     default_conventions: Callable
+    enumerate_kets: Callable | None = None
+    make_context: Callable | None = None
 
 
 _BACKENDS: dict[str, Backend] = {}
