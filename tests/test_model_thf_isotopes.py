@@ -45,3 +45,9 @@ def test_229_selection_does_not_change_default_232():
     load_model('thf_plus', isotope='229Th19F').validate()
     after = load_model('thf_plus').problem(J_max=1).hamiltonian()
     np.testing.assert_array_equal(before, after)
+
+
+def test_232_toml_preserves_native_parameter_provenance():
+    from heff.params import thf_v1
+    actual = load_model('thf_plus').problem().params
+    assert actual.params == thf_v1().params
