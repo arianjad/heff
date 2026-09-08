@@ -1,10 +1,12 @@
+import warnings
+
 from heff.backends import load_bundled_backends
 from heff.backend_registry import get_backend
 from heff.model_io import read_model_toml, resolve_param_set
 import pytest
 
 
-def _minimal_model(parameters, *, top_metadata=""):
+def _minimal_model(parameters, *, top_metadata="", basis_extra=""):
     return f'''schema_version = 1
 model_id = "minimal"
 default_manifold = "X"
@@ -32,6 +34,7 @@ J_min = 1
 J_max = 1
 M = "blocks"
 frame = "rotating"
+{basis_extra}
 
 [manifolds.X.parameters]
 {parameters}
@@ -69,8 +72,39 @@ def test_explicit_unsupported_unit_fails_when_parameters_are_resolved(tmp_path):
     definition = read_model_toml(path)
     load_bundled_backends()
 
-    with pytest.raises(ValueError, match="bananas"):
+    with pytest.raises(ValueError,
+                       match=r"manifolds\.X\.parameters\.B0.*bananas"):
         resolve_param_set(definition.manifolds["X"], get_backend("case_c"))
+
+
+def test_parameter_shape_error_names_full_bound_toml_path(tmp_path):
+    path = tmp_path / "missing-value.toml"
+    path.write_text(_minimal_model('B0 = { unit = "MHz" }'), encoding="utf-8")
+    definition = read_model_toml(path)
+    load_bundled_backends()
+
+    with pytest.raises(ValueError,
+                       match=r"manifolds\.X\.parameters\.B0.*containing value"):
+        resolve_param_set(definition.manifolds["X"], get_backend("case_c"))
+
+
+def test_parameter_warnings_name_full_bound_toml_path(tmp_path):
+    path = tmp_path / "parameter-warnings.toml"
+    path.write_text(
+        _minimal_model('B0 = { value = 1.0, status = "unreviewed", calibration = "run-17" }'),
+        encoding="utf-8")
+    definition = read_model_toml(path)
+    load_bundled_backends()
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        resolve_param_set(definition.manifolds["X"], get_backend("case_c"))
+
+    messages = [str(item.message) for item in caught]
+    assert any(message.startswith("manifolds.X.parameters.B0: preserving unknown metadata")
+               for message in messages)
+    assert any(message.startswith("manifolds.X.parameters.B0: unknown optional status")
+               for message in messages)
 
 
 def test_unknown_optional_status_warns_and_normalizes_to_unspecified(tmp_path):
@@ -156,3 +190,19 @@ B0 = 7274.3325
 
     with pytest.raises(ValueError, match=r"manifolds\.X\.basis\.J_max"):
         read_model_toml(path)
+
+
+def test_parsed_unknown_case_c_basis_key_is_rejected_by_backend_adapter(tmp_path):
+    path = tmp_path / "unknown-basis-key.toml"
+    path.write_text(_minimal_model("B0 = 1.0", basis_extra="J_stop = 2"),
+                    encoding="utf-8")
+    definition = read_model_toml(path)
+    load_bundled_backends()
+    backend = get_backend("case_c")
+
+    with pytest.raises(ValueError, match="J_stop"):
+        backend.make_spec(
+            definition.manifolds["X"].basis,
+            definition.manifolds["X"].electronic,
+            definition.isotopologues["test"].spins,
+        )

@@ -176,34 +176,37 @@ def read_bundled_model(model_id) -> ModelDefinition:
         return read_model_toml(path)
 
 
-def _parameter(raw, *, symbol, canonical_unit):
+def _parameter(raw, *, path, canonical_unit):
     if isinstance(raw, (int, float)) and not isinstance(raw, bool):
         return Param(float(raw), canonical_unit)
     if not isinstance(raw, Mapping) or "value" not in raw:
         raise ValueError(
-            f"parameters.{symbol} must be a number or a table containing value")
+            f"{path} must be a number or a table containing value")
     allowed = {"value", "unit", "uncertainty", "status", "source",
                "isotopologue", "convention", "note"}
     unknown = sorted(set(raw) - allowed)
     if unknown:
-        warnings.warn(f"parameters.{symbol}: preserving unknown metadata {unknown}")
+        warnings.warn(f"{path}: preserving unknown metadata {unknown}")
     status = raw.get("status", "unspecified")
     if status not in STATUSES:
         warnings.warn(
-            f"parameters.{symbol}: unknown optional status {status!r}; "
+            f"{path}: unknown optional status {status!r}; "
             "using 'unspecified'")
         status = "unspecified"
-    param = Param(
-        float(raw["value"]),
-        unit=raw.get("unit", canonical_unit),
-        uncertainty=raw.get("uncertainty"),
-        status=status,
-        source=raw.get("source"),
-        isotopologue=raw.get("isotopologue"),
-        convention=raw.get("convention"),
-        note=raw.get("note"),
-    )
-    _ = param.canonical
+    try:
+        param = Param(
+            float(raw["value"]),
+            unit=raw.get("unit", canonical_unit),
+            uncertainty=raw.get("uncertainty"),
+            status=status,
+            source=raw.get("source"),
+            isotopologue=raw.get("isotopologue"),
+            convention=raw.get("convention"),
+            note=raw.get("note"),
+        )
+        _ = param.canonical
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{path}: {exc}") from exc
     return param
 
 
@@ -218,7 +221,8 @@ def resolve_param_set(manifold, backend) -> ParamSet:
         key: value for key, value in manifold.conventions.items() if key in recognized
     })
     params = {
-        symbol: _parameter(loaded.raw, symbol=symbol,
+        symbol: _parameter(loaded.raw,
+                           path=f"manifolds.{manifold.id}.parameters.{symbol}",
                            canonical_unit=backend.canonical_units.get(symbol, "MHz"))
         for symbol, loaded in manifold.parameters.items()
     }
