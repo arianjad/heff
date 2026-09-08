@@ -1,7 +1,9 @@
 # Design — TOML-configured, multi-molecule effective Hamiltonians
 
-Status: approved architecture direction on 2026-09-07; awaiting review of this
-written specification before implementation planning.
+Status: approved architecture direction on 2026-09-07. The foundation plan
+implements the existing-ThF+ configuration slice only; later backends and basis
+transformations remain follow-on work. See the maintained
+[foundation acceptance report](../handoffs/2026-09-07-toml-foundation-acceptance.md).
 
 ## 1. Goal
 
