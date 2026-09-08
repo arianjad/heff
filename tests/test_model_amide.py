@@ -122,3 +122,36 @@ def test_metal_coupled_matrices_match_uncoupled_spin_operators(tmp_path):
     for name, actual in zip(matrices.names, matrices.mats):
         np.testing.assert_allclose(actual, U.T @ expected[name] @ U,
                                    atol=1e-13, rtol=0)
+
+
+def test_proton_triplet_core_tensors_match_explicit_spectator_cg_sum():
+    from math import sqrt
+    from heff.amide_basis import AmideBasisSpec, enumerate_amide_kets
+    from heff.backends.amide import AmideContext, AmideConventions, REGISTRY
+    from heff.wigner import w3j
+    from dataclasses import replace
+
+    spec = AmideBasisSpec(S=.5, I_N=1, i_H=.5, I_M=.5,
+        N_range=(1, 1), K_values=(1,), vibronic_sign=1)
+    kets = enumerate_amide_kets(spec)
+    kets = kets[kets['mF'] == 0]
+    ctx = AmideContext(spec, AmideConventions())
+    core_ctx = AmideContext(replace(spec, I_M=0), ctx.conventions)
+
+    def cg(g, f, mg, mi):
+        return (-1)**int(g-.5) * sqrt(2*f+1) * w3j(g, .5, f, mg, mi, 0)
+
+    for term in REGISTRY.values():
+        if term.rules.rank != 1 or term.name == 'zeeman_metal':
+            continue
+        for bra in kets:
+            for ket in kets:
+                expected = 0.0
+                for mi in (-.5, .5):
+                    b, k = bra.copy(), ket.copy()
+                    b['F'], k['F'] = b['F_core'], k['F_core']
+                    b['mF'] = k['mF'] = -mi
+                    expected += (cg(b['F'], bra['F'], -mi, mi)
+                                 * cg(k['F'], ket['F'], -mi, mi)
+                                 * term.fn(b, k, core_ctx))
+                assert term.fn(bra, ket, ctx) == pytest.approx(expected, abs=1e-13)
