@@ -13,7 +13,10 @@ dependencies = ["numpy>=1.26", "scipy>=1.11", "sympy>=1.12"]
 test = ["pytest>=7"]
 
 [tool.setuptools]
-packages = ["heff"]
+packages = ["heff", "heff.backends"]
+
+[tool.setuptools.package-data]
+heff = ["models/*.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

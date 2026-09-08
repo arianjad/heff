@@ -6,6 +6,9 @@ __pycache__/
 *.egg-info/
 build/
 dist/
+.wheel-check/
+.wheel-target/
+.wheel-cwd/
 docs/lit/*.pdf
 docs/lit/**/*.png
 docs/lit/*.png

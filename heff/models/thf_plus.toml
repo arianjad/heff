@@ -1,0 +1,48 @@
+schema_version = 1
+model_id = "thf_plus"
+display_name = "ThF+"
+default_manifold = "X3Delta1"
+default_isotopologue = "232Th19F"
+
+[isotopologues."232Th19F"]
+
+[[isotopologues."232Th19F".spins]]
+label = "19F"
+I = 0.5
+couple_to = "J"
+
+[manifolds.X3Delta1]
+backend = "case_c"
+terms = [
+  "centrifugal", "hyperfine_A_par", "hyperfine_A_par_dJ1",
+  "omega_doubling", "pt_odd_edm", "pt_odd_scalar_pseudoscalar",
+  "rotation", "spin_rotation_cI", "stark_z", "zeeman_Gpar",
+  "zeeman_nuclear",
+]
+
+[manifolds.X3Delta1.electronic]
+label = "X3Delta1"
+Omega = 1.0
+S = 1.0
+Lambda = 2.0
+T0 = 0.0
+
+[manifolds.X3Delta1.basis]
+J_min = 1
+J_max = 4
+M = "blocks"
+frame = "rotating"
+
+[manifolds.X3Delta1.parameters]
+B0 = 7274.3325
+D0 = { value = 3.897, unit = "kHz" }
+omega_ef = 5.29
+A_par = -20.1
+c_I = { value = 20.0, unit = "kHz" }
+d_mf = { value = 3.37, unit = "D", convention = "center_of_mass" }
+G_par = 0.04756
+g_N = 5.25773
+E_eff = { value = 35.0, unit = "GV/cm" }
+W_TP = { value = 50.0, unit = "kHz" }
+d_e = 0.0
+k_TP = 0.0

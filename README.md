@@ -22,6 +22,20 @@ The last four lines regenerate the two notebooks from their generator scripts
 and run them on a fresh kernel. The committed notebooks already carry their
 outputs, so reading them needs neither step.
 
+The bundled ThF+ model provides the smallest high-level workflow:
+
+```python
+import heff
+
+model = heff.load_model("thf_plus")
+problem = model.problem(J_max=2)
+H = problem.hamiltonian(E_z=20.0, B_z=0.01)
+```
+
+Bare TOML parameter values use the selected backend's canonical units. Sources
+may be recorded in comments or optional rich metadata; they are not required
+to load a model.
+
 ## What it is
 
 `H = Σ_k c_k M_k`. The term matrices `M_k` are built once per basis block and
@@ -81,7 +95,7 @@ Internal unit is MHz throughout; fields are `E_z` in V/cm and `B_z` in G.
 ## Validation
 
 Gated by the test suite — `conda run -n heff python -m pytest tests/ -q` passes in
-full: **248 passed, 2 skipped** (measured 2026-09-06), with the two tier-D
+full: **293 passed, 2 skipped** (measured 2026-09-07), with the two tier-D
 literature comparisons skipped unless `HEFF_RUN_LITERATURE=1` (the opt-in tier
 described below).
 

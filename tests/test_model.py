@@ -15,6 +15,14 @@ from heff.spec import enumerate_kets, thf_spec
 from heff.terms import ctx_from
 
 
+THF_PLUS_TERMS = (
+    "centrifugal", "hyperfine_A_par", "hyperfine_A_par_dJ1",
+    "omega_doubling", "pt_odd_edm", "pt_odd_scalar_pseudoscalar",
+    "rotation", "spin_rotation_cI", "stark_z", "zeeman_Gpar",
+    "zeeman_nuclear",
+)
+
+
 def _write_thf_model(tmp_path, *, model_id="temporary_thf", extra=""):
     path = tmp_path / f"{model_id}.toml"
     path.write_text(
@@ -286,3 +294,115 @@ def test_importing_model_does_not_import_or_initialize_backend_adapters():
         "assert list_backends() == ()"
     )
     subprocess.run([sys.executable, "-c", code], check=True)
+
+
+def test_public_model_api_is_lazy_on_import_heff():
+    """Catches package exports eagerly importing adapters or heavy libraries."""
+    code = (
+        "import sys; import heff; "
+        "assert 'heff.model' not in sys.modules; "
+        "assert 'heff.backends' not in sys.modules; "
+        "assert 'sympy' not in sys.modules; "
+        "assert 'scipy' not in sys.modules; "
+        "assert heff.load_model.__name__ == 'load_model'; "
+        "assert heff.list_models.__name__ == 'list_models'; "
+        "assert heff.MoleculeModel.__name__ == 'MoleculeModel'; "
+        "assert heff.Problem.__name__ == 'Problem'; "
+        "assert heff.list_models() == ('thf_plus',); "
+        "assert 'heff.backends' not in sys.modules"
+    )
+    subprocess.run([sys.executable, "-c", code], check=True)
+
+
+def test_bundled_thf_plus_matches_legacy_problem_exactly():
+    """Catches bundled data, term order, or composition changing ThF+ physics."""
+    model = load_model("thf_plus")
+    problem = model.problem()
+    legacy_params = thf_v1()
+    legacy_spec = thf_spec()
+    legacy_kets = enumerate_kets(legacy_spec)
+    legacy_tm = build_term_matrices(
+        legacy_kets, ctx_from(legacy_spec, legacy_params))
+
+    expected_canonical = {
+        "B0": 7274.3325,
+        "D0": 0.003897,
+        "omega_ef": 5.29,
+        "A_par": -20.1,
+        "c_I": 0.02,
+        "d_mf": 1.696497766,
+        "G_par": 0.04756,
+        "g_N": 5.25773,
+        "E_eff": 8.462962347e18,
+        "W_TP": 0.05,
+        "d_e": 0.0,
+        "k_TP": 0.0,
+    }
+    assert tuple(problem.params.params) == tuple(expected_canonical)
+    assert {
+        symbol: parameter.canonical
+        for symbol, parameter in problem.params.params.items()
+    } == expected_canonical
+    assert {
+        symbol: parameter.canonical
+        for symbol, parameter in legacy_params.params.items()
+    } == expected_canonical
+    np.testing.assert_array_equal(problem.kets, legacy_kets)
+    assert problem.term_names == THF_PLUS_TERMS
+    assert problem.term_matrices.names == THF_PLUS_TERMS
+    assert legacy_tm.names == THF_PLUS_TERMS
+    for got, expected in zip(problem.term_matrices.mats, legacy_tm.mats):
+        np.testing.assert_array_equal(got, expected)
+
+    for E_z, B_z in ((0.0, 0.0), (20.0, 0.01)):
+        got_H = problem.hamiltonian(E_z=E_z, B_z=B_z)
+        expected_H = hamiltonian(
+            legacy_tm, legacy_params, {"E_z": E_z, "B_z": B_z})
+        np.testing.assert_array_equal(got_H, expected_H)
+        got_evals, got_evecs = np.linalg.eigh(got_H)
+        expected_evals, expected_evecs = np.linalg.eigh(expected_H)
+        np.testing.assert_array_equal(got_evals, expected_evals)
+        np.testing.assert_allclose(
+            np.einsum("ik,jk->kij", got_evecs, got_evecs.conj()),
+            np.einsum("ik,jk->kij", expected_evecs, expected_evecs.conj()),
+            rtol=0.0,
+            atol=1e-13,
+        )
+
+
+def test_high_level_minimal_toml_accepts_bare_canonical_parameters(tmp_path):
+    """Catches the high-level API requiring optional parameter metadata."""
+    path = tmp_path / "minimal.toml"
+    path.write_text('''schema_version = 1
+model_id = "minimal"
+default_manifold = "X"
+default_isotopologue = "test"
+
+[isotopologues.test]
+spins = []
+
+[manifolds.X]
+backend = "case_c"
+terms = ["rotation"]
+
+[manifolds.X.electronic]
+label = "X"
+Omega = 1.0
+S = 1.0
+Lambda = 2.0
+
+[manifolds.X.basis]
+J_min = 1
+J_max = 1
+M = "blocks"
+frame = "rotating"
+
+[manifolds.X.parameters]
+B0 = 7274.3325
+''', encoding="utf-8")
+
+    problem = load_model(path).problem()
+
+    assert problem.term_names == ("rotation",)
+    assert problem.params.value("B0") == 7274.3325
+    assert problem.hamiltonian().shape == (6, 6)

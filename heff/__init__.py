@@ -7,6 +7,13 @@ never (plotting lives in notebooks, spec S3.8).
 
 __version__ = "0.1.0"
 
+
+def __getattr__(name):
+    if name in {"load_model", "list_models", "MoleculeModel", "Problem"}:
+        from . import model
+        return getattr(model, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 from . import (assemble, conventions, elements_c, elements_c2, engine, formalism,
               observe, params, spec, spectra, terms, track, twophoton,
               wigner)  # noqa: F401
@@ -49,4 +56,5 @@ __all__ = ["wigner", "spec", "KET_C", "KET_C2", "Blocking", "ElecState",
            "multi_curvature", "offdiag", "pair_differential", "spectra",
            "dipole_matrix", "label_lines", "line_strengths",
            "twophoton", "REGISTRY_2G", "dyad_weights", "two_photon_geometry",
-           "two_photon_matrix", "two_photon_line_strengths"]
+           "two_photon_matrix", "two_photon_line_strengths",
+           "load_model", "list_models", "MoleculeModel", "Problem"]
