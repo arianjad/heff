@@ -12,7 +12,7 @@ Units: energies as frequencies (`h·ν`). 1 cm⁻¹ = 29 979.2458 MHz. Nuclear s
 
 ## 1. Basis and truncation
 
-### 1.1 The recommended working basis
+### 1.1 The implemented working basis
 
 **Ω = ±1 block only, in the JILA product basis `|J, Ω, F, m_F⟩`**, with `F = J + I` (I = ½), Ω = ±1 the signed projection of the total electronic angular momentum on the internuclear axis, and J, F, m_F quantised along the instantaneous **E-field** direction.
 
@@ -49,7 +49,7 @@ With B = 0.242647 cm⁻¹ (§3) and ΔE(³Δ₂ − ³Δ₁) = 1052.5(1.0) cm⁻
 
 What the Ω = 2 admixture **does** change, and cannot be absorbed: the differential g-factor. Ng's own 32-level Ω = ±1 model gives δg/g = −0.00223 against a measured −0.00255(6), and he attributes the 15 % gap to "coupling between the X ³Δ₁ and the ³Δ₂ states that is not accounted for in the 32-level Hamiltonian" (thesis p. 85). Petrov's ThF⁺ model, which does include 1³Δ₂, lands at Δg = 7.56 × 10⁻⁵ ⇒ δg/g = −0.00254 `[derived from arXiv:2503.02840 Table I]`, essentially on the measurement. **I reproduced Ng's −0.00223 exactly** with a 96-state Ω = ±1 model built from the operators in §2 (see §6, check V7). So: the Ω = ±1 block is right for level energies to well below a kHz; it is wrong at the 15 % level for δg, which matters for eEDM systematics but not for spectroscopy.
 
-**Recommendation: v1 = Ω = ±1 block with effective (fitted) parameters.** Provide the full ³Δ manifold and the Ω = 0 perturbers as an opt-in extension (§1.4), needed only for ab initio Δg or for generating ω_ef rather than fitting it.
+**Implemented model: Ω = ±1 with effective (fitted) parameters.** The full ³Δ manifold and Ω = 0 perturbers remain outside the package (§1.4); they are needed to predict Δg or generate ω_ef rather than fit it.
 
 ### 1.3 Dimension per M_F block
 
@@ -74,11 +74,11 @@ What the Ω = 2 admixture **does** change, and cannot be absorbed: the different
 
 Per-M_F blocking is exact for a collinear (E ∥ B ∥ ẑ) static problem; it is broken by the rotating-frame term `ℏω_rot F_x` (Ng Eq. C.4) and by any B⊥, both of which couple Δm_F = ±1.
 
-### 1.4 The three tiers, so the decision is explicit
+### 1.4 Model tiers and current support
 
 | tier | basis | dim (J = 1–4) | what it buys | what it costs |
 |---|---|---|---|---|
-| **T1 (recommended v1)** | Ω = ±1, effective ω_ef, A∥, G∥, d_mf | 96 | every energy in §4 to ≪ 1 kHz; δg to 15 % | ω_ef and G∥ are inputs, not outputs |
+| **implemented** | Ω = ±1, effective ω_ef, A∥, G∥, d_mf | 96 | every energy in §4 to ≪ 1 kHz; δg to 15 % | ω_ef and G∥ are inputs, not outputs |
 | T2 | + ³Δ₂ (Ω = ±2), + ³Δ₃ (Ω = ±3) | 244 | δg to the measurement; the A_SO/λ fine structure | needs A_SO, λ, and the ³Δ₁–³Δ₂ off-diagonal element |
 | T3 | + Ω = 0 perturbers (a ¹Σ⁺, ³Π₀₋, ³Π₀₊) as in Petrov 2025 Eq. 3 | ~500+ | ω_ef **generated**, not fitted (see §2.3) | six ab initio electronic matrix elements |
 
@@ -128,7 +128,7 @@ Note there is **no −Ω² term**: this is the case-(c) convention of Ng Ch. 2.4
 
 ### 2.2 Spin–orbit A
 
-**Operator** (Leanhardt Eq. 11, p. 13): `H_SO = A Λ Σ`. Diagonal in Ω. Within the Ω = ±1 block it is a **constant** (Λ Σ = −2 for both Ω = +1 and Ω = −1), and is absorbed into the electronic origin. It never appears in the v1 Hamiltonian.
+**Operator** (Leanhardt Eq. 11, p. 13): `H_SO = A Λ Σ`. Diagonal in Ω. Within the Ω = ±1 block it is a **constant** (Λ Σ = −2 for both Ω = +1 and Ω = −1), and is absorbed into the electronic origin. It does not appear in the implemented Hamiltonian.
 
 It matters only for T2/T3 (§1.4), where A ≈ 787.5 cm⁻¹ `[derived, §1.4]` sets the ³Δ₁–³Δ₂ separation and hence the S-uncoupling admixture of §1.2. Leanhardt's justification for dropping it, verbatim (p. 13): the spin-orbit, tumbling, spin-spin and spin-rotation terms "primarily describe an overall shift of the ³Δ₁ J-level, and can be ignored in evaluating energy differences in the states we care about."
 
@@ -235,7 +235,7 @@ i.e. the same A∥ combination, off-diagonal in J. Ng's Eq. C.2 is strictly diag
 
 (F = J−½ levels have no ΔJ = ±1 partner: the formula's factor `(F−J+I+1)` vanishes. Verified numerically.)
 
-So this term shifts J = 1 F = 3/2 by −2.6 kHz relative to F = 1/2, changing the J = 1 hyperfine splitting by 0.017 % — invisible in Ng's 0.5 %-precision fit, but **above the kHz threshold this document is written to**, and it is the single largest term missing from Ng's Appendix C. Include it in v1; it is one extra matrix element from a formula already needed.
+So this term shifts J = 1 F = 3/2 by −2.6 kHz relative to F = 1/2, changing the J = 1 hyperfine splitting by 0.017 % — invisible in Ng's 0.5 %-precision fit, but **above the kHz threshold this document is written to**, and it is the single largest term missing from Ng's Appendix C. The package includes it using the same `A∥` parameter.
 
 ---
 
@@ -356,14 +356,14 @@ with the Zeeman shift defined as `E = −g μ_B B m_F` (Petrov arXiv:2503.02840 
 
 | J | F | γ_F | κ_F | g_F | g_F μ_B (kHz/G) |
 |---|---|---|---|---|---|
-| 1 | 3/2 | 1/3 | 1/3 | −0.015046 | −21.06 |
-| 1 | 1/2 | 2/3 | −1/3 | −0.032954 | −46.12 |
-| 2 | 5/2 | 2/15 | 1/5 | −0.005827 | −8.16 |
-| 2 | 3/2 | 1/5 | −1/5 | −0.010173 | −14.24 |
-| 3 | 7/2 | 1/14 | 1/7 | −0.003020 | −4.23 |
-| 3 | 5/2 | 2/21 | −1/7 | −0.004980 | −6.97 |
-| 4 | 9/2 | 2/45 | 1/9 | −0.001815 | −2.54 |
-| 4 | 7/2 | 1/18 | −1/9 | −0.002985 | −4.18 |
+| 1 | 3/2 | 1/3 | 1/3 | −0.014899 | −20.85 |
+| 1 | 1/2 | 2/3 | −1/3 | −0.032661 | −45.71 |
+| 2 | 5/2 | 2/15 | 1/5 | −0.005769 | −8.07 |
+| 2 | 3/2 | 1/5 | −1/5 | −0.010085 | −14.11 |
+| 3 | 7/2 | 1/14 | 1/7 | −0.002988 | −4.18 |
+| 3 | 5/2 | 2/21 | −1/7 | −0.004939 | −6.91 |
+| 4 | 9/2 | 2/45 | 1/9 | −0.001796 | −2.51 |
+| 4 | 7/2 | 1/18 | −1/9 | −0.002960 | −4.14 |
 
 `g_{F=1/2} = 2 g_{F=3/2}` holds exactly in the G∥-only limit (Leanhardt Eq. 24, since γ_{1/2} = 2γ_{3/2}); the nuclear term breaks it — the actual ratio is 2.19, a 10 % deviation `[derived]`. That deviation is the cleanest experimental handle on the nuclear contribution, if the F = 1/2 g-factor is ever measured.
 
@@ -423,7 +423,7 @@ The practical consequence: fitting G∥ to reproduce the measured g at J = 1, F 
 - **¹⁹F quadrupole**: I = ½, no quadrupole moment. Zero.
 - **Nuclear spin–spin**: one spin only. Zero.
 - **Electron spin–spin λ and spin–rotation γ_SR** (Leanhardt Eqs. 13–14): diagonal in Ω and constant within the Ω = ±1 block; absorbed into the origin. λ ≈ 261 cm⁻¹ `[derived, §1.4]` matters only for T2.
-- **Hyperfine-induced Ω-doublet asymmetry, e_Δ** (Leanhardt Eq. 15, the `½e_Δ(J₊I₊S₊² + J₋I₋S₋²)` term): "a previously unreported term ... expected to be even smaller than the already small Λ-doublet splitting itself, however, and will be ignored" (Leanhardt p. 13). It makes ω_ef depend on F. Scaling `e_Δ/õ_Δ ~ A∥/B₀ = 2.8 × 10⁻³` (replacing one rotational `B J₊` by a hyperfine factor) gives `e_Δ ~ 3.7 kHz` and a hyperfine dependence of the Ω-doublet splitting of **order 1–10 kHz** `[estimate, method: ratio of hyperfine to rotational constant applied to õ_Δ = ω_ef/4]`. That is at the v1 threshold, with an order-of-magnitude uncertainty. **OPEN-8.**
+- **Hyperfine-induced Ω-doublet asymmetry, e_Δ** (Leanhardt Eq. 15, the `½e_Δ(J₊I₊S₊² + J₋I₋S₋²)` term): "a previously unreported term ... expected to be even smaller than the already small Λ-doublet splitting itself, however, and will be ignored" (Leanhardt p. 13). It makes ω_ef depend on F. Scaling `e_Δ/õ_Δ ~ A∥/B₀ = 2.8 × 10⁻³` (replacing one rotational `B J₊` by a hyperfine factor) gives `e_Δ ~ 3.7 kHz` and a hyperfine dependence of the Ω-doublet splitting of **order 1–10 kHz** `[estimate, method: ratio of hyperfine to rotational constant applied to õ_Δ = ω_ef/4]`. That is at the package's kHz scale, with an order-of-magnitude uncertainty. **OPEN-8.**
 - **Off-diagonal-in-Ω hyperfine** (ΔΩ = ±1, connecting ³Δ₁ to ³Δ₂ and to the Ω = 0 states): suppressed by hyperfine/spin-orbit, "hence a factor of 10⁻⁶" (Leanhardt p. 14). With A∥ = 20 MHz and ΔE = 1052 cm⁻¹ the ratio is 6 × 10⁻⁷ `[derived]`, so amplitude ~10⁻⁶ and energy ~10⁻⁵ Hz. Drop.
 - **Vibrational structure**: out of scope for v = 0. Record only that `B₀ = B_e − α_e/2 = 0.24261 cm⁻¹` from Gresh's B_e = 0.24311(7), α_e = 1.00(4) × 10⁻³, against the directly measured `B₀ = 29.09733(4)/4 GHz = 0.2426456 cm⁻¹` — agreement to 1.5 × 10⁻⁴ relative `[derived]`. Use the measured 4B.
 - **Second-order / perpendicular Zeeman**: `±(3/4)(g_F μ_B B⊥)²/(γ_F d_mf E_rot)` (Leanhardt Eq. 72). At B⊥ = 1 mG and E_rot = 60 V/cm: (0.0209 kHz)²·0.75/33.93 MHz ≈ 7 × 10⁻⁹ Hz `[derived]`. Negligible unless B⊥ reaches ~1 G.
@@ -463,7 +463,7 @@ Ten orders of magnitude below the kHz floor. They are in the term list because t
 
 `H_rot-frame = ℏ ω_rot F_x` (Ng thesis Eq. C.4, p. 320), with ẑ along E_rot and **x̂ anti-parallel to the (counter-clockwise) rotation vector**. Couples Δm_F = ±1 within the same F, J, Ω, breaks per-M_F blocking, and is what generates Berry's phase and the |m_F| = 3/2 avoided crossings `Δ^u, Δ^ℓ` (third order in ω_rot/d_mf E_rot; Leanhardt Eq. 42: `Δ ≈ 170 ω_ef (ω_rot/d_mf E_rot)³`). Ng thesis Table B.2 lists `Δ^u = 2π × 0.511 Hz`, `Δ^ℓ = 2π × 1.43 Hz` at E_rot = 60 V/cm, ω_rot = 2π × 147.5 kHz — model output, not measurement.
 
-Out of scope for a static-field v1, but note it if the code ever claims to reproduce a JILA Ramsey frequency.
+This term is outside the static-field package model and is required before claiming to reproduce a JILA rotating-frame Ramsey frequency.
 
 ---
 
@@ -552,13 +552,13 @@ Two field points: **E = 1 V/cm, B = 1 G** (a generic laboratory scale) and **E_r
 | 24 | Ω-doubling avoided crossings Δ^u, Δ^ℓ | 0.511, 1.43 Hz | — | — | — | rotating field only; model output |
 | 25 | Electronic polarizability at 60 V/cm | ~10⁻⁸ Hz | — | — | — | drop |
 
-**Where the 1 kHz line falls.** Rows 1–15 all reach or exceed ~1 kHz somewhere in J = 1–4 at the stated field points, and are in scope. Rows 16–19 sit below 1 kHz there, but each is the *same operator* as a row above it (16 ↔ 9, 18 ↔ 11, 19 ↔ 15) evaluated at a weaker field, so they cost nothing extra and must not be dropped by construction — only by field. Rows 20, 21, 24, 25 are genuinely droppable for a static-field v1. Rows 22–23 stay because they are the observable, not because they are large.
+**Where the 1 kHz line falls.** Rows 1–15 all reach or exceed ~1 kHz somewhere in J = 1–4 at the stated field points, and are in scope. Rows 16–19 sit below 1 kHz there, but each is the *same operator* as a row above it (16 ↔ 9, 18 ↔ 11, 19 ↔ 15) evaluated at a weaker field, so they cost nothing extra and must not be dropped by construction — only by field. Rows 20, 21, 24, and 25 remain outside the static-field package model. Rows 22–23 stay because they are the observable, not because they are large.
 
 Note the ordering is field-dependent and crosses over: at 60 V/cm the Stark shift dominates the Ω-doubling for J ≤ 2 and is dominated by it for J ≥ 3; at 1 V/cm the Ω-doubling dominates the Stark shift at every J. Any code that assumes a fixed ordering of terms will be wrong somewhere in this range.
 
 ---
 
-## 5. Recommended v1 term list
+## 5. Implemented ²³²Th¹⁹F⁺ term list
 
 **Basis**: Ω = ±1, J = 1–4, F = J ± ½, all m_F. 96 states; block-diagonal in M_F (16/14/10/6/2 per signed block) for collinear static fields.
 
@@ -586,7 +586,7 @@ Note the ordering is field-dependent and crosses over: at 60 V/cm the Stark shif
 | Spin–orbit A, spin–spin λ, spin–rotation γ_SR | constant within Ω = ±1 | Leanhardt p. 13 |
 | ²³²Th hyperfine, ²³²Th quadrupole, ¹⁹F quadrupole | identically 0 | I(²³²Th) = 0, I(¹⁹F) = ½ |
 | Off-diagonal-in-Ω hyperfine | ~10⁻⁵ Hz | ratio hyperfine/spin-orbit = 6 × 10⁻⁷ |
-| e_Δ hyperfine Ω-doubling | ~1–10 kHz **estimate** | **borderline** — dropped in v1, flagged OPEN-8; the only dropped term above the kHz line |
+| e_Δ hyperfine Ω-doubling | ~1–10 kHz **estimate** | **borderline** — omitted, flagged OPEN-8; the only omitted term above the kHz line |
 | Parity-dependent Zeeman (g_rS, g′_rS) | Δg(E=0) = 2.3 × 10⁻⁴ ⟹ ≈ 1 kHz at 1 G | **borderline** — dropped for level energies, required for a zero-field Δg. OPEN-10 |
 | Rotational g_r | ≤ 0.6 % of g_F, 0.36 kHz at 1 G **estimate** | absorbed into the fitted G∥ at J = 1; introduces ~1 % error at J > 1 |
 | Perpendicular / 2nd-order Zeeman | 7 × 10⁻⁹ Hz at B⊥ = 1 mG | Leanhardt Eq. 72 |
@@ -597,9 +597,9 @@ Note the ordering is field-dependent and crosses over: at 60 V/cm the Stark shif
 
 ---
 
-## 6. Verification checks the code should implement
+## 6. Verification checks
 
-Each names the failure mode only it catches. V1–V6 and V8–V11 are Hamiltonian-agnostic or closed-form (both PASS and FAIL reachable, no pinned spectra). V7, V12, V13 are labelled **opt-in** comparisons to published numbers.
+Each check names its distinct failure mode. The package implements the stable structural checks; V7, V12, and V13 remain labelled comparisons to published numbers rather than universal acceptance conditions.
 
 | id | check | passes iff | failure mode it uniquely catches |
 |---|---|---|---|
@@ -623,44 +623,77 @@ Explicitly **not** a check: any comparison to a stored spectrum for one paramete
 
 ---
 
-## 7. Open items for Arian
+## 7. Current decisions and limitations
 
-**OPEN-1 — ³Δ fine-structure constants for tier T2.** The observed ³Δ intervals are 1052.5 and 2097.5 cm⁻¹, ratio 2.0, so a single A cannot describe the manifold. Fitting `2AΣ + (2/3)λ(3Σ²−S²)` gives A ≈ 787.5, λ ≈ 261 cm⁻¹ `[derived]`, λ/A = 0.33. Options: (a) use these two derived constants; (b) treat the three Ω components as independent case-(c) origins with the measured T₀'s (no A, no λ); (c) go to T3, where a ¹Σ⁺ at 314 cm⁻¹ is an explicit perturber of ³Δ₁ and the apparent λ is an artefact of squeezing case (c) into case (a). I recommend (b) for T2 and (c) if the fine structure is ever the point.
+The stable `OPEN-*` identifiers below are summarized in
+[`open-questions.md`](open-questions.md), including the odd-isotope items
+`OPEN-16` through `OPEN-23`. This section keeps the detailed ThF⁺ basis for
+the equations and citations elsewhere in the document.
 
-**OPEN-2 — the e/f convention at S = 1 (must be decided before any parity label is written).** Arian's thesis rule `e ⇔ P = (−1)^{J−S−ℓ}` is the S = ½ specialisation; at S = 1 it gives the opposite label to B&C's J-only rule (PDF p. 283 / book p. 251). For ThF⁺, B&C says the **e** component is the **upper** one of every Ω-doublet; the thesis rule would say **f**. Options: (a) adopt B&C's rule globally and add a note in the thesis-convention layer that item 21 is S = ½-only; (b) keep the thesis rule and relabel every literature comparison. The physical statement is convention-free and verified: the **upper** component has parity `(−1)^J`.
+**`OPEN-1` — ³Δ fine structure.** The observed ³Δ intervals are 1052.5 and
+2097.5 cm⁻¹, so one spin-orbit constant cannot describe the manifold. The
+package uses the Ω = ±1 effective model. A larger model should use separate
+case-(c) origins or include the nearby perturbers explicitly.
 
-**OPEN-3 — the sign of the G∥ Zeeman operator.** Ng thesis Eq. C.6 prints `H = −G∥ μ_B (J·n̂)(n̂·B) − g_N μ_N I·B`. That is inconsistent with the g_F relation printed on the same page, with the G∥ = 0.048(2) / −0.042(2) pair Ng quotes, and with the measured |g| = 0.0149 — all three of which require `+G∥`. Options: (a) `+G∥ μ_B (J·n̂)(n̂·B) − g_N μ_N I·B` (my recommendation; verified numerically to reproduce 20.85 kHz/G and δg/g = −0.00223); (b) Ng's printed operator with the *relative* sign of the g_N term flipped in the g_F formula — which then fails to reproduce his own G∥ = 0.048. Worth a one-line question to K. B. Ng.
+**`OPEN-2` — resolved parity convention.** The package uses B&C's J-only e/f
+rule. The upper component has parity `(−1)^J` and is e. The thesis expression
+`P=(−1)^{J−S−ℓ}` is an S = 1/2 specialization and cannot be applied here.
 
-**OPEN-4 — the sign of g_F.** Never measured. Every theory route (G∥ = +0.034, +0.035, +0.047; Petrov Fig. 2 showing g^{u,ℓ} ≈ −1.49 × 10⁻²) implies g_F < 0. Expose it as a switch, default negative, and make any observable that depends on it report which branch it used.
+**`OPEN-3` — resolved implementation sign.** The package uses
+`+G∥ μ_B (J·n̂)(n̂·B) − g_N μ_N I·B`. This branch reproduces Ng's printed
+g-factor relation and the measured magnitude; Ng's Eq. C.6 prints the
+opposite G∥ sign. The discrepancy in the source remains unconfirmed by its
+authors.
 
-**OPEN-5 — the microscopic ¹⁹F hyperfine constants a, b_F, c.** Only the combination `A∥ = 2a − b_F − (2/3)c` is known. No source read gives them separately for ThF⁺, and no ab initio calculation of them exists. This matters only if you ever want the perpendicular/d-type hyperfine or the ΔΩ = ±1 elements; for the Ω = ±1 block A∥ is sufficient.
+**`OPEN-4` — sign of g_F.** The experiment measured only `|g_F|`. The package
+uses the negative branch supported by the available calculations.
 
-**OPEN-6 — c_I and bias in A∥.** The 20 kHz default is a CsF-scaled sensitivity estimate with unquantified uncertainty and unestablished sign. A molecule-specific calculation or a joint hyperfine/spin-rotation fit is needed. The existing A∥ fit omitted c_I, so its stated error is not a bound on the effect of adding this term; the algebraic 2c_I–6c_I bias examples above remain sensitivity calculations, not a statistical limit extracted from the experimental covariance.
+**`OPEN-5` — microscopic ¹⁹F hyperfine constants.** Only
+`A∥ = 2a − b_F − (2/3)c` is known. The Ω = ±1 axial model needs only this
+combination; perpendicular or ΔΩ = ±1 hyperfine requires separate inputs.
 
-**OPEN-7 — g_r.** Not measured, not computed, absorbed into the fitted G∥. My rigid-rotor nuclear-charge estimate (0.47 μ_N) is a floor: the electronic part has the opposite sign and in a heavy molecule can dominate. Consequence: predicted g-factors at J = 2, 3, 4 carry an unquantified ~1 % error. Ng 2022 flags this as worth computing.
+**`OPEN-6` — c_I and bias in A∥.** The 20 kHz value is a CsF-scaled
+sensitivity estimate with unknown sign and unquantified transfer error. The
+40–120 kHz bias examples are sensitivity calculations, not a confidence
+interval for the existing A∥ fit.
 
-**OPEN-8 — e_Δ, the hyperfine-dependent Ω-doubling.** My scaling puts it at 1–10 kHz, i.e. straddling the v1 threshold; Leanhardt dismisses it without a number. It would make ω_ef depend on F, which is in principle measurable in the existing J = 1 / J = 2 microwave data. Do you want it in v1 as a zero-defaulted knob?
+**`OPEN-7` — g_r.** The rotational g-factor is omitted. It is neither measured
+nor computed for ThF⁺, leaving an unquantified error of order 1 percent in the
+predicted J = 2–4 g-factors.
 
-**OPEN-9 — W_a / W_P (nuclear-spin-dependent parity violation).** No ThF⁺ value found in any source read (Skripnikov & Titov 2015 full text, Denis 2015, Petrov 2025, Petrov 2023, Ng 2022, Ng thesis App. C). If you want NSD-PV in the engine, this parameter has to come from a new calculation.
+**`OPEN-8` — hyperfine-dependent Ω doubling.** The package omits `e_Δ`. The
+1–10 kHz estimate is only an order-of-magnitude scale.
 
-**OPEN-10 — parity-dependent Zeeman terms.** Leanhardt Eq. 64 / B&C Eq. 9.70 terms (vi)–(vii). They produce Petrov's Δg(E = 0) = 2.3 × 10⁻⁴ (≈ 1 kHz at 1 G) and are absent from every Ω = ±1 effective model including Ng's. Include them in v1 with `|g′_rS| ≈ ω_ef/(2B_e) = 3.6 × 10⁻⁴` as the default, or leave the model unable to produce a zero-field Δg?
+**`OPEN-9` — NSD-PV.** No ThF⁺ `W_a` or `W_P` value was found in the sources
+reviewed. A model of this interaction needs a new electronic-structure input.
 
-**OPEN-11 — n̂ direction (a convention, but it flips signs everywhere).** JILA: n̂ points **from F to Th** ("from the more negative atom to the more positive one", Leanhardt p. 15; "pointing towards thorium", Ng thesis p. 318). Petrov/Skripnikov: n̂ is "directed **from Th to F**" (Skripnikov & Titov 2015 p. 2; arXiv:2503.02840 p. 3). The signs of Ω, the signed d, E_eff, and "upper/lower doublet" all flip with the choice. Pick one and assert it at the top of the code. I have used the **JILA convention** throughout this document (n̂ from F to Th, d_mf = +3.37 D, Ω = +1 for ³Δ₁ with Λ = +2).
+**`OPEN-10` — parity-dependent Zeeman terms.** These terms are omitted, so the
+model does not generate the reported zero-field differential g-factor.
 
-**OPEN-12 — δg vs Δg.** Ng thesis: `δg = (g^u − g^ℓ)/2`. Petrov and the Ng 2022 *paper*: `Δg = g^u − g^ℓ`. A factor of 2, and both appear in sources you will compare against. Which does the code report?
+**`OPEN-11` — resolved axis convention.** The default is the JILA direction
+`n̂: F→Th`. The alternative `Th→F` convention is explicit and reverses signed
+Ω, dipole, and effective-field quantities together.
 
-**OPEN-13 — Gresh's k″ sign.** Magnitudes agree beautifully across ten bands (0.869–0.892 × 10⁻⁴ cm⁻¹, giving ω_ef = 5.21–5.35 MHz against the microwave 5.29(5)). But the printed **sign** tracks the upper state's label — negative for every Ω = 0⁻ band, positive for every Ω = 0⁺ band (verified by reading the rendered Table 1). Since `k′ = 0` for all these bands, `s′` never enters the fit and the e/f assignment of the lower state depends on branch bookkeeping that flips with the upper state's reflection parity. The Ω = 0⁻ sign (k″ < 0, ⟹ e above f) is the one consistent with Ng 2022 Fig. 2. Confirm with the authors, or just take ω_ef and its sign from the microwave measurement.
+**`OPEN-12` — resolved Δg convention.** Results default to
+`Δg = g^u − g^ℓ`; the thesis half-difference remains an explicit convention.
 
-**OPEN-14 — E_eff: 35.2 (Denis) vs 37.3 (Skripnikov) GV/cm**, both with ~7 % claimed uncertainty; Ng adopts ≈35, Petrov adopts 37.3. Which does the code default to? (Both supersede Meyer & Bohn's 90 GV/cm, which Skripnikov calls "more than twice overestimated".)
+**`OPEN-13` — Gresh k″ sign.** The printed sign follows upper-state branch
+bookkeeping. The package takes the lower-state magnitude and ordering from the
+microwave measurement.
 
-**OPEN-15 — Petrov's printed `D = −0.133 a.u.`** (arXiv:2503.02840 p. 3). −0.133 a.u. = −0.338 D, eight times smaller than the d_mf = 3.37 D they cite from the same reference in the same sentence; −1.33 a.u. = −3.381 D matches exactly, and matches the companion HfF⁺ paper's format (D∥ = −1.53(2) a.u.). Almost certainly a typo. Not load-bearing for us — we use Ng's measured 3.37(9) D — but worth knowing if their Δg table is ever re-derived.
+**`OPEN-14` — E_eff.** The package adopts 35.0 GV/cm with a 7 percent scale;
+published calculations give 35.2 and 37.3 GV/cm.
 
+**`OPEN-15` — Petrov's printed dipole.** `−0.133 a.u.` is inconsistent with
+the 3.37 D magnitude cited in the same sentence. The package uses Ng's
+measured 3.37(9) D center-of-mass-origin value.
 
-**v2 open items.** OPEN-16 through OPEN-23 are defined in the v2 spec (`docs/superpowers/specs/2026-09-05-heff-v2-isotopologues-two-photon.md` §7) and collected in `docs/open-questions.md`. Task 1's rulings on four of them are written into §9 and are the citable source for the code: **OPEN-16** (A∥(Th) sign) → §9.4.3, resolved, default `thf_v2('229', a_par_th_sign='negative')`; **OPEN-17** (eQq₂ normalisation bridge) → §9.4.4, **not** resolved, escalated with two candidate factors and the one pinned ratio; **OPEN-21** (does K = 1 survive) → §9.5.3, resolved: no, not in exact closure; **OPEN-20** (²²⁷Th spin and moment) → §9.6, still open, with a labelled Schmidt placeholder.
+For `OPEN-16` through `OPEN-23`, §9 remains the equation-level source and
+`open-questions.md` states the current software choices and scientific limits.
 
 ---
 
-## 8. Method log
+## 8. Source and verification record
 
 **Read at source, in full or by named page range:**
 
@@ -681,7 +714,7 @@ Explicitly **not** a check: any comparison to a stored spectrum for one paramete
 | `digest-literature-thf-plus.md` | used as a map only; every sign, definition and number it lists was re-read at source |
 | `synthesis-draft.md` §1 | Molecule-Structure's confirmed sign bug in the case (a) Λ-doubling q operator (identically zero: `K1 = K0+2q` vs the 3j needing `P1 = P0−2q`) and the absence of any ΔΛ = ±4 operator — noted, but no repo file was opened |
 
-**Brown & Carrington** (`C:\Users\Arian\Zotero\storage\CKZKCGXY\…`, 1045 pages; PDF page = book page + 32). Read via PyMuPDF (pdf-mcp was down, HTTP 401). Page ranges extracted to `notes/lit/bc-pages/`:
+**Brown & Carrington** (1045-page local copy; PDF page = book page + 32). An optional research checkout may also contain plain-text extracts under `docs/lit/bc-pages/`:
 
 | PDF pp. | book pp. | what was used |
 |---|---|---|
@@ -694,9 +727,9 @@ Explicitly **not** a check: any comparison to a stored spectrum for one paramete
 | 636–652 | 604–620 | **Eq. (9.70)**: the complete seven-term Zeeman Hamiltonian, including the two parity-dependent terms |
 | 686–700 | 654–668 | (o + p + q) Λ-doubling operator forms — ³Σ worked example; **no ³Δ (o_Δ, p_Δ, q_Δ) treatment found in B&C**, which is why §2.3 cites Leanhardt/Brown & Merer for the ΔΛ = 4 case |
 
-**Page renders read as images: 2** (Ng 2022 p. 3; Gresh 2016 p. 10), out of a budget of 30. Both were pre-existing renders in `notes/lit/`; no new renders were needed.
+**Page renders read as images:** Ng 2022 p. 3 and Gresh 2016 p. 10. These visual checks support the parity ordering and table-sign statements above.
 
-**Numerics I ran** (scripts under the session scratchpad, conda env `claude-code`, Python 3.12, NumPy + `sympy.physics.wigner`; nothing written into `notes/` except this file):
+**Numerical derivations recorded for this document** (Python, NumPy, and `sympy.physics.wigner`):
 
 1. Unit conversions and every size in §2 and §4.
 2. Verification that Ng Eq. C.5's ΔJ = 0 element equals `−Ω m_F γ_F d_mf E` for all (J ≤ 4, F, m_F, Ω) — check V2, **passes**.
@@ -705,12 +738,12 @@ Explicitly **not** a check: any comparison to a stored spectrum for one paramete
 5. Exhaustive basis enumeration, total and per-M_F, for both Ω = ±1 and the full ³Δ manifold.
 6. **A 96-state Ω = ±1 Hamiltonian (J = 1–4) built from the §2 operators and diagonalised**, used to: confirm Hermiticity; confirm the zero-field level pattern (0, ω_ef, 3A∥/4, 3A∥/4 + ω_ef); settle the Eq. C.6 Zeeman sign (20.85 vs 23.52 kHz/G); measure the hyperfine ΔJ mixing (max 2.603 kHz); measure the c_I effect (50 kHz at c_I = 20 kHz); and extract `g^u`, `g^ℓ` from the m_F = ±3/2 splittings of the two Stark doublets at E = 40, 60, 100 V/cm, giving **δg/g = −0.00223 at 60 V/cm**, identical to Ng's own 32-level value, with convergence already reached at J_max = 2.
 
-**What was not available.** `pdf-mcp` and the `zotero` MCP server both failed to connect (HTTP 401); B&C and all PDFs were read with PyMuPDF instead. Brown & Merer 1979 (the ³Δ effective-Hamiltonian paper Leanhardt cites as [118]) and Nelis et al. [120] are not in `notes/lit/` and were not obtained — so the `o_Δ, p_Δ, q_Δ` and `g_rS, g′_rS` operator definitions in §2.3 and §2.9 rest on Leanhardt's transcription of them, not on the originals. Loh et al., Science 342, 1220 (2013) supplement was likewise not obtained. Petrov, PRA 108, 062804 (2023) (the source of the S₂, S₃ formulas) and Caldwell et al., PRA 108, 012804 (2023) were not obtained; neither affects any parameter used here.
+**Source-coverage limit for the derivation.** Brown & Merer 1979 (the ³Δ effective-Hamiltonian paper Leanhardt cites as [118]) and Nelis et al. [120] were not inspected. The `o_Δ, p_Δ, q_Δ` and `g_rS, g′_rS` definitions in §§2.3 and 2.9 therefore rest on Leanhardt's transcription, not the original papers. Loh et al., Science 342, 1220 (2013) supplement, Petrov, PRA 108, 062804 (2023), and Caldwell et al., PRA 108, 012804 (2023) were also not inspected; none supplies a parameter used by the current package model.
 
 
-### 8.1 Addendum for §9 (v2 derivations, 2026-09-05)
+### 8.1 Additional sources for §9
 
-**Read at source for §9, beyond what §8 lists.** Brown & Carrington via PyMuPDF from the same Zotero copy (`pdf-mcp` and the `zotero` MCP server were down again this session — the same HTTP 401 / ConnectionRefused as before, so no PDF-native search was available):
+**Read at source for §9, beyond what §8 lists.** Brown & Carrington was checked from the same local copy:
 
 | PDF pp. | book pp. | what was used for §9 |
 |---|---|---|
@@ -750,14 +783,14 @@ Explicitly **not** a check: any comparison to a stored spectrum for one paramete
 
 ---
 
-## 9. Two nuclear spins, and the rank-K two-photon operator (v2 derivations)
+## 9. Two nuclear spins and the rank-K two-photon operator
 
-Written 2026-09-05 for `heff` v2 (²²⁷ThF⁺, ²²⁹ThF⁺, and the two-photon operator). **This section is the single source Tasks 4, 5 and 7 copy from; they cite §9 and do not re-derive.** Every formula carries its Brown & Carrington equation number with both the PDF page and the book page of the copy at `C:\Users\Arian\Zotero\storage\CKZKCGXY\Brown and Carrington, Rotational Spectroscopy of Diatomic Molecules.pdf` (**PDF page = book page + 32**). Steps that are algebra or numerics run here are tagged `[derived]`; anything a source does not support is tagged **UNVERIFIED** and escalated in §7, never guessed.
+This section is the canonical equation-level source for the ²²⁷ThF⁺ and ²²⁹ThF⁺ two-spin model and the rank-K two-photon operator. Every formula carries its Brown & Carrington equation number with both PDF and book pages (**PDF page = book page + 32**). Algebra and numerical checks are tagged `[derived]`; unsupported steps remain **UNVERIFIED** and are summarized in §7 and [`open-questions.md`](open-questions.md).
 
 **Notation contract for all of §9, stated once because it is the commonest way to get a phase backwards.**
 
 - **A prime means the bra.** `⟨J′, Ω′, F₁′, F′, m′_F | … | J, Ω, F₁, F, m_F⟩`. This is the convention of [HAM] §2, of `heff/elements_c.py`, and of Ng thesis Eq. C.5. **B&C's own convention is the opposite** — in (5.172)–(5.176), (5.186), (9.50)–(9.53) the *primed* labels are the **ket**. Every B&C equation reproduced below is first quoted verbatim in B&C's convention and then rewritten with the primes moved onto the bra; the rewrite is nothing but a relabelling, but skipping it transposes 6j columns and flips phases.
-- **Coupling scheme**: `F₁ = J + I_Th`, `F = F₁ + I_F`, basis `|((J I_Th) F₁, I_F) F, m_F⟩` ([TH] §3.1; justified there by |A∥(Th)| ≈ 1.5 GHz ≫ |A∥(F)| = 20.1 MHz and by Petrov 2018's use of F₁ as the HfF⁺ label). Ω is the signed molecule-frame projection, as in §1.1. Setting `I_Th = 0` must return every v1 formula of §2 exactly; that is the master gate of §9.1.
+- **Coupling scheme**: `F₁ = J + I_Th`, `F = F₁ + I_F`, basis `|((J I_Th) F₁, I_F) F, m_F⟩` ([TH] §3.1; justified there by |A∥(Th)| ≈ 1.5 GHz ≫ |A∥(F)| = 20.1 MHz and by Petrov 2018's use of F₁ as the HfF⁺ label). Ω is the signed molecule-frame projection, as in §1.1. Setting `I_Th = 0` returns every one-spin formula of §2 exactly; this is the master reduction check of §9.1.
 - **Molecule-frame component**: `q = Ω′ − Ω = Ω_bra − Ω_ket`. This is forced by the 3j `(J′ k J; −Ω′ q Ω)`, whose projections must sum to zero. B&C write the same physical statement as `q = Ω − Ω′` in (9.52) **because their primes are on the ket** — the two are the same rule, not two conventions. Cairncross thesis p. 141 ("we can simply set q = Ω′ − Ω") uses primed = bra and agrees with the form written here.
 - Wigner 3j in round brackets, 6j in curly brackets, both in the `heff.wigner` argument order: `(j₁ j₂ j₃; m₁ m₂ m₃)` and `{j₁ j₂ j₃; j₄ j₅ j₆}`.
 
@@ -859,7 +892,7 @@ Row (a) is the check the brief asks for: all 1720 elements over `J ≤ 4`, `J′
 
 ---
 
-### 9.2 The Th operators are the v1 formulas with F → F₁, exactly
+### 9.2 The Th operators are the one-spin formulas with F → F₁, exactly
 
 **The structural theorem — B&C Eq. (5.176), PDF p. 205 / book p. 173, verbatim:**
 
@@ -878,24 +911,24 @@ equation (5.172), followed by equation (5.174).
 
 **Application.** In `|((J I_Th) F₁, I_F) F, m_F⟩` take `j₁ = F₁` (which already contains J and I_Th), `j₂ = I_F`, `j₁₂ = F`. Every Th interaction — the Th magnetic hyperfine, the Th electric quadrupole, the Th nuclear spin–rotation — is a scalar built from the rotational/electronic degrees of freedom and I_Th alone, i.e. from the **inner** part. B&C (5.176) then says its matrix element is diagonal in F and m_F, **independent of them and of I_F**, and equal to the matrix element evaluated inside `|J, Ω, I_Th, F₁⟩`. `[derived from B&C (5.176)]`
 
-**Consequence, stated as the substitution rule Tasks 4 and 5 implement.** With `I → I_Th`, `F → F₁` and no other change, the following v1 expressions are the **exact** Th matrix elements in the two-spin basis, times `δ_{FF′} δ_{m_F m′_F}`:
+**Substitution rule.** With `I → I_Th`, `F → F₁` and no other change, the following one-spin expressions are the **exact** Th matrix elements in the two-spin basis, times `δ_{FF′} δ_{m_F m′_F}`:
 
-| v1 formula | B&C source | becomes |
+| one-spin formula | B&C source | becomes |
 |---|---|---|
 | §2.4 axial hyperfine, ΔJ = 0 | (9.50), PDF p. 636 / book p. 604 | `A∥^Th [F₁(F₁+1) − J(J+1) − I_Th(I_Th+1)] / [2J(J+1)]` |
 | §2.5 axial hyperfine, ΔJ = ±1 | (9.51), PDF p. 636 / book p. 604 | same expression with `F → F₁`, `I → I_Th`, J the larger of the two |
 | §2.6 nuclear spin–rotation | (8.7) PDF p. 410 / book p. 378, element (8.20) PDF p. 414 / book p. 382 | `c_I^Th [F₁(F₁+1) − I_Th(I_Th+1) − J(J+1)] / 2` |
 | §9.4 electric quadrupole | (9.52)/(9.53), PDF pp. 636–637 / book pp. 604–605 | same, `I → I_Th`, `F → F₁` |
 
-Selection rules for all four: `ΔF₁ = 0`, `ΔF = 0`, `Δm_F = 0`, and the v1 ΔJ/ΔΩ rules unchanged.
+Selection rules for all four: `ΔF₁ = 0`, `ΔF = 0`, `Δm_F = 0`, with the one-spin ΔJ/ΔΩ rules unchanged.
 
-**What this means for the code, so no new algebra is written for the Th terms.** `heff`'s existing `hyperfine_A_par`, `hyperfine_A_par_dJ1` and `spin_rotation_cI` are already the bare Casimir/(9.51) kernels — none of them reads Ω except `hyperfine_A_par_dJ1`, which divides by the signed Ω because B&C's brace is `A∥/Ω`. The Th versions are **those same functions read through a field adapter** that hands them `(I_Th, F₁)` where the v1 call hands them `(I_F, F)`. That is a one-line indirection, not a new matrix element, and it is the reason §9.3 — not §9.2 — is where the work is.
+**Implementation.** The existing `hyperfine_A_par`, `hyperfine_A_par_dJ1`, and `spin_rotation_cI` functions are the bare Casimir/(9.51) kernels. The Th versions use the same functions through an adapter that supplies `(I_Th, F₁)` where the one-spin call supplies `(I_F, F)`. Section 9.3 contains the additional recoupling needed for fluorine.
 
 **Cross-check run** `[derived]`: at `I_Th = 5/2` the diagonal (9.50) coefficients over F₁ at J = 1 are `−1.7500, −0.5000, +1.2500`, reproducing [TH] §4.1 exactly.
 
 #### 9.2.1 The Th nuclear Zeeman: the one lab-frame Th operator
 
-The substitution rule above is a statement about **scalars**. `H = −g_N^Th μ_N T¹(I_Th)·T¹(B)` is not one: `T¹(B)` is a lab-frame constant, so what acts on the molecule is a lab-frame **rank-1** operator on the inner spin. B&C (5.176) does not apply, there is no v1 formula with `F → F₁` to reach for, and the element has to be built. It is the only Th term in the package with `ΔF₁ = 0, ±1` and `ΔF = 0, ±1`. `[derived]`
+The substitution rule above is a statement about **scalars**. `H = −g_N^Th μ_N T¹(I_Th)·T¹(B)` is not one: `T¹(B)` is a lab-frame constant, so what acts on the molecule is a lab-frame **rank-1** operator on the inner spin. B&C (5.176) does not apply, and no one-spin `F → F₁` substitution produces this element. It is the only Th term in the package with `ΔF₁ = 0, ±1` and `ΔF = 0, ±1`. `[derived]`
 
 Four cited steps, primes on the bra as everywhere in §9, `B ∥ ẑ` so `p = 0`:
 
@@ -907,7 +940,7 @@ Four cited steps, primes on the bra as everywhere in §9, `B ∥ ẑ` so `p = 0`
   x sqrt(I_Th(I_Th+1)(2I_Th+1))                                              <- B&C (5.179), PDF p.206 / book p.174
 ```
 
-Line 2 is **exactly** `axial_geometry`'s line 2 at `k = 1` (§9.1). Line 3 is **exactly** the recoupler `zeeman_nuclear_F` uses, with `(F₁, I_F) → (J, I_Th)`: `I_Th` is the *second* constituent of `F₁ = J + I_Th`, which is what makes (5.175) the right equation there and (5.174) the right one on the line above — the same "operator on the first vs the second constituent" distinction §9.1 turns on. The sign convention is v1's, `−g_N μ_N`.
+Line 2 is **exactly** `axial_geometry`'s line 2 at `k = 1` (§9.1). Line 3 is **exactly** the recoupler `zeeman_nuclear_F` uses, with `(F₁, I_F) → (J, I_Th)`: `I_Th` is the *second* constituent of `F₁ = J + I_Th`, which is what makes (5.175) the right equation there and (5.174) the right one on the line above. The sign convention is the package's one-spin convention, `−g_N μ_N`.
 
 **Verification `[derived]`, because the bra-vs-ket `F₁` in line 3's phase is invisible to Hermiticity — the same trap §9.3 hit on the (5.173) phase.** `T¹_0(I_Th) = I_Th,z` was rebuilt in the fully decoupled `|J,m_J⟩|I_Th,m₁⟩|I_F,m₂⟩` basis at `J = 1, I_Th = 5/2, I_F = 1/2` (36 states), transformed to the coupled basis with two layers of Clebsch–Gordan coefficients — a route using neither (5.174) nor (5.175) — and compared element by element:
 
@@ -1089,7 +1122,7 @@ With `I → I_Th`, `F → F₁` (justified by §9.2), and with the primes moved 
 
 - `ΔJ = 0, ±1, ±2` (B&C say so in the sentence quoted above).
 - `q = Ω_bra − Ω_ket`, so inside the Ω = ±1 block of ³Δ₁ there are exactly two terms: **q = 0, ΔΩ = 0** (constant `eq₀Q`) and **q = ∓2, ΔΩ = ±2** (constant `eq₂Q`). The second is parity-even, diagonal in J, F₁, F, m_F, and sits in the same matrix position as the Ω-doubling operator ([TH] §3.2, §4.4).
-- **Both vanish identically for `I ≤ ½` — and the reason is the numerator, not the denominator.** A nucleus with `I < 1` **has no quadrupole moment**: the moment is defined by the rank-2 element `⟨I‖T²(Q)‖I⟩`, which requires the triangle `(I, 2, I)`, so `eQ = 0` and `H_Q ≡ 0` for `I = 0, ½`. The 3j `(I 2 I; −I 0 I)` in the *denominator* of (9.52)/(9.53) vanishes on exactly the same triangle, so the printed expression at `I ≤ ½` is `0/0` — **singular, not zero**; reading the vanishing denominator as the reason for the vanishing element is backwards, and a literal transcription divides by zero. **The code must carry an explicit `if I < 1: return 0.0` guard ahead of the inverse 3j** (this is what Task 5's gate V21 encodes). So ²²⁷ThF⁺ (I_Th = ½, §9.6) has no Th quadrupole at all, exactly as ¹⁹F has none (§2.11). `[derived]`
+- **Both vanish identically for `I ≤ ½` — and the reason is the numerator, not the denominator.** A nucleus with `I < 1` **has no quadrupole moment**: the moment is defined by the rank-2 element `⟨I‖T²(Q)‖I⟩`, which requires the triangle `(I, 2, I)`, so `eQ = 0` and `H_Q ≡ 0` for `I = 0, ½`. The 3j `(I 2 I; −I 0 I)` in the *denominator* of (9.52)/(9.53) vanishes on exactly the same triangle, so the printed expression at `I ≤ ½` is `0/0` — **singular, not zero**; reading the vanishing denominator as the reason for the vanishing element is backwards, and a literal transcription divides by zero. **The implementation returns zero for `I < 1` before evaluating the inverse 3j.** Thus ²²⁷ThF⁺ (I_Th = ½, §9.6) has no Th quadrupole at all, exactly as ¹⁹F has none (§2.11). `[derived]`
 
 **Comparing (9.52) at q = 0 with (9.53) fixes B&C's own definition of the constant** `[derived]`:
 
@@ -1130,7 +1163,7 @@ Casimir function used: `[¾C(C+1) − I(I+1)J(J+1)] / [2I(2I−1)(2J−1)(2J+3)]
 
 #### 9.4.3 OPEN-16 — the sign of A∥(Th) is settled, and it is not a convention
 
-Recorded here because Tasks 4 and 5 need the ruling and must not re-open it. `docs/lit/lookup-apar-th-sign-convention.md` (committed `0b3e5fa`) audited the Skripnikov & Titov 2015 (A∥ = −4163 μ_Th/μ_N MHz) versus Denis et al. 2015 (+1833 MHz) disagreement. Its findings: both groups do state their molecular-axis convention elsewhere in the same paper and the axes are opposite (Skripnikov ζ from Th to F, Denis F→Th); **A∥ as both define it is invariant under a consistent axis reversal** `[derived there]`; and the two groups **agree** on the sign of the analogous HfF⁺ constant. **The disagreement is therefore real physics, not a convention fork**, and the audit recommends `A∥(²²⁹Th, ThF⁺ X ³Δ₁) = −1.51(11) GHz`. **Arian ruled 2026-09-05 that the package default is `thf_v2('229', a_par_th_sign='negative')`, the keyword recording which calculation you trust (it is a parameter choice, not a convention, so it lives in `params`, not `conventions`).** Unlike `n_hat`, which is a genuine convention switch, and the docstring must say so. Do not re-derive this; see the audit for the four-step chain and the one email that would close it.
+[`docs/lit/lookup-apar-th-sign-convention.md`](lit/lookup-apar-th-sign-convention.md) audited the Skripnikov & Titov 2015 (A∥ = −4163 μ_Th/μ_N MHz) versus Denis et al. 2015 (+1833 MHz) disagreement. Its findings: both groups state opposite molecular-axis conventions, **A∥ as both define it is invariant under a consistent axis reversal** `[derived there]`, and the two groups agree on the analogous HfF⁺ sign. **The disagreement is therefore between electronic-structure calculations, not a convention fork**, and the audit recommends `A∥(²²⁹Th, ThF⁺ X ³Δ₁) = −1.51(11) GHz`. The bundled `229Th19F` model fixes the negative branch. The legacy `thf_v2('229', a_par_th_sign=...)` constructor can select either calculation explicitly; this is a parameter choice, unlike the `n_hat` convention.
 
 #### 9.4.4 OPEN-17 — the eQq₂ normalisation bridge: NOT resolved, escalated
 
@@ -1284,7 +1317,7 @@ d·ε = Σ_p (−1)^p ε_{−p} T¹_p(d) ≡ Σ_p c[p] T¹_p(d) ,        c[p] �
 
 so that `c_a[p] = (−1)^p (ε₂*)_{−p}` and `c_b[p] = (−1)^p (ε₁)_{−p}`. **Note `(ε₂*)_{−p}` means: conjugate the Cartesian Jones vector first, then take its spherical component with the formula above.** For the σ⁺ Jones vector `ê_{+1} = −(x̂ + iŷ)/√2` this gives `c[+1] = +1` and nothing else, i.e. absorbing a σ⁺ photon raises `m_F` by one — the sanity anchor for the whole convention.
 
-**The dyad, in the form Task 7's `dyad_weights(eps1, eps2)` returns.** B&C (5.141) at `k₁ = k₂ = 1` is exactly the Clebsch–Gordan coupling, since `⟨k₁p₁ k₂p₂|KP⟩ = (−1)^{k₁−k₂+P}(2K+1)^{1/2}(k₁ k₂ K; p₁ p₂ −P)`. Inverting it and collecting the polarisation factors gives one weight per `(K, P)`:
+**The dyad returned by `dyad_weights(eps1, eps2)`.** B&C (5.141) at `k₁ = k₂ = 1` is exactly the Clebsch–Gordan coupling, since `⟨k₁p₁ k₂p₂|KP⟩ = (−1)^{k₁−k₂+P}(2K+1)^{1/2}(k₁ k₂ K; p₁ p₂ −P)`. Inverting it and collecting the polarisation factors gives one weight per `(K, P)`:
 
 ```
 w^K_P = Σ_{p_a + p_b = P} ⟨1 p_a  1 p_b | K P⟩  c_a[p_a] c_b[p_b] ,        p_a, p_b ∈ {0, ±1}
@@ -1326,7 +1359,7 @@ S9.5.1(3)  polarisation dyad: conjugate + slot order
       eps1=sigma- eps2=sigma- : Delta m_F = [-2]
 ```
 
-Rows (a) and (b) are identities to machine precision; row (c) shows the check is **not** vacuous — the pre-fix line fails it by `13`. Rows (d)/(e) reproduce the [2γ] §3.3 probe (`p₁ + p₂ = +1+1 → Δm_F = +2`, `+1−1 → 0`, `−1−1 → −2`) and pin down what "σ⁺σ⁺" means: the probe's rows are labelled by the **leg components** `(p_a, p_b)`, not by the two Jones vectors. With the conjugate in place, `(p_a, p_b) = (+1, +1)` is `ε₁ = σ⁺` with `ε₂ = σ⁻`, because conjugating `ε₂` flips the sign of its helicity label. `[derived]` The reachable **set** `Δm_F ∈ {0, ±2}` under σ± only (§9.5.4) is the same either way; only the mapping from beam polarisations to `Δm_F` differs, and it is inverted between the Raman reading (rows d, the operator as [2γ] §3.1 and Cossel write it) and the ladder reading (rows e, both photons absorbed, no star). **The notebook must say which reading it is using when it labels a polarisation pair.**
+Rows (a) and (b) are identities to machine precision; row (c) shows the check is **not** vacuous — the pre-fix line fails it by `13`. Rows (d)/(e) reproduce the [2γ] §3.3 probe (`p₁ + p₂ = +1+1 → Δm_F = +2`, `+1−1 → 0`, `−1−1 → −2`) and pin down what "σ⁺σ⁺" means: the probe's rows are labelled by the **leg components** `(p_a, p_b)`, not by the two Jones vectors. With the conjugate in place, `(p_a, p_b) = (+1, +1)` is `ε₁ = σ⁺` with `ε₂ = σ⁻`, because conjugating `ε₂` flips the sign of its helicity label. `[derived]` The reachable **set** `Δm_F ∈ {0, ±2}` under σ± only (§9.5.4) is the same either way; only the mapping from beam polarisations to `Δm_F` differs, and it is inverted between the Raman reading (rows d, the operator as [2γ] §3.1 and Cossel write it) and the ladder reading (rows e, both photons absorbed, no star). **Any polarization-labelled result must state which reading it uses.**
 
 #### 9.5.2 Which (K, ΔΩ) channels exist — the algebra, not the assertion
 
@@ -1356,7 +1389,7 @@ This is the algebraic content of [2γ] §3.3's table (Ω = +1 → −1 requires 
 α^1 ∝ P_X ½ ( d_a d_b − d_b d_a ) P_X = P_X ½ [d_a, d_b] P_X = 0
 ```
 
-because `d = −e Σ_i r_i` is a vector operator whose Cartesian components commute. **`K = 1` is identically zero in exact closure**, confirming [SPEC-v2] §3.2's inference.
+because `d = −e Σ_i r_i` is a vector operator whose Cartesian components commute. **`K = 1` is identically zero in exact closure**, confirming the registered operator's rank set.
 
 **The order at which it reappears** `[derived]`. Writing `1/Δ_i = (1/Δ)(1 − δ_i/Δ + …)` with `δ_i = E_i − Ē`, the zeroth-order term is the closure term above and vanishes; the first-order term is `−(1/Δ²) P_X d_a (H − Ē) d_b P_X`, whose antisymmetric part `−(1/2Δ²) P_X (d_a H d_b − d_b H d_a) P_X` does **not** vanish. So `K = 1` is suppressed by one power of **(intermediate splitting)/(detuning)** — equivalently, it is the well-known antisymmetric Raman tensor, which exists only when the two time-orderings' denominators differ (resolved intermediates, or `ω₁ ≠ ω₂`).
 
@@ -1377,9 +1410,9 @@ Three things this shows. (i) With a **common** denominator, `||K=1|| = 2.2 × 10
 
 **Scope of the proof, stated exactly** `[derived]`. The argument needs `𝒫` to project onto the **complete** opposite-parity space, so that it acts as the identity on `d|g⟩`. That is what the closure operator of §9.5.1 *is*, and the ruling below is a ruling about that operator. It is **not** a statement about a common detuning alone: with a common `Δ` but an **incomplete** intermediate manifold — a single intermediate electronic state, which is the actual ThF⁺/HfF⁺ situation — `P_X d_a 𝒫 d_b P_X` is generically **not** symmetric in `a ↔ b`, and `K = 1` survives at **zeroth** order in `δ/Δ`. The extreme case is explicit: for `𝒫 = |i⟩⟨i|`, `P_X d_a |i⟩⟨i| d_b P_X = v_a v_b†` with `v_a = P_X d_a |i⟩` (schematic for **real** polarisation components; a complex `ε` carries the conjugate on the bra leg, which changes none of what follows), whose antisymmetric part `½(v_a v_b† − v_b v_a†)` vanishes only if `v_a ∥ v_b`. So there are two distinct suppressions of `K = 1`, and they must not be conflated: **completeness of the intermediate manifold** (exact zero) and **commonness of the detuning** (which alone buys nothing once the manifold is restricted).
 
-**Ruling for Task 7: register `K ∈ {0, 2}` only, for the complete-closure operator §9.5.1 defines.** There is no `alpha_K1_*` parameter in that operator, and none should be invented. A `K = 1` term becomes meaningful in two places, both outside v2's registered set: the *resolved* form ([2γ] §3.5, §4.2), where it enters at `O(δ/Δ)`; and any restricted-manifold model, where it enters at `O(1)`. Either would need its own `placeholder` α with the order recorded here.
+**Implemented decision: register `K ∈ {0, 2}` only for the complete-closure operator of §9.5.1.** There is no `alpha_K1_*` parameter in that operator. A `K = 1` term becomes meaningful in two places outside the registered set: the *resolved* form ([2γ] §3.5, §4.2), where it enters at `O(δ/Δ)`, and a restricted-manifold model, where it can enter at `O(1)`. Either requires a distinct operator and parameter definition.
 
-**Consequence for Task 8's closure test.** The identity being tested is the complete-closure one, so the fixture's intermediate manifold must be **complete in the relevant angular space** for `K = 1` to come out zero — a one-intermediate-state fixture will not satisfy it. **Recommended shape**: the fixture compares the `K = 0` and `K = 2` projections against the closure prediction, and reports the `K = 1` residual **separately**, as the measured restricted-manifold (or `δ/Δ`) effect rather than as a failure. With a complete manifold that residual is machine-zero (the `2.2 × 10⁻¹⁶` row above); with a restricted one it is `O(1)` relative to `K = 0`, and that number is the diagnostic, not the verdict.
+**Closure-test interpretation.** The identity applies to a **complete intermediate manifold in the relevant angular space**; a one-state fixture does not satisfy that premise. The package test compares the `K = 0` and `K = 2` projections with the closure prediction and treats the `K = 1` residual as a separate diagnostic. It is machine-zero for the complete fixture (`2.2 × 10⁻¹⁶` above) and can be `O(1)` relative to `K = 0` for a restricted manifold.
 
 #### 9.5.4 Selection rules, as data
 
@@ -1400,7 +1433,7 @@ The narrowing to `{0, ±2}` is the operational statement: Ng's target `|J=1, F=3
 
 #### 9.5.5 The validity condition, in one sentence the notebook can quote
 
-> The closure form of the two-photon operator requires a detuning large compared with the intermediate rotational structure, `Δ ≫ B_i ≈ 7 GHz` for ThF⁺ (`B_i` = the **intermediate** electronic state's rotational constant, `B_e ≈ 0.23 cm⁻¹`), whereas the JILA experiments run at 0.16–1.5 GHz — so this is the right *operator shape* and the wrong *limit for the current experiment*, and the α's could later be generated by a resolved sum once the intermediate ladder and its 0⁺/0⁻ labels are settled.
+> The closure form of the two-photon operator requires a detuning large compared with the intermediate rotational structure, `Δ ≫ B_i ≈ 7 GHz` for ThF⁺ (`B_i` = the **intermediate** electronic state's rotational constant, `B_e ≈ 0.23 cm⁻¹`), whereas the JILA experiments run at 0.16–1.5 GHz. The implemented closure form captures the operator shape but is outside the experiment's quantitative limit; a prediction requires a resolved sum with a selected intermediate ladder and consistent 0⁺/0⁻ labels.
 
 ([2γ] §3.4: Cossel thesis p. 218 for the 160 MHz → ≈1.5 GHz detunings; Gresh 2016 Table 2 for the intermediate-state `B_e ≈ 0.229–0.236 cm⁻¹ ≈ 6.9–7.1 GHz` (the Ω = 0⁻ at 14 589 cm⁻¹ and its neighbours — X ³Δ₁ itself has `B_e = 0.243 cm⁻¹`); [2γ] §4.2 for "A can generate B's parameters, B cannot generate A's spectra". The intermediate *hyperfine* structure is a different story and being hyperfine-unresolved is plausible; being rotationally unresolved is not, at JILA detunings.)
 
@@ -1410,7 +1443,7 @@ The narrowing to `{0, ±2}` is the operational statement: Ng's target `|J=1, F=3
 
 **Why the default remains a placeholder.** The checked nuclear-moment compilations contain no measured ²²⁷Th moment, but the previous claim that no theoretical estimate exists was incorrect. [Minkov et al., Phys. Rev. C 110, 034327 (2024), Table IV](https://arxiv.org/abs/2408.11010) predicts μ(²²⁷Th) = −0.0860 μ_N for its octupole-deformed 1/2 ground solution. With I = 1/2 and the existing molecular factor −10408 MHz, this gives g_N = −0.1720 and A∥ = +1790.176 MHz. This is a model prediction without a calibrated uncertainty, not a measurement. The ENSDF ground-state assignment remains tentative (1/2⁺); see the [source audit](superpowers/reports/2026-09-08-thf-nuclear-estimate-audit.md). The previously chosen Schmidt value is retained as a stress-test default, not promoted to a physical prediction.
 
-**Arian's ruling (2026-09-05): use the Schmidt single-particle moment, not `μ(²²⁷) = μ(²²⁹)`.**
+**Package default:** use the Schmidt single-particle moment as a stress test, rather than the older `μ(²²⁷) = μ(²²⁹)` assumption. The field-plot dataset uses the separate Minkov value described above.
 
 **Conditional spherical single-particle assumption** `[model assumption]`. If the nuclear spin is identified with a single spherical neutron's j = 1/2 and positive parity, then ℓ = 0 and the s₁/₂ Schmidt formula applies. The total I = 1/2 of a deformed nucleus does not establish that identification or a pure 4s₁/₂ orbital. The arithmetic below tests this assumed model.
 

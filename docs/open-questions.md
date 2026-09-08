@@ -1,231 +1,98 @@
-# Open questions raised during implementation
+# Current scientific limitations and decisions
 
-## OQ-A — the Ω-doubling sign and the parity of the upper doublet component
+This page records the live scope of the implemented models. The numbered
+`OPEN-*` labels are stable references used by code, tests, notebooks, and the
+canonical [ThF+ Hamiltonian note](thf-plus-x3delta1-effective-hamiltonian.md).
+A resolved item remains here when software cites its identifier.
 
-Raised: Task 5 of `docs/superpowers/plans/2026-09-05-heff-v1-thf-tutorial.md`.
-**Status: CLOSED 2026-09-05 — confirmed by Arian: the upper component has parity (−1)^J at every J (e above f uniformly). Code unchanged.**
+## ThF+ X 3Delta1 model
 
-### The physical invariant (convention-free)
+| ID | Current status | Consequence |
+|---|---|---|
+| `OPEN-1` | The observed 3Delta fine-structure intervals cannot be represented by one spin-orbit constant. The shipped model therefore keeps only Omega = +/-1 and fitted effective constants. | A model that includes 3Delta2 and 3Delta3 needs separate electronic origins or a larger coupled-state model. |
+| `OPEN-2` | **Resolved.** The package uses Brown's e/f rule: the upper Omega-doublet component has parity `(-1)^J` and is e. | Applying the thesis's `S=1/2` specialization at `S=1` would invert every e/f label. |
+| `OPEN-3` | **Resolved for the implementation.** The package uses `+G_par mu_B (J.n)(n.B)`, which reproduces Ng's printed g-factor relation and measured magnitude. Ng thesis Eq. C.6 prints the opposite sign. | The source-level discrepancy remains worth author confirmation, but the implemented branch is fixed and tested. |
+| `OPEN-4` | The experiment measured `|g_F|`; theory selects the negative branch used by default. | Signed observables inherit a theory-supported, experimentally unresolved sign. |
+| `OPEN-5` | Only `A_par = 2a - b_F - 2c/3` is known for 19F. The separate microscopic constants are unavailable. | The axial Omega = +/-1 model is supported; perpendicular or Delta-Omega = +/-1 hyperfine terms are not. |
+| `OPEN-6` | The shipped `c_I(19F) = 20 kHz` is a CsF-scaled sensitivity estimate with unknown sign and unquantified transfer error. | The fitted `A_par` may absorb roughly 40--120 kHz of an omitted or mismodelled spin-rotation contribution. |
+| `OPEN-7` | The rotational g-factor `g_r` is omitted and not known for ThF+. | Predicted J = 2--4 g-factors carry an unquantified error of order 1 percent. |
+| `OPEN-8` | Hyperfine-dependent Omega doubling `e_Delta` is omitted. The estimate in the Hamiltonian note is only an order-of-magnitude 1--10 kHz scale. | The model cannot predict an F-dependent Omega-doublet splitting at that scale. |
+| `OPEN-9` | No ThF+ nuclear-spin-dependent parity-violation coefficient `W_a` or `W_P` was found in the sources reviewed. | NSD-PV requires a new electronic-structure input and operator choice. |
+| `OPEN-10` | Parity-dependent Zeeman terms are omitted. | The model does not generate the reported zero-field differential g-factor; use it for the included axial Zeeman physics only. |
+| `OPEN-11` | **Resolved as a convention.** The default axis is JILA's `n_hat = F_to_Th`; the alternative `Th_to_F` convention is explicit. | Axis reversal flips signed Omega, dipole, and effective-field quantities together. |
+| `OPEN-12` | **Resolved as an output convention.** The default is `Delta g = g^u - g^l`; the thesis convention `delta g = Delta g/2` remains selectable. | Always retain the convention stamp when comparing results. |
+| `OPEN-13` | Gresh's printed `k''` sign depends on upper-state branch bookkeeping. | The package takes the Omega-doublet magnitude and ordering from the microwave result rather than inferring them from that sign. |
+| `OPEN-14` | The package adopts `E_eff = 35.0 GV/cm` with a 7 percent scale; published calculations give 35.2 and 37.3 GV/cm. | This is an adopted ab-initio input, not a direct measurement. |
+| `OPEN-15` | Petrov's printed `D = -0.133 a.u.` is inconsistent with the measured 3.37 D magnitude and is likely missing a factor of ten. | The package uses Ng's measured, center-of-mass-origin dipole and does not use the printed Petrov number. |
 
-The **upper** Ω-doublet component has parity `(−1)^J` at every J — equivalently,
-**e lies `ω_ef J(J+1)/2` above f, uniformly in J** under Brown's 1975 rule.
+## Odd-thorium isotopologues and two-photon operator
 
-Two primary sources, read independently:
+### `OPEN-16`: sign of A_parallel(229Th)
 
-- Ng 2022 Fig. 2, rendered and read as an image ([HAM] §2.3). Caption: positive
-  (negative) parity levels are black (grey). At **J = 1** the grey line is above
-  the black in both F = 3/2 and F = 1/2; at **J = 2** the black is above the grey
-  in both F = 5/2 and F = 3/2.
-- Gresh 2016's `k″ < 0` for the X ³Δ₁ lower state, which is the same ordering
-  ([HAM] §2.3, third overturn note).
+**Decision:** the bundled `229Th19F` model uses the negative branch,
+`A_par_Th = -1510 MHz`, following Skripnikov and Titov. The positive Denis
+branch remains a real disagreement between electronic-structure calculations;
+an axis reversal does not resolve it. The older `thf_v2()` API can select the
+positive branch explicitly, while the bundled TOML fixes the negative branch.
+See section 9.4.3 of the Hamiltonian note.
 
-### Why heff's element is `−ω_ef J(J+1)/4` and not Ng's `(−1)^J ω_ef J(J+1)/4`
+### `OPEN-17` and `OPEN-18`: thorium quadrupole inputs
 
-heff's parity operator (`heff.conventions.parity_phase`, thesis Eq. A.15 = B&C
-Eq. 6.234) acts as
+**Unresolved:** the signed normalization bridge from Petrov's `eQq0/eQq2`
+definitions to the Brown-and-Carrington matrix elements is not established.
+The bundled `229Th19F` values `eQq0_Th = -2600 MHz` and
+`eQq2_Th = +300 MHz` are `placeholder` sensitivity points with no numerical
+uncertainty. They are not a convention-validated pair or a prediction. The
+only implemented `eqq2_norm` is `bc_9p52_q2`; selecting
+`petrov2018_eq23` raises rather than guessing. A matched ThF+ electric-field-
+gradient calculation is the missing input. See the
+[quadrupole audit](superpowers/reports/2026-09-08-thf-quadrupole-estimate-audit.md).
 
-```
-E* |J, Ω⟩ = (−1)^{J−S−ℓ+s} |J, −Ω⟩ = (−1)^{J−1} |J, −Ω⟩     (³Δ: S = 1, ℓ = s = 0)
-```
+### `OPEN-19`: thorium spin rotation
 
-so the combination `(|+1⟩ + σ|−1⟩)/√2` has parity `σ·(−1)^{J−1}`. The eigenvalues
-of an off-diagonal `c` in this two-state space are `±|c|`; the **upper** one
-(`+|c|`) is the symmetric combination (σ = +1) when `c > 0` and the antisymmetric
-one (σ = −1) when `c < 0`.
+**Unresolved:** no ThF+ value for `c_I_Th` is available. The package holds it
+at zero for both odd isotopologues. Zero switches off an unknown operator; it
+is not a physical estimate. The earlier 1 kHz--1 MHz bracket is a scale study,
+not an uncertainty interval.
 
-- With the **J-independent negative** element `c = −ω_ef J(J+1)/4 < 0`: σ = −1 at
-  every J, so the upper parity is `−(−1)^{J−1} = (−1)^J` at every J. ✔ invariant.
-  (J = 1: phase +1, antisymmetric has parity −1, and it is the upper one, +ω_ef/2.
-  J = 2: phase −1, antisymmetric has parity +1, still upper.)
-- With **Ng Eq. C.3 transcribed literally**, `c = (−1)^J ω_ef J(J+1)/4`: σ = (−1)^J,
-  so the upper parity is `(−1)^J(−1)^{J−1} = −1` at **every** J. ✘ The two
-  alternations cancel instead of composing; the figure's alternation is lost.
+### `OPEN-20`: 227Th spin and magnetic moment
 
-Ng's `(−1)^J` is the same physics written in a ket-phase convention where
-`E*|J, Ω⟩ = |J, −Ω⟩` (no `(−1)^{J−S}`), i.e. his `|J, Ω = −1⟩` carries a
-J-dependent phase relative to the ket heff's parity operator acts on. Nothing in
-any source read for [HAM] writes that phase down, which is why this was flagged
-rather than assumed.
+**Chosen package default:** the bundled `227Th19F` model retains the
+`A_par_Th = +39.821 GHz`, `g_N_Th = -3.826` Schmidt single-particle values as
+explicit `placeholder` stress-test inputs. The tentative `I^pi = (1/2+)`
+assignment does not imply a pure spherical `s_1/2` neutron state.
 
-The **splitting magnitude** `ω_ef J(J+1)/2` is identical under either form and is
-unaffected by this question.
+**Distinct theory case:** Minkov et al. (2024) predict
+`mu(227Th) = -0.0860 mu_N`, hence `g_N = -0.1720` and
+`A_par_Th = +1.790176 GHz` with the same molecular electronic factor. The
+field-plot dataset uses this value, but the bundled package model does not.
+The calculation quotes no calibrated uncertainty and omits Coriolis and
+collective mixing corrections. The ground-state moment and low-lying spin
+assignments remain experimental and nuclear-model limitations. See the
+[nuclear estimate audit](superpowers/reports/2026-09-08-thf-nuclear-estimate-audit.md).
 
-### Status in code
+### `OPEN-21`: rank-one two-photon channel
 
-- `heff/elements_c.py:omega_doubling` returns `−J(J+1)/4` (coefficient `ω_ef`),
-  with the transposition recorded in its `cite`.
-- Both halves of [HAM] V4 are **hard gates** in
-  `tests/test_elements_c_fieldfree.py`: the splitting law
-  (`test_V4_omega_doubling_splitting_law`) and the parity ordering
-  (`test_V4_upper_doublet_parity_alternates_as_minus_one_to_the_J`). The parity
-  gate fails at even J on Ng's literal form and at odd J on a globally flipped
-  sign, so both outcomes are reachable.
-- No constant, tolerance or parity phase was adjusted.
+**Resolved for the implemented operator:** exact closure over a complete
+opposite-parity intermediate space makes the antisymmetric `K = 1` tensor
+zero. The registered closure operator therefore contains only `K = 0, 2`.
+`K = 1` can reappear for energy-resolved denominators or a restricted
+intermediate manifold; those are different operators and are not implemented.
 
-### The question for Arian
+### `OPEN-22`: rotational truncation
 
-> Confirm that the upper Ω-doublet component of ThF⁺ X ³Δ₁ has parity `(−1)^J` at
-> every J (e above f uniformly, Brown 1975). If yes, the code is correct as
-> written and this item closes. If the ordering is instead parity `−1` at every J,
-> Ng Eq. C.3 is literal in heff's convention and the sign in `omega_doubling`
-> flips back — one character, caught either way by the V4 parity gate.
+**Current default:** the bundled model uses `J_max = 4`. Convergence must be
+checked for the selected odd-isotope parameters because thorium hyperfine can
+mix adjacent J manifolds strongly. The separate field-plot calculation used
+`J <= 8` and sampled `J <= 7` versus `J <= 8`; that result does not prove the
+bundled Schmidt stress-test model converged at `J_max = 4`.
 
-**Answer (Arian, 2026-09-05): yes — (−1)^J on top. Closed; code as written.**
+### `OPEN-23`: closure validity for the experiment
 
-A one-line question to K. B. Ng about the `|J, Ω = −1⟩` ket phase would settle the
-convention side of it, and is the same message that settles OPEN-3.
-
-## Erratum — [HAM] §2.8 g_F table
-
-Raised: Task 6 of `docs/superpowers/plans/2026-09-05-heff-v1-thf-tutorial.md`
-review, round 1. **Status: erratum in the document; the code is unaffected.**
-
-[HAM] §2.8's printed g_F table is headed `[derived, G_par = 0.04756]`, but its
-four rows reproduce only when the closed form
-`g_F = −G_par γ_F + g_N (μ_N/μ_B) κ_F` is evaluated at G_par = 0.048 (Ng's
-printed, rounded value), not at the header's own 0.04756.
-
-For J = 1, F = 3/2:
-
-- At **G_par = 0.04756**: g_F = −0.0148989 → 20.853 kHz/G. This matches
-  [HAM] §2.8's own numerical confirmation line, stated three paragraphs above
-  the table, and the measured |g_{F=3/2}| = 0.0149.
-- At **G_par = 0.048**: g_F = −0.0150455 → 21.058 kHz/G. This matches the
-  table's printed row (−0.015046, i.e. 21.06 kHz/G).
-
-The code uses G_par = 0.04756 (`heff/params.py`, `thf_v1()`), consistent with
-the document's own confirmation line, not with the printed table. The
-document's table should be regenerated at G_par = 0.04756 (or its header
-corrected to read 0.048, whichever Arian intends as the source value); the
-code and tests do not pin to the table's numbers either way.
-
-## OPEN-16 through OPEN-23 — v2 isotopologues and two-photon
-
-Raised: `docs/superpowers/specs/2026-09-05-heff-v2-isotopologues-two-photon.md`
-§7 (numbering continues [HAM] §7). Each is a place where the code would
-otherwise be asserting something no source supports; none blocks any task,
-because each is a flag, a default or a figure choice rather than a formula.
-
-### OPEN-16 — the sign of A∥(Th)
-
-Source: [SPEC-v2] §7, [TH] §2.2 (gap G4), `docs/lit/lookup-apar-th-sign-
-convention.md`, [HAM] §9.4.3.
-
-Skripnikov & Titov print −4163 (μ/μ_N) MHz, Denis print +1833 MHz from the
-same defining equation, agreeing to 2.2 % in magnitude. The sign is what
-**orders the F₁ manifold**, so every ²²⁹ThF⁺ level diagram depends on it.
-`docs/lit/lookup-apar-th-sign-convention.md` shows the two groups' axis
-conventions are opposite but that A∥ is invariant under a consistent
-reversal, and that they agree on the analogous HfF⁺ constant — so the
-disagreement is a real disagreement between two calculations, not a
-convention mismatch, and the audit recommends A∥ < 0. The package therefore
-defaults `thf_v2('229', a_par_th_sign='negative')`, trusting Skripnikov &
-Titov 2015; `thf_v2('229', a_par_th_sign='positive')` trusts Denis 2015
-instead — the keyword records which ab initio calculation you trust, not a
-convention.
-
-**Question:** (a) do you accept the audit's recommendation as the shipped
-default (`a_par_th_sign='negative'`), given that an ab initio disagreement is
-not settled by an audit of conventions? (b) should the notebook draw both
-branches side by side anyway, since the F₁ ordering is the most visible
-feature of every ²²⁹ThF⁺ figure? [Controller ruling, task 10: the notebook
-draws the default `negative` branch only, and names the `a_par_th_sign=`
-alternative in one sentence — pending Arian's answer to (b).]
-
-### OPEN-17 — the eQq₀/eQq₂ normalisation bridge
-
-Source: [SPEC-v2] §7, [TH] §3.2, [HAM] §9.4.4.
-
-B&C's (9.52) at q = ±2 versus Petrov 2018 Eq. (23), with its √6 and Y₂₂.
-[TH] §3.2 flags this **UNVERIFIED** and says every eQq₂-derived number
-inherits the caveat; the q=0 transfer also has an unresolved signed normalization. Two things are not pinned by the printed equations: the
-scalar-product pairing in Petrov's Eq. (19), and whether the `√(2π/5)` there
-is intended or a typo for `√(4π/5) = C²_q`. The package computes in B&C's own
-normalisation (`eqq2_norm='bc_9p52_q2'`, the only implemented value);
-`'petrov2018_eq23'` raises `NotImplementedError` naming this item rather than
-guessing between the two candidate factors (`−1/√3`, `−1/√6`).
-
-**Question:** if the two normalisations differ by a factor the derivation
-cannot pin from the printed equations alone, is asking Petrov the right
-move, or do we ship B&C's normalisation and label the HfF⁺-anchored estimate
-as order-of-magnitude?
-
-### OPEN-18 — eQq₀ and eQq₂ defaults
-
-Current decision (2026-09-08): retain −2600 and +300 MHz as explicit
-`status='placeholder'` sensitivity points with no numeric uncertainty. The
-Hf-to-Th electronic transfer and signed normalization are unvalidated for both
-components. See the [estimate audit](superpowers/reports/2026-09-08-thf-estimate-audit.md).
-A direct Th EFG calculation in matched conventions is the missing physical input.
-
-### OPEN-19 — c_I(Th)
-
-Source: [SPEC-v2] §7, [TH] §4.6 (gap G3).
-
-Unconstrained over three decades, ~1 kHz to ~1 MHz; [TH] §4.6 declines to
-pick, and at the top of the range it would exceed the entire ¹⁹F hyperfine.
-Defaulted to 0 (`status='held-fixed'`) for both ²²⁹Th and ²²⁷Th.
-
-**Question:** does the notebook show a bracket sweep so the reader sees what
-is at stake, or is a `note` enough? [This notebook states the bracket in
-prose only, per the controller's no-parameter-sweep ruling.]
-
-### OPEN-20 — ²²⁷Th: the spin and the moment
-
-Source: [SPEC-v2] §7, [TH] §1.4, `docs/lit/lookup-227th-nuclear-moment.md`,
-[HAM] §9.6.
-
-I = (1/2⁺) remains a tentative ENSDF assignment. [Minkov et al., Phys. Rev. C 110, 034327 (2024), Table IV](https://arxiv.org/abs/2408.11010) predicts μ(²²⁷Th) = −0.0860 μ_N for its octupole-deformed 1/2 ground solution. With I = 1/2 and the existing molecular factor −10408 MHz, this gives g_N = −0.1720 and A∥ = +1790.176 MHz. This is a model prediction without a calibrated uncertainty, not a measurement.
-
-Arian's 2026-09-05 choice of the Schmidt default remains in force:
-`A_par_Th = +39821 MHz`, `g_N_Th = -3.826`, both placeholders. The spherical
-s₁/₂ assumption is not implied by deformed I = 1/2. The direct 2024 prediction
-is now an available alternative, and no factor-two error bound is established
-for the Schmidt value. See the [source audit](superpowers/reports/2026-09-08-thf-nuclear-estimate-audit.md).
-
-The remaining issue is the nuclear-model uncertainty and eventual parameter-model
-choice, not a lack of any published estimate. No spin assignment or default
-central value was changed by this audit.
-
-### OPEN-21 — does the K = 1 two-photon channel exist? RESOLVED
-
-Source: [SPEC-v2] §7, [HAM] §9.5.3.
-
-**Resolution (Task 1, 2026-09-05): no, not in exact closure.** `K = 1` is the
-antisymmetric part of the polarisation dyad; in exact closure (a complete
-opposite-parity intermediate manifold) it reduces to `P_X [d_a, d_b] P_X / 2`,
-which is identically zero because the Cartesian components of the dipole
-operator commute — verified numerically to `2.2 × 10⁻¹⁶` against `||K=0||`,
-`||K=2||` of order 0.5 on a complete spherical-harmonic closure model ([HAM]
-§9.5.3). `K = 1` reappears only at `O(δ/Δ)` in the resolved sum (a genuinely
-different, unregistered operator) or at `O(1)` for a restricted (non-complete)
-intermediate manifold — neither is the closure operator this package
-implements. **`K ∈ {0, 2}` is registered in `REGISTRY_2G`; there is no
-`alpha_K1_*` parameter, and the closure gate `tests/test_twophoton_closure.py`
-(V27) is what pins this down.**
-
-### OPEN-22 — J_max for ²²⁹ThF⁺
-
-Source: [SPEC-v2] §7, [TH] §4.2.
-
-The Th ΔJ = ±1 hyperfine is a ~2 GHz off-diagonal element whose second-order
-shift is 60–135 MHz and, unlike the ²³²Th case, is not absorbable into `B₀`
-because it depends on `F₁`. [TH] infers that J = 1–5 or 1–6 may be needed for
-kHz-level J = 4 energies. `J_max` is a `StateSpec` knob and `j_convergence`
-reports the convergence at any value; the *default* is a physics parameter
-and therefore Arian's.
-
-**Question:** `J_max = 4` for the notebook figures with a convergence table
-(this notebook's choice), or `J_max = 6` throughout at 1152 states?
-
-### OPEN-23 — the two-photon validity condition
-
-Source: [SPEC-v2] §7, [2γ] §3.4, [HAM] §9.5.5.
-
-The rank-K form is the `Δ ≫ B_i ≈ 7 GHz` limit (`B_i` the intermediate
-state's rotational constant); JILA runs at 0.16–1.5 GHz. The notebook states
-this plainly, quoting [HAM] §9.5.5.
-
-**Question:** is that enough, or do you want the resolved-sum path built as a
-product (not just a test fixture) against one of the two contested ladders
-(Denis 2015 or Petrov 2018), with the choice labelled?
+**Model limitation:** the rank-K closure form requires detuning large compared
+with the intermediate rotational structure, approximately 7 GHz for the
+relevant ThF+ states. The cited JILA detunings are 0.16--1.5 GHz. The package
+therefore supplies the closure operator's tensor structure and placeholder
+polarizabilities, not a quantitative model of those experiments. A resolved
+intermediate-state sum requires a selected ladder, energies, dipoles, and
+consistent phase and polarization conventions.
