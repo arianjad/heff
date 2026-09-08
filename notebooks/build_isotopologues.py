@@ -7,8 +7,8 @@ nbformat, and `if __name__ == "__main__": build()`. Nothing is imported from
 build_tutorial.py; the helper patterns (write_state, dominant, select_q,
 display_levels) are re-implemented here for the two-spin basis.
 
-Run:  conda run -n heff python notebooks/build_isotopologues.py
-Then: conda run -n heff jupyter execute --inplace notebooks/ThF_plus_Isotopologues.ipynb
+Run:  python notebooks/build_isotopologues.py
+Then: python -m jupyter nbconvert --to notebook --execute --inplace notebooks/ThF_plus_Isotopologues.ipynb
 """
 import pathlib
 

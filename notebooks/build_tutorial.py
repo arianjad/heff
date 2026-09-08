@@ -3,8 +3,8 @@
 The notebook is generated from a script so it is reviewable as a diff and
 regenerable after an API change.
 
-Run:  conda run -n heff python notebooks/build_tutorial.py
-Then: conda run -n heff jupyter execute notebooks/ThF_plus_X3Delta1_Tutorial.ipynb
+Run:  python notebooks/build_tutorial.py
+Then: python -m jupyter nbconvert --to notebook --execute --inplace notebooks/ThF_plus_X3Delta1_Tutorial.ipynb
 """
 import pathlib
 
