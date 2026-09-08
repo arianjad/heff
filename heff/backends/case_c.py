@@ -97,32 +97,29 @@ def make_spec(basis, electronic, spins):
             "high-level case-c foundation supports at most one spin",
             ("isotopologue", "spins", 1))
 
-    spin_chain = []
-    for index, record in enumerate(spins):
-        spin_path = ("isotopologue", "spins", index)
+    I = 0.0
+    if spins:
+        record = spins[0]
+        spin_path = ("isotopologue", "spins", 0)
         if not isinstance(record, Mapping):
             raise _InputValidationError(
                 "case-c spins must be records", spin_path)
         spin = Spin(label=_required(record, "label", spin_path),
                     I=_required(record, "I", spin_path),
                     couple_to=_required(record, "couple_to", spin_path))
-        expected_parent = "J" if index == 0 else f"F{index}"
-        if spin.couple_to != expected_parent:
+        if spin.couple_to != "J":
             raise _InputValidationError(
-                f"spins must form a chain coupled inner-first: spins[{index}] "
-                f"({spin.label!r}) must have couple_to == {expected_parent!r}, "
+                "spins must form a chain coupled inner-first: spins[0] "
+                f"({spin.label!r}) must have couple_to == 'J', "
                 f"got {spin.couple_to!r}",
                 spin_path + ("couple_to",))
-        spin_chain.append(spin)
-    spin_chain = tuple(spin_chain)
+        I = spin.I
 
     # The native v1 representation carries one nuclear spin through I.
-    state_spins = ()
-    I = spin_chain[-1].I if spin_chain else 0.0
     try:
         return StateSpec(case="c", electronic=(elec_state,), I=I,
                          J_range=(basis["J_min"], basis["J_max"]), M=basis["M"],
-                         frame=basis["frame"], spins=state_spins)
+                         frame=basis["frame"], spins=())
     except ValueError as exc:
         # Range and spin-chain invariants were checked above; the remaining
         # StateSpec validation reachable here is the M mode.

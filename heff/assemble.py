@@ -184,13 +184,7 @@ def hamiltonian(tm, pset, knobs):
     complex only if an ACTIVE (nonzero-coefficient) term is complex -- an
     all-real active set stays float64 (spec S3.3; fix round 1, finding 4).
     """
-    c = coefficients(tm, pset, knobs)
-    d = tm.mats[0].shape[0]
-    active_idx = [k for k in range(len(c)) if c[k] != 0.0]
-    if not active_idx:
-        return np.zeros((d, d), dtype=float)
-    stack = np.array([tm.mats[k] for k in active_idx])
-    return np.tensordot(np.asarray(c)[active_idx], stack, axes=1)
+    return hamiltonian_batch(tm, coefficients(tm, pset, knobs))[0]
 
 
 def sweep_coefficients(tm, pset, knob_arrays):

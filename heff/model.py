@@ -13,16 +13,12 @@ from .spec import enumerate_kets
 from .terms import ctx_from, terms_for_case
 
 
-def _with_source(source, message):
-    return f"{source}: {message}"
-
-
 def _case_insensitive_key(mapping, requested, *, kind, source):
     matches = [key for key in mapping if key.casefold() == str(requested).casefold()]
     if len(matches) == 1:
         return matches[0]
-    raise ValueError(_with_source(
-        source, f"unknown {kind} {requested!r}; available: {tuple(mapping)}"))
+    raise ValueError(
+        f"{source}: unknown {kind} {requested!r}; available: {tuple(mapping)}")
 
 
 def _bind_backend_path(path, manifold_id, isotope_id):
@@ -90,26 +86,25 @@ class MoleculeModel:
             location = ", ".join(paths) if paths else (
                 f"manifolds.{self.manifold.id}.backend")
             raise ValueError(
-                _with_source(self.source, f"{location}: {detail}")) from exc
+                f"{self.source}: {location}: {detail}") from exc
 
         try:
             params = resolve_param_set(self.manifold, self.backend)
         except ValueError as exc:
-            raise ValueError(_with_source(self.source, str(exc))) from exc
+            raise ValueError(f"{self.source}: {exc}") from exc
 
         selected = self.manifold.metadata.get("terms", self.backend.default_terms)
         if (not isinstance(selected, tuple)
                 or not all(isinstance(name, str) for name in selected)):
             path = f"manifolds.{self.manifold.id}.terms"
-            raise ValueError(_with_source(
-                self.source, f"{path}: must be an array of strings"))
+            raise ValueError(f"{self.source}: {path}: must be an array of strings")
         term_names = selected
         try:
             terms = terms_for_case(
                 self.backend.case, names=term_names, registry=self.backend.registry)
         except ValueError as exc:
-            raise ValueError(_with_source(
-                self.source, f"manifolds.{self.manifold.id}.terms: {exc}")) from exc
+            raise ValueError(
+                f"{self.source}: manifolds.{self.manifold.id}.terms: {exc}") from exc
 
         available = (set(params.params) | set(self.backend.runtime_knobs)
                      | set(self.backend.optional_zero_parameters))
@@ -117,10 +112,9 @@ class MoleculeModel:
             for symbol in term.param:
                 if symbol not in available:
                     path = f"manifolds.{self.manifold.id}.parameters.{symbol}"
-                    raise ValueError(_with_source(
-                        self.source,
-                        f"{path}: missing parameter required by active term "
-                        f"{term.name!r}"))
+                    raise ValueError(
+                        f"{self.source}: {path}: missing parameter required by active term "
+                        f"{term.name!r}")
         return Problem(self.backend, spec, params, term_names)
 
     def problem(self, **basis_overrides):
@@ -164,7 +158,7 @@ def load_model(model_or_path, *, manifold=None, isotope=None) -> MoleculeModel:
         try:
             definition = read_model_toml(candidate)
         except ValueError as exc:
-            raise ValueError(_with_source(source, str(exc))) from exc
+            raise ValueError(f"{source}: {exc}") from exc
     else:
         bundled = list_bundled_models()
         model_id = _case_insensitive_key(
@@ -174,7 +168,7 @@ def load_model(model_or_path, *, manifold=None, isotope=None) -> MoleculeModel:
         try:
             definition = read_bundled_model(model_id)
         except ValueError as exc:
-            raise ValueError(_with_source(source, str(exc))) from exc
+            raise ValueError(f"{source}: {exc}") from exc
 
     manifold_id = _case_insensitive_key(
         definition.manifolds,
@@ -192,7 +186,7 @@ def load_model(model_or_path, *, manifold=None, isotope=None) -> MoleculeModel:
         backend = get_backend(manifold_definition.backend)
     except ValueError as exc:
         path = f"manifolds.{manifold_id}.backend"
-        raise ValueError(_with_source(source, f"{path}: {exc}")) from exc
+        raise ValueError(f"{source}: {path}: {exc}") from exc
 
     return MoleculeModel(
         definition=definition,
