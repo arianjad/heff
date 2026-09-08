@@ -1,0 +1,266 @@
+{
+  "isotope": "232",
+  "scenario": "baseline",
+  "Jmax": 8,
+  "parameters": {
+    "B0": {
+      "value": 7274.3325,
+      "unit": "MHz",
+      "uncertainty": 0.01,
+      "source": "Ng 2022 SII B p.2 (interval = 29.09733(4) GHz); Ng thesis S4.1.1 p.78",
+      "status": "derived",
+      "isotopologue": "232Th19F+",
+      "convention": null,
+      "note": "Interval/4 approximation, not a refit with D0 and extra hyperfine terms. Propagated measurement uncertainty is 0.010 MHz. With the current B J(J+1)-D[J(J+1)]^2 terms, the rotational interval is 4B-32D, 124.704 kHz below the source interval; a consistent refit is unresolved"
+    },
+    "D0": {
+      "value": 3.897,
+      "unit": "kHz",
+      "uncertainty": 0.12,
+      "source": "Gresh 2016 Table 1, X3Delta1 D'' column (1.30(4)e-7 cm-1)",
+      "status": "measured",
+      "isotopologue": null,
+      "convention": null,
+      "note": null
+    },
+    "omega_ef": {
+      "value": 5.29,
+      "unit": "MHz",
+      "uncertainty": 0.05,
+      "source": "Ng 2022 Table I p.5; Ng thesis Table 4.1 p.87",
+      "status": "measured",
+      "isotopologue": null,
+      "convention": null,
+      "note": null
+    },
+    "A_par": {
+      "value": -20.1,
+      "unit": "MHz",
+      "uncertainty": 0.1,
+      "source": "Ng 2022 Table I p.5",
+      "status": "measured",
+      "isotopologue": null,
+      "convention": null,
+      "note": "may absorb 2 c_I .. 6 c_I ~ 40-120 kHz of unmodelled nuclear spin-rotation -- [HAM] S2.6, OPEN-6"
+    },
+    "c_I": {
+      "value": 20.0,
+      "unit": "kHz",
+      "uncertainty": null,
+      "source": "[HAM] S2.6: B&C Table 8.12 c2(19F, CsF) = 15.1 kHz at B_v = 0.183782 cm-1, scaled linearly in B",
+      "status": "estimate",
+      "isotopologue": null,
+      "convention": null,
+      "note": "Order-of-magnitude analogy only. The 15.1 kHz CsF anchor gives 19.94 kHz after B scaling; neither the ThF+ sign nor a factor-of-three error bound is established. CsF is closed-shell; ThF+ is open-shell. B&C printed p.421/PDF p.453 discusses opposite-sign first/second-order contributions. Sweep this parameter rather than treating 20 kHz as a precision prediction"
+    },
+    "d_mf": {
+      "value": 3.37,
+      "unit": "D",
+      "uncertainty": 0.09,
+      "source": "Ng 2022 Table I p.5",
+      "status": "measured",
+      "isotopologue": null,
+      "convention": "center_of_mass",
+      "note": "ORIGIN-DEPENDENT for an ion: 2.74 D w.r.t. the Th nucleus (Skripnikov & Titov 2015 Table II) = 3.46 D at c.m."
+    },
+    "G_par": {
+      "value": 0.04756,
+      "unit": "",
+      "uncertainty": 0.002,
+      "source": "Ng thesis p.87 (0.048(2) for g_F < 0); reproduces |g_F=3/2| = 0.0149 exactly -- [HAM] S3",
+      "status": "derived",
+      "isotopologue": null,
+      "convention": null,
+      "note": "sign of g_F is NOT measured; theory forces g_F < 0. OPEN-4"
+    },
+    "g_N": {
+      "value": 5.25773,
+      "unit": "",
+      "uncertainty": null,
+      "source": "19F nuclear g-factor, Petrov et al. arXiv:1704.06631 Eq. 3",
+      "status": "held-fixed",
+      "isotopologue": null,
+      "convention": null,
+      "note": null
+    },
+    "E_eff": {
+      "value": 35.0,
+      "unit": "GV/cm",
+      "uncertainty": 2.45,
+      "source": "Ng thesis Eq. C.8 discussion p.322 (JILA adopts ~35); Skripnikov & Titov 2015 give 37.3(7 %), Denis 2015 35.2",
+      "status": "ab-initio",
+      "isotopologue": null,
+      "convention": null,
+      "note": "OPEN-14: 35.2 vs 37.3 GV/cm. Uncertainty is the quoted +-7 % of the adopted value (2.45 GV/cm), not a spread over the three calculations"
+    },
+    "W_TP": {
+      "value": 50.0,
+      "unit": "kHz",
+      "uncertainty": 3.5,
+      "source": "Skripnikov & Titov 2015 Table II p.8 (+-7 %)",
+      "status": "ab-initio",
+      "isotopologue": null,
+      "convention": null,
+      "note": "uncertainty is that quoted +-7 % of 50 kHz"
+    },
+    "d_e": {
+      "value": 0.0,
+      "unit": "",
+      "uncertainty": null,
+      "source": null,
+      "status": "held-fixed",
+      "isotopologue": null,
+      "convention": null,
+      "note": "electron EDM in e.cm; 0 turns the PT-odd block off"
+    },
+    "k_TP": {
+      "value": 0.0,
+      "unit": "",
+      "uncertainty": null,
+      "source": null,
+      "status": "held-fixed",
+      "isotopologue": null,
+      "convention": null,
+      "note": "scalar-pseudoscalar coupling, dimensionless; 0 turns it off"
+    }
+  },
+  "conventions": {
+    "n_hat": "F_to_Th",
+    "ef_rule": "brown1975",
+    "zeeman_sign": "plus_Gpar",
+    "zeeman_energy": "E_minus_g_muB_B_mF",
+    "dg_def": "Delta",
+    "edm_factor": "ng",
+    "dipole_origin": "center_of_mass",
+    "formalism": "R2",
+    "quadrupole_convention": "bc_q0_is_negative_efg",
+    "eqq2_norm": "bc_9p52_q2",
+    "two_photon_norm": "bc_5p142_reduced",
+    "version": "thf-v1"
+  },
+  "blocks": [
+    {
+      "mF": 0.5,
+      "dimension": 32,
+      "parents": 12,
+      "min_zero_J_weight": 0.999999910523759,
+      "min_stark_step_overlap": 0.984195765299456,
+      "max_J7_to_J8_error_MHz": 1.3722456060349941e-08,
+      "min_cutoff_overlap": 0.9999999999999682
+    },
+    {
+      "mF": 1.5,
+      "dimension": 30,
+      "parents": 10,
+      "min_zero_J_weight": 0.999999910523759,
+      "min_stark_step_overlap": 0.9916576265882322,
+      "max_J7_to_J8_error_MHz": 1.2034433893859386e-08,
+      "min_cutoff_overlap": 0.9999999999999736
+    },
+    {
+      "mF": 2.5,
+      "dimension": 26,
+      "parents": 6,
+      "min_zero_J_weight": 0.9999999528327246,
+      "min_stark_step_overlap": 0.9944259041300487,
+      "max_J7_to_J8_error_MHz": 7.203198038041592e-09,
+      "min_cutoff_overlap": 0.9999999999999829
+    },
+    {
+      "mF": 3.5,
+      "dimension": 22,
+      "parents": 2,
+      "min_zero_J_weight": 0.9999999720030956,
+      "min_stark_step_overlap": 0.9988717686514326,
+      "max_J7_to_J8_error_MHz": 2.2846506908535957e-09,
+      "min_cutoff_overlap": 0.9999999999999931
+    }
+  ],
+  "time_reversal_error_MHz": 6.402842700481415e-10,
+  "levels": [
+    {
+      "J": 1,
+      "F": 1.5,
+      "parity": 1,
+      "energy_MHz": 14540.98681043393,
+      "J_weight": 0.9999999106537575
+    },
+    {
+      "J": 1,
+      "F": 1.5,
+      "parity": -1,
+      "energy_MHz": 14546.276808541988,
+      "J_weight": 0.9999999105237595
+    },
+    {
+      "J": 1,
+      "F": 0.4999999999999999,
+      "parity": 1,
+      "energy_MHz": 14556.034412,
+      "J_weight": 0.9999999999999998
+    },
+    {
+      "J": 1,
+      "F": 0.4999999999999999,
+      "parity": -1,
+      "energy_MHz": 14561.324412000002,
+      "J_weight": 0.9999999999999998
+    },
+    {
+      "J": 2,
+      "F": 2.4999999999999996,
+      "parity": -1,
+      "energy_MHz": 43634.58765240983,
+      "J_weight": 0.9999999529355003
+    },
+    {
+      "J": 2,
+      "F": 1.4999999999999998,
+      "parity": -1,
+      "energy_MHz": 43642.91731145801,
+      "J_weight": 0.999999910523759
+    },
+    {
+      "J": 2,
+      "F": 2.4999999999999996,
+      "parity": 1,
+      "energy_MHz": 43650.45765016663,
+      "J_weight": 0.9999999528327246
+    },
+    {
+      "J": 2,
+      "F": 1.5,
+      "parity": 1,
+      "energy_MHz": 43658.78730956607,
+      "J_weight": 0.9999999106537574
+    },
+    {
+      "J": 3,
+      "F": 3.5,
+      "parity": 1,
+      "energy_MHz": 87273.07470617013,
+      "J_weight": 0.9999999720844106
+    },
+    {
+      "J": 3,
+      "F": 2.5000000000000004,
+      "parity": 1,
+      "energy_MHz": 87278.87088983337,
+      "J_weight": 0.9999999528327252
+    },
+    {
+      "J": 3,
+      "F": 3.5,
+      "parity": -1,
+      "energy_MHz": 87304.81470380392,
+      "J_weight": 0.9999999720030956
+    },
+    {
+      "J": 3,
+      "F": 2.5000000000000004,
+      "parity": -1,
+      "energy_MHz": 87310.6108875902,
+      "J_weight": 0.9999999529355008
+    }
+  ]
+}
