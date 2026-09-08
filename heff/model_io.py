@@ -248,6 +248,19 @@ def resolve_param_set(manifold, backend) -> ParamSet:
                            canonical_unit=backend.canonical_units.get(symbol, "MHz"))
         for symbol, loaded in manifold.parameters.items()
     }
+    tagged = {
+        symbol: parameter.convention
+        for symbol, parameter in params.items()
+        if parameter.convention
+    }
+    tags = set(tagged.values())
+    if len(tags) > 1:
+        paths = ", ".join(
+            f"manifolds.{manifold.id}.parameters.{symbol}.convention"
+            for symbol in tagged)
+        raise ValueError(
+            f"{paths}: conflicting convention tags in one ParamSet: "
+            f"{sorted(tags)}")
     try:
         return ParamSet(params, conventions)
     except ValueError as exc:

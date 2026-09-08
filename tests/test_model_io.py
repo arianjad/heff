@@ -231,6 +231,24 @@ dipole_origin = "heavy_nucleus"
     assert "manifolds.X.conventions.dipole_origin" in message
 
 
+def test_conflicting_parameter_tags_name_each_participating_input(tmp_path):
+    path = tmp_path / "conflicting-parameter-conventions.toml"
+    path.write_text(
+        _minimal_model('''B0 = { value = 1.0, convention = "other" }
+d_mf = { value = 3.37, unit = "D", convention = "center_of_mass" }'''),
+        encoding="utf-8")
+    definition = read_model_toml(path)
+    load_bundled_backends()
+
+    with pytest.raises(ValueError) as caught:
+        resolve_param_set(definition.manifolds["X"], get_backend("case_c"))
+
+    message = str(caught.value)
+    assert "manifolds.X.parameters.B0.convention" in message
+    assert "manifolds.X.parameters.d_mf.convention" in message
+    assert "conventions.dipole_origin" not in message
+
+
 def test_unknown_top_level_descriptive_metadata_is_retained_and_does_not_block_load(tmp_path):
     path = tmp_path / "display-name.toml"
     path.write_text(
