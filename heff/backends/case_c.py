@@ -62,11 +62,15 @@ def make_spec(basis, electronic, spins):
         raise _InputValidationError(
             f"missing case-c basis key {key!r}",
             ("manifold", "basis", key))
-    if basis["J_min"] > basis["J_max"]:
+    range_paths = (("manifold", "basis", "J_min"),
+                   ("manifold", "basis", "J_max"))
+    try:
+        reversed_range = basis["J_min"] > basis["J_max"]
+    except TypeError as exc:
+        raise _InputValidationError(str(exc), *range_paths) from exc
+    if reversed_range:
         raise _InputValidationError(
-            "J_min must be less than or equal to J_max",
-            ("manifold", "basis", "J_min"),
-            ("manifold", "basis", "J_max"))
+            "J_min must be less than or equal to J_max", *range_paths)
 
     electronic_record = _one_electronic_record(electronic)
     if not isinstance(electronic_record, Mapping):

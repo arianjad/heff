@@ -202,6 +202,19 @@ def test_invalid_runtime_basis_range_names_both_endpoints(tmp_path):
     assert "manifolds.X3Delta1.basis.J_max" in message
 
 
+def test_incomparable_runtime_basis_range_names_both_endpoints(tmp_path):
+    """Catches a range comparison TypeError falling back to backend."""
+    model = load_model(_write_thf_model(tmp_path))
+
+    with pytest.raises(ValueError) as caught:
+        model.problem(J_max="two")
+
+    message = str(caught.value)
+    assert "manifolds.X3Delta1.basis.J_min" in message
+    assert "manifolds.X3Delta1.basis.J_max" in message
+    assert "manifolds.X3Delta1.backend" not in message
+
+
 def test_invalid_spin_coupling_names_the_isotopologue_spin_path(tmp_path):
     """Catches a spin-chain error being misattributed to manifold basis."""
     path = _write_thf_model(tmp_path)
