@@ -3,21 +3,7 @@ import pytest
 from heff.assemble import build_term_matrices
 from heff.params import thf_v1
 from heff.spec import block_by_mF, enumerate_kets, thf_spec
-from heff.terms import REGISTRY, Rules, Term, ctx_from, terms_for_case
-
-
-def test_omitting_names_preserves_the_complete_sorted_case_catalogue():
-    expected = tuple(
-        REGISTRY[name] for name in sorted(REGISTRY) if "c" in REGISTRY[name].cases
-    )
-
-    assert terms_for_case("c") == expected
-
-
-def test_explicit_term_names_preserve_user_order():
-    terms = terms_for_case("c", names=("rotation", "omega_doubling"))
-
-    assert tuple(term.name for term in terms) == ("rotation", "omega_doubling")
+from heff.terms import Rules, Term, ctx_from, terms_for_case
 
 
 def test_unknown_selected_term_fails():

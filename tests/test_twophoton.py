@@ -30,7 +30,7 @@ from heff.elements_c2 import REGISTRY_C2, axial_geometry
 from heff.params import thf_v2
 from heff.spec import block_by_mF, enumerate_kets, thf_spec
 from heff.terms import REGISTRY, check_selection_rules, terms_for_case, ctx_from
-from heff.twophoton import (REGISTRY_2G, dyad_weights, two_photon_geometry,
+from heff.twophoton import (REGISTRY_2G, dyad_weights,
                             two_photon_line_strengths, two_photon_matrix)
 
 SQ2 = np.sqrt(2.0)

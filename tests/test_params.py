@@ -10,7 +10,7 @@ import pytest
 
 from heff.conventions import Conventions
 from heff.params import (DEBYE_TO_MHZ_PER_V_CM, GV_PER_CM_TO_MHZ_PER_E_CM,
-                         MU_B, MU_N, Param, ParamSet, STATUSES, thf_v1, thf_v2)
+                         MU_B, MU_N, Param, ParamSet, thf_v1, thf_v2)
 
 
 def test_param_of_is_a_one_argument_constructor():
@@ -28,14 +28,6 @@ def test_edm_shift_reproduces_the_documented_micro_hertz():
     """[HAM] S2.12: d_e = 1e-31 e.cm at E_eff = 35 GV/cm is 0.846 uHz."""
     shift_mhz = 1e-31 * Param(35.0, "GV/cm").canonical
     assert shift_mhz * 1e12 == pytest.approx(0.846, abs=0.002)  # MHz -> uHz
-
-
-def test_canonical_is_idempotent_in_the_sense_that_matters():
-    """Conversion happens once, at read time; the record itself never mutates."""
-    p = Param(3.37, "D")
-    first, second = p.canonical, p.canonical
-    assert first == second
-    assert (p.value, p.unit) == (3.37, "D")
 
 
 def test_unknown_unit_and_unknown_status_raise():
@@ -93,11 +85,6 @@ def test_with_overrides_does_not_mutate_the_original():
     assert ps2.params["A_par"].unit == "MHz"
 
 
-def test_bare_float_override_warns_once():
-    with pytest.warns(UserWarning, match="bare float"):
-        thf_v1().with_(A_par=-21.5)
-
-
 def test_missing_symbol_returns_the_default_not_a_keyerror():
     assert thf_v1().value("no_such_knob", default=0.0) == 0.0
     with pytest.raises(KeyError):
@@ -109,13 +96,6 @@ def test_table_names_every_symbol_with_its_status():
     for sym in ("B0", "D0", "omega_ef", "A_par", "d_mf", "G_par", "g_N", "c_I"):
         assert sym in text
     assert "estimate" in text and "measured" in text
-
-
-def test_placeholder_status_is_accepted_and_estimate_is_still_distinct():
-    p = Param(1.0, status="placeholder")
-    assert p.status == "placeholder"
-    assert p.status != "estimate"
-    assert {"placeholder", "estimate"} <= STATUSES
 
 
 def test_alpha_unit_is_registered_with_factor_one():

@@ -73,8 +73,8 @@ from heff.elements_c2 import axial_geometry
 from heff.params import thf_v2
 from heff.spec import KET_C2, enumerate_kets, thf_spec
 from heff.terms import ctx_from
-from heff.twophoton import dyad_weights, two_photon_matrix
-from heff.wigner import w3j, w6j
+from heff.twophoton import dyad_weights
+from heff.wigner import w3j
 
 SQ2 = np.sqrt(2.0)
 DELTA = 137.0

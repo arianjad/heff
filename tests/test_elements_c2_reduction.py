@@ -16,7 +16,7 @@ from heff.elements_c import dipole_geometry
 from heff.elements_c2 import REGISTRY_C2, axial_geometry
 from heff.params import thf_v1, thf_v2
 from heff.spec import Spin, StateSpec, block_by_mF, enumerate_kets, thf_spec
-from heff.terms import REGISTRY, ctx_from, terms_for_case
+from heff.terms import ctx_from, terms_for_case
 
 # v2 name -> v1 name. The five delegating terms keep their v1 names; the four
 # 19F terms are suffixed _F because Task 5 adds the Th partner under the bare
@@ -228,5 +228,3 @@ def test_V19_the_19F_doublet_ordering_flips_between_F1_manifolds():
     ref = _19F_doublet_splittings(spec_with_I_Th_zero(J_max=1), J=1)
     assert ref[1.0] == pytest.approx(+0.7500, rel=1e-4)
     assert got[1.5] < 0.0 < ref[1.0], "the F1 = 3/2 doublet ordering must invert"
-
-

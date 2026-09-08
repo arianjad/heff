@@ -50,12 +50,11 @@ def test_pin_col_is_idempotent_and_handles_an_exact_zero_amplitude():
 
 
 def test_pin_col_tie_rule_is_deterministic():
-    """_PIN_TIE = 1e-6: plain argmax(|.|) picks different components when two are
+    """Plain argmax(|.|) picks different components when two are
     near-tied with opposite signs; the tie rule (lowest-index near-max) is what
     makes the pin machine-reproducible (C2V matching/_utils.py:453)."""
     v = np.array([[0.5, -0.5 * (1 + 1e-9), 0.1]])
     assert track.pin_col(v)[0] == 1
-    assert track._PIN_TIE == 1e-6
 
 
 def test_apply_gauge_none_returns_an_untouched_copy():

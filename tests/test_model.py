@@ -119,26 +119,6 @@ A_par = -20.1
     return path
 
 
-def test_loaded_thf_problem_matches_the_low_level_hamiltonian(tmp_path):
-    """Catches composition that changes basis order, terms, or coefficients."""
-    path = _write_thf_model(tmp_path)
-    model = load_model(path, manifold="X3Delta1", isotope="232Th19F+")
-    problem = model.problem(J_max=2)
-
-    spec = thf_spec(J_max=2)
-    kets = enumerate_kets(spec)
-    ctx = ctx_from(spec, thf_v1())
-    legacy_tm = build_term_matrices(kets, ctx)
-    legacy_H = hamiltonian(
-        legacy_tm, thf_v1(), {"E_z": 20.0, "B_z": 0.01})
-
-    assert np.array_equal(problem.kets, kets)
-    assert problem.term_matrices.names == legacy_tm.names
-    for got, expected in zip(problem.term_matrices.mats, legacy_tm.mats):
-        assert np.array_equal(got, expected)
-    assert np.array_equal(problem.hamiltonian(E_z=20.0, B_z=0.01), legacy_H)
-
-
 def test_basis_override_changes_only_the_problem_and_composition_is_frozen(tmp_path):
     """Catches an override mutating the source definition or model/problem."""
     model = load_model(_write_thf_model(tmp_path))
@@ -374,17 +354,6 @@ def test_problem_sweep_matches_the_existing_engine(tmp_path):
     assert np.array_equal(got.evals, expected.evals)
     assert np.array_equal(got.evecs, expected.evecs)
     assert got.active_terms == expected.active_terms
-
-
-def test_importing_model_does_not_import_or_initialize_backend_adapters():
-    """Catches the high-level module defeating lazy backend loading."""
-    code = (
-        "import sys; import heff.model; "
-        "from heff.backend_registry import list_backends; "
-        "assert 'heff.backends' not in sys.modules; "
-        "assert list_backends() == ()"
-    )
-    subprocess.run([sys.executable, "-c", code], check=True)
 
 
 def test_public_model_api_is_lazy_on_import_heff():

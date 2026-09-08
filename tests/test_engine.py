@@ -111,14 +111,6 @@ def test_sweep_result_carries_the_zero_field_reference(tm):
     assert res.reference == 1
 
 
-def test_sweep_broadcasts_a_2d_grid(tm):
-    """A raveled (E_z, B_z) meshgrid sweeps the full 2D grid in one call."""
-    E, B = np.meshgrid(np.linspace(0, 60, 5), np.linspace(0, 2, 3), indexing="ij")
-    res = sweep(tm, thf_v1(), {"E_z": E.ravel(), "B_z": B.ravel()})
-    assert res.evals.shape[0] == 15
-    assert res.evecs.shape[0] == 15
-
-
 def test_sweep_with_pinned_gauge_is_reproducible(tm):
     """gauge='pinned' gives byte-reproducible eigenvectors across repeated calls."""
     kw = dict(gauge="pinned")

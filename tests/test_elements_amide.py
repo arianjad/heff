@@ -145,5 +145,3 @@ def test_edm_matches_pinned_off_diagonal_n_fixture_and_selectors():
         -0.4330127018922193, abs=3e-12
     )
     assert amide.EDM(q, (*q_prime[:-1], -0.5), 0.5) == 0.0
-
-
