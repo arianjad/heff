@@ -25,7 +25,6 @@ from heff.assemble import build_term_matrices, hamiltonian
 from heff.terms import ctx_from
 
 OUT = ROOT / "results/thf-fields-2026-09-08"
-CACHE = ROOT / ".superpowers/sdd/2026-09-07-heff-toml-model-foundation/field-plot-cache"
 EGRID = np.unique(np.r_[0, np.geomspace(.001, 100, 151), np.linspace(100, 10000, 397),
                         10, 1000, 5000])
 BGRID = np.linspace(0, 100, 401)
@@ -61,18 +60,9 @@ def parameters(iso, scenario="baseline"):
 def matrices(iso, m, p, jmax):
     problem = load_model("thf_plus", isotope=f"{iso}Th19F").problem(J_max=jmax)
     k = problem.kets[problem.kets["mF"] == m]
-    # Matrix cache is parameter-free; tied to the checked source commit and cutoff.
-    path = CACHE / f"88fabca-{iso}-m{m:g}-J{jmax}.npz"
-    if path.exists():
-        with np.load(path) as z:
-            from heff.assemble import TermMatrices
-            tm = TermMatrices(tuple(z["names"].tolist()), tuple(tuple(x) for x in json.loads(str(z["params"]))),
-                              tuple(z["mats"]), k, json.loads(str(z["manifest"])))
-    else:
-        tm = build_term_matrices(k, ctx_from(problem.spec, p), case=problem.backend.case,
-                                 registry=problem.backend.registry, term_names=problem.term_names)
-        np.savez_compressed(path, names=tm.names, params=json.dumps(tm.params),
-                            mats=np.array(tm.mats), manifest=json.dumps(tm.manifest))
+    # Build from the current source so student edits cannot reuse stale disk matrices.
+    tm = build_term_matrices(k, ctx_from(problem.spec, p), case=problem.backend.case,
+                             registry=problem.backend.registry, term_names=problem.term_names)
     h0 = hamiltonian(tm, p, {"E_z": 0, "B_z": 0})
     he = hamiltonian(tm, p, {"E_z": 1, "B_z": 0}) - h0
     hb = hamiltonian(tm, p, {"E_z": 0, "B_z": 1}) - h0
@@ -328,7 +318,7 @@ def export_tables(cases):
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument("--render-only",action="store_true")
-    args=parser.parse_args();OUT.mkdir(parents=True,exist_ok=True);CACHE.mkdir(parents=True,exist_ok=True)
+    args=parser.parse_args();OUT.mkdir(parents=True,exist_ok=True)
     cases=[]
     for iso,scenario in [(x,"baseline") for x in ISOS]+[("229","legacy-quadrupole")]:
         if args.render_only:

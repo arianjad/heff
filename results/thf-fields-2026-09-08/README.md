@@ -90,14 +90,15 @@ not certified bounds between samples or physical error bars. Time-reversal
 spectral residuals are below 0.002 Hz. Parity commutation and Stark
 anticommutation checks passed. See `validation.json` and per-block JSON records.
 
-From the worktree root with the existing heff environment:
+From the repository root, after installing `.[plot]`:
 
-```powershell
-& C:/Users/Arian/anaconda3/python.exe C:/Users/Arian/Code/Astra-Research-Orchestration/astra-09062026/tools/run_cpu_pool.py --pool general --threads 2 -- C:/Users/Arian/anaconda3/envs/heff/python.exe scripts/plot_thf_isotopes.py
+```shell
+python scripts/plot_thf_isotopes.py
 ```
 
 `--render-only` regenerates figures/tables from the saved NPZ and JSON data.
-The local matrix cache is ignored by Git; raw curve arrays and the plotting
-parameter sets are committed. The calculation uses existing native heff
-operators and NumPy diagonalization; no package matrix element was modified.
+The calculation builds term matrices from the current source; no machine-local
+checkpoint or disk matrix cache is required. Raw curve arrays and plotting
+parameter sets are committed. The script uses existing native heff operators
+and NumPy diagonalization; no package matrix element is replaced.
 No GPU, installation, external write, or package-default update was needed.

@@ -697,14 +697,13 @@ numeric uncertainty bound is assigned (**OPEN-6**). The sign of g_F is not
 measured, only |g| (**OPEN-4**); E_eff is 35 vs 37.3 GV/cm across sources
 (**OPEN-14**).
 
-**Open questions** — `docs/open-questions.md`:
+**Current conventions and limitations** — [the model guide](../docs/models.md)
+and [scientific limitations](../docs/open-questions.md):
 
-- **OQ-A**, the Ω-doubling sign and the parity of the upper doublet component
-  (§5 above). Confirmed by Arian on 2026-09-05; closed, code as written.
-- The **[HAM] §2.8 g_F table erratum**: the printed table reproduces at
-  G∥ = 0.048, not at the 0.04756 in its own header. The code uses 0.04756,
-  which is what the document's own numerical confirmation line and the measured
-  |g| = 0.0149 require; §11 above shows that agreement.
+- The upper Ω-doublet component has parity `(−1)^J` in the implemented
+  convention; §5 explains its relation to the e/f labels.
+- The [HAM] §2.8 g_F table uses the same G∥ = 0.04756 as the code. §11
+  demonstrates its agreement with the adopted |g| = 0.0149 scale.
 
 `tests/` check kernel behavior and symmetry identities; comparisons to
 published numbers are opt-in behind `HEFF_RUN_LITERATURE=1`. These checks
