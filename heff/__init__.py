@@ -1,8 +1,8 @@
 """heff -- effective Hamiltonians for molecules, term-matrix first.
 
-Import stays light on purpose (gate A8): numpy only. sympy is imported inside
-heff.wigner's kernels, scipy inside heff.track's assignment call, matplotlib
-never (plotting lives in notebooks, spec S3.8).
+Importing :mod:`heff` does not import SymPy, SciPy, or Matplotlib. Wigner
+kernels and state assignment import their optional numerical dependencies when
+called; plotting belongs in notebooks.
 """
 
 __version__ = "0.1.0"

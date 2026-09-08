@@ -1,20 +1,16 @@
 """Assignment, sign gauges and ordering policies.
 
-The kernels are lifted from C2V-Molecules atm_core/matching/_utils.py
-(C:/Users/Arian/Code/C2V-Molecules @ 59a067a): `_assign` (:265), `global_sign_col`
-(:456), `pin_col` (:467) and `_PIN_TIE = 1e-6` (:453). The C2V grid machinery
-(snake propagation, the 967-line repair layer) is deliberately NOT lifted --
-v1 runs energy order on small blocks, and repair.py exists to certify adiabatic
-labels on a 2D grid, which nothing here needs yet (spec S3.5, risk 5).
+The assignment and gauge kernels derive from
+``C2V-Molecules/atm_core/matching/_utils.py`` at ``59a067a``. This module
+implements energy ordering and overlap-based tracking for its supplied grid.
 
-Three orthogonal axes, none forbidding another (spec S3.5):
+Three independent controls:
   order ~ {energy, adiabatic_step, adiabatic_zero_field}
   gauge ~ {none, pinned, global}
-  assignment strategy ~ {argmax, hungarian, adaptive}
+  assignment strategy ~ {max_overlap, hungarian, adaptive}
 `adiabatic_zero_field` is the thesis's stated rule (p.267: order by the
-"adiabatically correlated free field state") and NEITHER source repo implements
-it -- Molecule-Structure chains step-to-step overlap, C2V repairs an energy-order
-seed.
+"adiabatically correlated free field state"). It compares each point with the
+selected reference; `adiabatic_step` follows overlaps between adjacent points.
 """
 import numpy as np
 
@@ -31,7 +27,7 @@ def assign(matrix, *, mode="cost", strategy="adaptive"):
     mode='cost' -> argmin on the matrix; mode='overlap' -> argmax on |matrix|.
     strategy='adaptive' tries argmin/argmax first and falls back to Hungarian
     the moment the result is not a permutation. scipy is imported here, not at
-    module scope, to keep `import heff` under a second (gate A8).
+    module scope so importing ``heff`` does not require SciPy.
     """
     work = -np.abs(np.asarray(matrix)) if mode == "overlap" else np.asarray(matrix)
     if strategy == "max_overlap":

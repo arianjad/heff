@@ -1,8 +1,7 @@
-"""Task 5 gates: the Th magnetic hyperfine, spin-rotation, nuclear Zeeman and
-electric quadrupole terms of REGISTRY_C2.
+"""Th magnetic-hyperfine, spin-rotation, nuclear-Zeeman, and quadrupole gates.
 
-These are the first committed gates that exercise I_Th != 0 STRUCTURE. V16 (the
-master reduction, tests/test_elements_c2_reduction.py) runs at I_Th = 0, where
+These gates exercise I_Th != 0 structure. V16 (the master reduction,
+tests/test_elements_c2_reduction.py) runs at I_Th = 0, where
 every term in this file is identically zero and the I_Th 6j of axial_geometry
 collapses to 1; V19 exercises I_Th = 5/2 but only through the 19F recoupler. So
 V18/V20/V21/V22 below are what stands between the Th block and a plausible-
@@ -426,10 +425,11 @@ def test_eQq2_is_dOmega_two_diagonal_in_J_F1_F_mF_and_parity_even():
 
 
 def test_eQq2_refuses_the_petrov_normalisation_naming_OPEN_17():
-    """[HAM] S9.4.4's ruling: the Petrov 2018 Eq. (23) bridge is NOT resolved --
-    the two candidate factors are -1/sqrt(3) and -1/sqrt(6) and the printed
-    equations do not discriminate -- so the converter refuses rather than
-    guessing a branch. A guessed factor is a stop-work condition."""
+    """[HAM] S9.4.4: Petrov 2018 Eq. (23) leaves the normalization unresolved.
+
+    The candidate factors, -1/sqrt(3) and -1/sqrt(6), are indistinguishable
+    from the printed equations, so the converter raises instead of guessing.
+    """
     kets, _, _ = setup_229(J_max=1)
     ctx = ctx_at(2.5, conventions=Conventions(eqq2_norm="petrov2018_eq23"))
     i = int(np.flatnonzero((kets["J"] == 1.0) & (kets["Om"] == -1.0)
@@ -523,7 +523,7 @@ def test_R13_th_nuclear_zeeman_matches_a_decoupled_basis_rebuild():
     element. The rebuild uses neither (5.174) nor (5.175).
 
     zeeman_nuclear_F is checked on the same fixture at one extra assert -- it
-    was verified analytically against (5.175) in Task 4 and a numerical pin is
+    agrees analytically with (5.175), and this numerical pin is
     free here.
     """
     J, I_Th, I_F = 1.0, 2.5, 0.5
@@ -567,7 +567,7 @@ def test_A5_holds_for_every_th_term():
     outside them.
 
     Run over the whole of REGISTRY_C2, not just the six Th terms: the eleven
-    Task 4 terms had only an I_Th = 0 A5 check in committed tests, and a rule
+    The term-level A5 check at I_Th = 0 does not exercise these terms, and a rule
     set can be right at I_Th = 0 and wrong at I_Th = 5/2 (the I_Th 6j opens
     Delta F1 = +-1 that does not exist at I_Th = 0).
     """
@@ -590,7 +590,7 @@ def test_every_th_term_is_hermitian_on_the_229_basis():
 
 
 def test_every_th_term_vanishes_at_I_Th_zero():
-    """Why V16 (tests/test_elements_c2_reduction.py) is untouched by Task 5:
+    """Why V16 (tests/test_elements_c2_reduction.py) remains unchanged:
     every Th term is identically zero on the 96-ket I_Th = 0 basis the master
     gate runs on -- the magnetic ones because their Casimir bracket and their
     <I||T1(I)||I> both vanish, the quadrupole ones by the I < 1 guard."""

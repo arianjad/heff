@@ -1,11 +1,7 @@
-"""Gate A4 -- tracking invariants.
+"""Gate A4 tracking invariants.
 
-Uniquely catches tracking corruption: an assignment that is not a permutation
-(Molecule-Structure's greedy np.argmax(overlap, axis=1) at Energy_Levels.py:1354
-can silently duplicate a trace at a near-degeneracy), a sign gauge that is not
-idempotent, and the np.sign(0) edge that zeroes an eigenvector
-(Energy_Levels.py:312) -- C2V's _PIN_TIE rule is the fix and is lifted, not
-re-derived.
+The tests require permutation-valued assignments near degeneracies, an
+idempotent sign gauge, and a deterministic tie rule for zero amplitudes.
 """
 import numpy as np
 import pytest
@@ -24,7 +20,7 @@ def test_assign_returns_a_permutation_even_at_a_near_degeneracy():
 
 
 def test_max_overlap_strategy_can_duplicate_which_is_why_adaptive_is_the_default():
-    """FAIL demo: the greedy strategy is allowed to return a non-permutation."""
+    """The greedy strategy may return a non-permutation."""
     overlap = np.array([[0.9, 0.8], [0.95, 0.1]])
     idx = track.assign(overlap, mode="overlap", strategy="max_overlap")
     assert sorted(idx.tolist()) == [0, 0]
@@ -66,21 +62,18 @@ def test_apply_gauge_none_returns_an_untouched_copy():
 
 
 def test_apply_gauge_global_is_one_flip_per_point_not_per_vector():
-    """Controller ruling 1: 'global' is ONE +/-1 per point applied to EVERY
-    state at that point, keyed on the ground state's dominant component AT
-    POINT 0 -- not each vector's own component 0 (the bug: 25/280 real
-    eigenvectors have |v[0]| < 1e-12 and were never gauged). Fabricate 3
-    points x 2 states x 4 components where state 0's component-0 amplitude is
-    exactly zero at point 1: the old per-vector code would leave that whole
-    point's states untouched (sign ambiguous -> np.where keeps +1 spuriously
-    for the WRONG reason); the new code keys on component 2 (the ground
-    state's true dominant component, found at point 0) and flips point 1's
-    entire state pair together because state 0 is negative there."""
+    """`global` applies one +/-1 factor to every state at each point.
+
+    The factor uses the ground state's dominant component at point 0. This
+    fixture has three points, two states, and four components; at point 1,
+    component 0 vanishes while component 2 is negative. The gauge therefore
+    flips the entire state pair using component 2.
+    """
     v = np.zeros((3, 2, 4))
     v[0, 0] = [0.1, 0.2, 0.9, 0.1]     # point 0, state 0 (ground): dominant = index 2
     v[0, 1] = [0.9, 0.1, 0.1, 0.1]     # point 0, state 1
     v[1, 0] = [0.0, 0.2, -0.8, 0.1]    # point 1, state 0: component 0 is exactly zero,
-    v[1, 1] = [0.7, 0.3, 0.2, 0.1]     # ...the old per-vector gauge could never see this flip
+    v[1, 1] = [0.7, 0.3, 0.2, 0.1]     # the shared point gauge flips this state too
     v[2, 0] = [0.1, 0.1, 0.9, 0.0]     # point 2, state 0: positive on component 2, no flip
     v[2, 1] = [0.6, 0.1, 0.1, 0.1]
     out = track.apply_gauge(v, "global")
@@ -99,12 +92,9 @@ def test_apply_gauge_global_requires_a_points_states_components_array():
 
 
 def test_apply_gauge_global_on_the_real_mF_three_halves_sweep():
-    """Coverage per controller ruling 1: on the real ThF+ |m_F|=3/2 block (5
-    points), gauge='global' leaves the reference amplitude (ground state's
-    dominant component at point 0) positive at EVERY point. FAIL demo: a
-    whole-point sign flip (still a valid eigensolution -- eigh's overall sign
-    per point is solver-arbitrary) is exactly the corruption this check must
-    catch, and it does."""
+    """On the real ThF+ |m_F|=3/2 block, `global` keeps the ground-state
+    reference amplitude positive at every point. A whole-point sign flip is a
+    valid eigensolution but violates this gauge contract."""
     from heff.assemble import build_term_matrices
     from heff.engine import sweep
     from heff.params import thf_v1
@@ -129,7 +119,7 @@ def test_apply_gauge_global_on_the_real_mF_three_halves_sweep():
     corrupted[2] *= -1                                   # fabricate: flip point 2's WHOLE state set
     corrupted_amp = corrupted[:, ref_index, 0]
     assert corrupted_amp[2] < 0
-    assert not np.all(corrupted_amp >= 0)                # FAIL demo: the check catches it
+    assert not np.all(corrupted_amp >= 0)                # negative control
 
 
 def test_order_states_energy_is_the_identity_and_is_sorted():
@@ -183,7 +173,7 @@ def _rotation_fixture():
 
 
 def test_adiabatic_step_and_adiabatic_zero_field_disagree_past_a_crossing():
-    """Gate A4 (controller finding 3a): energy order alone cannot tell
+    """Gate A4: energy order alone cannot tell
     adiabatic_step and adiabatic_zero_field apart. On the rotation fixture,
     adiabatic_step only ever compares consecutive points (max step 24 deg <
     45 deg), so it tracks the physical state continuously and NEVER relabels.
@@ -199,7 +189,7 @@ def test_adiabatic_step_and_adiabatic_zero_field_disagree_past_a_crossing():
 
 
 def test_adiabatic_step_carries_the_accumulated_slot_through_a_held_swap():
-    """Gate A4 (controller finding 3b): a [I, P, P] eigenvector stack, P a
+    """Gate A4: in a [I, P, P] eigenvector stack, P is a
     0<->1 swap. adiabatic_step must reindex the PREVIOUS point by its own
     already-accumulated permutation (`evecs[i-1][:, perm[i-1]]`,
     heff/track.py) before overlapping against the next raw eigenvectors.
@@ -216,9 +206,8 @@ def test_adiabatic_step_carries_the_accumulated_slot_through_a_held_swap():
 
 
 def test_adiabatic_zero_field_reference_names_which_point_is_zero_field():
-    """Controller ruling 5: `reference` picks WHICH grid index anchors
-    adiabatic_zero_field; the undocumented default (0) silently assumed the
-    sweep itself started at zero field. Anchoring at index 3 (θ=40 deg)
+    """`reference` selects the grid index that anchors adiabatic_zero_field.
+    Anchoring at index 3 (θ=40 deg)
     instead of 0 on the same rotation fixture shifts the crossing so only the
     last point (θ=90 deg, |90-40|=50 deg > 45 deg) relabels."""
     w, v = _rotation_fixture()

@@ -3,13 +3,11 @@
 V16a uniquely catches: a two-spin enumerator that does not degenerate to the v1
 basis at I_Th = 0 -- which would silently invalidate every v1 closed form as a
 check on the v2 elements, because the two would no longer be comparing the same
-states. FAIL is reachable and was demonstrated by mutation: shortening the F1
-loop by one step (stop at `twoJ + twoI1 - 1`) makes the ket-for-ket comparison
-in test_I_Th_zero_reduces_to_the_v1_basis fail.
+states. Shortening the F1 loop by one step (stop at `twoJ + twoI1 - 1`) makes
+the ket-for-ket comparison in test_I_Th_zero_reduces_to_the_v1_basis fail.
 
-The sort-key mutation originally proposed for V16a -- ordering the v2 kets by
-('J','F','mF','Om') instead of ('J','F1','F','mF','Om') -- was PROBED and does
-NOT break V16a: at I_Th = 0 the F1 column is identically J, so within a J the
+At I_Th = 0, ordering v2 kets by ('J','F','mF','Om') instead of
+('J','F1','F','mF','Om') does not break V16a: the F1 column is identically J, so within a J the
 two orders are the same permutation. It breaks test_omega_partners_are_adjacent
 on the 229 basis instead, where F1 genuinely varies; that is that test's job,
 and it is why the ordering guarantee needs its own gate rather than riding on
@@ -18,10 +16,9 @@ the reduction gate.
 V17 uniquely catches: an off-by-one in the added F1 loop. The dimension closed
 form (2I_Th+1)(2I_F+1) sum_J 2(2J+1) is DERIVED (the F1/F recoupling is a change
 of basis at fixed (J, Omega, m_total), [SPEC-v2] S2.2), not transcribed from a
-document, so this is a check and not a transcription. FAIL is reachable in
-test_invariants_reject_an_out_of_triangle_F1 and was demonstrated by mutation:
-deleting the F1 triangle raise from check_basis_invariants makes it fail, so the
-F1 check is the only thing that catches that ket.
+document, so this is a check and not a transcription.
+test_invariants_reject_an_out_of_triangle_F1 requires the F1 triangle check;
+removing that validation makes the test fail.
 """
 import numpy as np
 import pytest
@@ -117,7 +114,7 @@ def test_omega_partners_are_adjacent():
 
 
 def test_invariants_reject_an_out_of_triangle_F1():
-    """FAIL demonstration: F1 = J + I_Th + 1 is outside |J - I_Th| .. J + I_Th."""
+    """Reject F1 = J + I_Th + 1 outside |J - I_Th| .. J + I_Th."""
     spec = thf_spec("229")
     J, I_Th = 1.0, spec.spins[0].I
     bad = np.array([(J, 1.0, J + I_Th + 1, J + I_Th + 1.5, 0.5)], dtype=KET_C2)

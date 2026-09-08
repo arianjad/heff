@@ -93,7 +93,7 @@ def test_ket_order_is_deterministic_and_pairs_omega():
 
 
 def test_invariants_reject_a_bad_basis():
-    """FAIL demonstration: a fabricated basis with F outside |J-I| .. J+I."""
+    """Reject a fabricated basis with F outside |J-I| .. J+I."""
     spec = thf_spec()
     bad = np.array([(1.0, 1.0, 2.5, 0.5)], dtype=KET_C)
     with pytest.raises(ValueError, match="triangle"):

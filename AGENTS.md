@@ -25,6 +25,9 @@ Inspect live Git state before editing, and preserve unrelated user work.
 
 - Keep README and the current guides student-facing and consistent with the
   producing code. Use repository-relative paths and portable Python commands.
+- Write code comments and docstrings as current contracts and rationale. Keep
+  task history and debugging narratives in Git or dated evidence records;
+  retain scientific citations, assumptions, and unresolved conventions.
 - Edit notebook generators alongside notebook prose. Refresh outputs when
   numerical inputs or code change; preserve outputs for prose-only corrections.
 - Preserve source-review evidence and original numerical runs. A changed

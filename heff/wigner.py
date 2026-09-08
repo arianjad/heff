@@ -1,22 +1,15 @@
 """3j/6j/9j behind one interface.
 
-Backend: sympy.physics.wigner under functools.lru_cache -- exact, and already
-what both source repos use (Molecule-Structure Source Code/matrix_elements.py:18-23;
-C2V-Molecules atm_core/physics.py:12-27, which records a 99.9 % hit rate). The
-matrix-first architecture pays the Wigner cost once per basis rather than once
-per parameter set, which is why a fast-but-fragile dependency is not needed:
-`wigners` (Rust) ships wheels but has no 6j/9j, and `py3nj` has 6j/9j but ships
-no wheels at all (spec S3.8). This module is an interface so a fast 3j path can
-be swapped in behind gate A6 later.
+The backend is ``sympy.physics.wigner`` behind ``functools.lru_cache``. Matrix
+construction reuses each symbol within a basis. The small public interface
+keeps the backend replaceable.
 
-sympy is imported INSIDE the kernels: `import heff` must stay under 1 s and must
-not pull sympy (gate A8).
+SymPy is imported inside the kernels so importing ``heff`` does not require it.
 
 Arguments are half-integers as Python floats. They are converted to exact
 sympy Rationals via round(2*x)/2 -- passing a float straight to sympy risks a
-Float argument where the routine wants a Rational. Gate A7 guarantees every
-value coming out of the enumerator is an exact multiple of 0.5, so the rounding
-never loses information.
+Float argument where the routine wants a Rational. Basis enumeration produces
+values that are exact multiples of 0.5, so this conversion preserves them.
 """
 from functools import lru_cache
 
@@ -76,6 +69,6 @@ def cache_info():
 
 
 def clear_cache():
-    """Drop every cached symbol (used by gate A6 to measure hit rate)."""
+    """Drop every cached symbol."""
     for f in (_w3j, _w6j, _w9j):
         f.cache_clear()

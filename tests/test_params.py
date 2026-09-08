@@ -1,10 +1,7 @@
-"""Parameter record: units in the data model, provenance on every value.
+"""Parameter units, provenance, and convention contracts.
 
-Uniquely catches the C2V-Molecules d_0 incident (digest wart #3): a
-reduced-vs-physical dipole default living in one script while the physical
-override lived in another, silently scaling every answer by 6.4 %. A unit
-field on the value is what prevents it. Nothing here gates on `status`
-(per Arian's standing rule: estimator parameters are ordinary parameters).
+Each value carries its unit, so reduced and physical dipoles cannot be mixed.
+Parameter status remains metadata; it does not gate calculation.
 """
 import pytest
 
@@ -137,7 +134,7 @@ def test_thf_v2_229_carries_the_documented_values_and_statuses():
 
 
 def test_thf_v2_227_A_par_is_a_labelled_placeholder():
-    """R8: the placeholder is the Schmidt single-particle value, not the
+    """The placeholder is the Schmidt single-particle value, not the
     mu(227Th) = mu(229Th) assumption -- the note must say so."""
     ps = thf_v2("227")
     a_par = ps.params["A_par_Th"]
@@ -155,7 +152,7 @@ def test_thf_v2_227_A_par_is_a_labelled_placeholder():
 
 
 def test_thf_v2_229_a_par_th_sign_keyword_selects_the_trusted_calculation():
-    """R14: the sign of A_par_Th is a parameter choice made through thf_v2's
+    """The sign of A_par_Th is a parameter choice made through thf_v2's
     keyword, not a conventions.py fork -- 229Th's Param is signed, and the
     227Th placeholder ignores the keyword entirely."""
     assert thf_v2("229").params["A_par_Th"].value == pytest.approx(-1510)

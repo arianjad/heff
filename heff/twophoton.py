@@ -1,11 +1,9 @@
 """The rank-K effective two-photon (2 x E1) operator within one electronic state.
 
-EVERY form in this file is copied from docs/thf-plus-x3delta1-effective-
-hamiltonian.md S9.5 -- the single source for the two-photon operator -- with its
-Brown & Carrington equation number and PDF/book page carried into the decorator,
-in the style heff/elements_c.py and heff/elements_c2.py use. Nothing here was
-re-derived. If a check disagrees with one of these forms, report both with
-citations -- do not adjust a sign (Arian's standing rule).
+The operator formulas are documented in
+docs/thf-plus-x3delta1-effective-hamiltonian.md S9.5. Decorators carry Brown &
+Carrington equation and page citations. Resolve disagreements with the cited
+equations before changing a sign.
 
 WHAT THE OPERATOR IS. Adiabatic elimination of a far-detuned intermediate
 manifold ([HAM] S9.5, [2gamma] S3.1, Cossel PhD thesis (Colorado, 2014) Eqs.
@@ -39,18 +37,17 @@ WHICH CHANNELS ARE REGISTERED: K in {0, 2} ONLY.
   measured lives in them, [2gamma] S3.0). No operator in this module consumes
   them.
 
-REGISTRY_2G IS A THIRD REGISTRY ([SPEC-v2] S3.2) -- not heff.terms.REGISTRY,
-not heff.elements_c2.REGISTRY_C2 -- so a transition operator can never be
-summed into an assembled Hamiltonian. The entries exist for their Rules, their
-cite and gate A5; heff.assemble never sees them.
+``REGISTRY_2G`` is separate from ``heff.terms.REGISTRY`` and
+``heff.elements_c2.REGISTRY_C2``. It holds transition operators, which are not
+summed into an assembled Hamiltonian.
 
 WHICH 6j THE RANK-K REDUCTION USES, AND WHERE IT LIVES. [HAM] S9.5.1(2) is
 S9.1's two-spectator chain with k -> K: the reduction is the two spectator 6j's
 {F1 F I_F; F' F1' K} and {J F1 I_Th; F1' J' K}, and BOTH are evaluated inside
 heff.elements_c2.axial_geometry -- this module writes no recoupling algebra of
-its own beyond the polarisation dyad. So the 6j patch site for a monkeypatched
-FAIL demonstration (Task 8) is `heff.elements_c2.w6j` -- there is no
-`heff.twophoton.w6j` to patch. The B&C (5.142) 6j {1 1 K; j' j j''} that a
+its own beyond the polarisation dyad. The 6j evaluation therefore lives in
+``heff.elements_c2.w6j``; this module does not evaluate a 6j directly. The B&C
+(5.142) 6j {1 1 K; j' j j''} that a
 RESOLVED intermediate sum would carry is exactly what closure removes; it
 appears nowhere in this file, which is the whole content of the closure form.
 w3j is used here directly, for the Clebsch-Gordan coefficients of the dyad.
@@ -246,9 +243,8 @@ def _channel(K, dOmega):
 
     A registered term is called as fn(bra, ket, ctx) (heff.terms), so the lab
     component is the one the kets themselves force, P = Delta m_F -- the sum
-    over P at fixed weight. That is the right object for gate A5, which asks
-    whether the FORMULA is non-zero inside its declared Rules and zero outside;
-    a physical amplitude weights each P by the dyad, which is
+    over P at fixed weight. A physical amplitude weights each P by the dyad,
+    which is
     two_photon_line_strengths' job.
     """
     def fn(bra, ket, ctx):
@@ -272,9 +268,8 @@ two_photon_K0_dOm0 = term(
 two_photon_K2_dOm0 = term(
     name="two_photon_K2_dOm0", param=("alpha_K2_dOm0",), cases=("c2",),
     # hermitian=False: fn evaluates at P = Delta m_F, and by reciprocity
-    # (M_P(a,b) = (-1)^P M_{-P}(b,a), test_rank_K_sum_rule_and_reciprocity)
-    # that object is antisymmetric at odd Delta m_F -- measured max|M-Mt| =
-    # 0.632 on the 229ThF+ J_max=2 basis (fix round 1, finding 1).
+    # (M_P(a,b) = (-1)^P M_{-P}(b,a)), so this object is antisymmetric at odd
+    # Delta m_F.
     registry=REGISTRY_2G, hermitian=False, real=True,
     rules=Rules(dJ=_K2, dOm=(0.0,), dF1=_K2, dF=_K2, dmF=_K2),
     cite="The rank-2 channel at dOmega = 0. Selection rules as data, "
@@ -287,8 +282,7 @@ two_photon_K2_dOm0 = term(
 
 two_photon_K2_dOm2 = term(
     name="two_photon_K2_dOm2", param=("alpha_K2_dOm2",), cases=("c2",),
-    # hermitian=False: same reciprocity argument as K2_dOm0 -- measured
-    # max|M-Mt| = 0.741 on the same basis (fix round 1, finding 1).
+    # hermitian=False: the same reciprocity relation as K2_dOm0 applies.
     registry=REGISTRY_2G, hermitian=False, real=True,
     rules=Rules(dJ=_K2, dOm=(-2.0, 2.0), dF1=_K2, dF=_K2, dmF=_K2),
     cite="The |dOmega| = 2 channel, which exists at K = 2 ONLY: |q| = 2 needs "
@@ -313,9 +307,8 @@ def two_photon_line_strengths(evals_a, evecs_a, kets_a, evals_b, evecs_b, kets_b
     diagonalised blocks. Mirrors heff.spectra.line_strengths.
 
     AMPLITUDES ARE SUMMED OVER EVERY (K, dOmega, P) CHANNEL AND THEN SQUARED --
-    heff.spectra._strengths_from_matrices is reused unchanged, so the ordering
-    is encoded in exactly one place in the package (gate B8 there, gate V28
-    here). This is not a formality: Cossel's Fig. 6.18 (thesis p.224) is a
+    heff.spectra._strengths_from_matrices is reused, so the package implements
+    the ordering in one place. Cossel's Fig. 6.18 (thesis p.224) reports a
     MEASURED cancellation of two sigma pathways "because of the signs of the
     Wigner 3j coefficients" ([2gamma] S3.0).
 

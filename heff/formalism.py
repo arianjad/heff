@@ -1,43 +1,22 @@
-# Lifted verbatim from Molecule-Structure Source Code/formalism.py
-# Source: C:/Users/Arian/Code/Molecule-Structure @ 9eec91a
-# 118 lines, exactly invertible, 20 kernel tests. Kept as-is per spec S3.9
-# "lift verbatim (rename only)". Do not refactor: its identity-on-absence
-# contract is what keeps untagged legacy dicts byte-identical through it.
+# Source: Molecule-Structure/Source Code/formalism.py @ 9eec91a.
+# The identity-on-absence contract preserves untagged R² parameter dictionaries.
 """Bidirectional N²↔R² spectroscopic-parameter converter (B&C Table 7.2,
 quartic-truncated).
 
-The engine's rotational operator is R²-form (N²_op − Λ²·I). Modern papers and
-the PGopher default are N²-formulation. A state dict declares which convention
-ITS constants are in:
+A state dictionary declares whether its constants use the ``N²`` or ``R²``
+rotational formalism:
   'formalism': 'N2' | 'R2'
   'Lambda':    |Λ|            (REQUIRED whenever 'formalism' is set; 0 for Σ;
                                never inferred — spec §3, §6, §7)
 
-`convert_formalism` rewrites the constants into the *other* convention — it is
-just the (exactly invertible) Table 7.2 arithmetic, so N²→R² and R²→N² are the
-same code with one sign — and sets 'formalism' to the new convention so the tag
-always follows the data. 'Lambda' is read, never popped, left untouched. A dict
-with no 'formalism' key is returned unchanged: no declared convention ⇒ nothing
-to convert. That identity-on-absence is what keeps every legacy (untagged, R²)
-entry byte-identical through the converter.
-
-The engine wants R², so the load-time call sites convert only when the declared
-formalism is 'N2' (molecule_parameters.get_molecule_params and the
-Energy_Levels user-dict path). 'formalism'/'Lambda' are left in the returned
-dict; the Hamiltonian builders read params by targeted key access, so the extra
-keys are inert.
-
-Spec: the design note lives in Molecule-Structure at
-docs/superpowers/specs/2026-05-15-n2-r2-formalism-converter-design.md (not
-copied here)
-(that spec describes the earlier one-directional, metadata-stripping contract;
-this module is now bidirectional and tag-preserving — spec superseded here).
+``convert_formalism`` applies the exactly invertible Brown & Carrington Table
+7.2 arithmetic and updates the ``formalism`` tag. It reads but preserves
+``Lambda``. A dictionary with no ``formalism`` key is returned unchanged.
 """
 import warnings
 
-# cm⁻¹ ↔ MHz factor. MUST equal molecule_parameters.params_general['c'].
-# Passed explicitly by callers to dodge the post-merge 'c'-key collision
-# (state dicts reuse 'c' for the hyperfine dipolar constant). Hazard #1.
+# Conversion factor from cm⁻¹ to MHz. Callers may pass it explicitly when a
+# state dictionary uses ``c`` for a hyperfine dipolar constant.
 DEFAULT_C_CM = 29979.2458
 
 # X ↔ its centrifugal-distortion partner X_D (B&C generic-X row). Declarative,
@@ -52,7 +31,7 @@ CENTRIFUGAL_PARTNERS = {
     'p+2q':     'p2q_D',     # Λ-doubling p,    B&C eq. 7.190
     'Gamma_SR': 'Gamma_D',   # spin-rotation γ, B&C eq. 7.189
     'q_lD':     'q_lD_D',    # Λ-doubling q,    B&C eq. 7.190
-    'ASO':      'A_D',       # spin-orbit A,    B&C eq. 7.187 (verified 2026-05-16)
+    'ASO':      'A_D',       # spin-orbit A,    B&C eq. 7.187
 }
 
 # Sextic (H-order) keys: unsupported (quartic truncation; codebase has no H).

@@ -43,8 +43,7 @@ def test_A1_assembly_is_exactly_the_weighted_sum():
     """Gate A1: H(c) == sum_k c_k M_k on random M_k and random c.
 
     Uniquely catches assembler indexing/ordering drift -- a term matrix paired
-    with the wrong coefficient, or a transposed stack. Generalises
-    Molecule-Structure's GATE A (export_crossing_subspace.py:323).
+    with the wrong coefficient, or a transposed stack.
     """
     rng = np.random.default_rng(20260905)
     tm = _random_tm(rng)
@@ -131,11 +130,8 @@ def test_inactive_terms_are_reported_not_hidden(block):
 
 
 def test_vertex_is_the_exact_derivative_of_H(block):
-    """dH/dB_z is exact because H is linear in every knob: it is the sum over
-    the terms containing B_z of (product of the other knobs) x M_k, checked
-    here against that exact identity (not a finite difference -- see
-    task-7-report.md ruling 1: a difference quotient at 1e5 MHz diagonals sits
-    below the noise floor a 1e-9 atol would require)."""
+    """Check dH/dB_z against the exact linear identity. Finite differences of
+    1e5 MHz diagonals lose the precision needed for this derivative check."""
     kets, ctx = block
     tm = build_term_matrices(kets, ctx)
     pset = thf_v1()
@@ -246,13 +242,11 @@ def test_V9_kramers_degeneracy_at_zero_B():
     # default rtol=1e-5 alone gives a tolerance of ~1.5 MHz there -- large enough
     # to swallow the real ~0.01-0.1 MHz Zeeman asymmetry and make this assertion
     # vacuously pass regardless of B. Compare the absolute difference directly
-    # (task-7-report.md: discovered during GREEN, not a physics or sign issue).
     assert np.max(np.abs(wa - wb)) > 1e-4
 
 
 def test_manifest_records_terms_conventions_and_citations(block):
-    """The manifest is a record (dimension, cites, conventions, cache key), not
-    a gate -- rebuilding twice yields the same key."""
+    """Record matrix provenance and a deterministic specification fingerprint."""
     kets, ctx = block
     tm = build_term_matrices(kets, ctx)
     m = tm.manifest
@@ -262,44 +256,31 @@ def test_manifest_records_terms_conventions_and_citations(block):
     assert m["wigner_backend"] == "sympy+lru_cache"
     assert isinstance(m["wigner_version"], str) and m["wigner_version"]
     assert isinstance(m["spec_hash"], str) and len(m["spec_hash"]) == 64  # sha256 hex
-    # the cache key is a record, designed now, gating nothing
-    import json
-    key = json.loads(m["key"])
-    assert key["dimension"] == len(kets) and "rotation" in key["terms"]
     rebuilt = build_term_matrices(kets, ctx).manifest
-    assert rebuilt["key"] == m["key"]
     assert rebuilt["spec_hash"] == m["spec_hash"]
 
 
-def test_cache_key_is_block_aware_not_just_case_dimension_terms_conventions():
-    """Fix round 1, finding 1: the +m_F = 3/2 and -m_F = 3/2 blocks share case,
-    dimension, term names and conventions, so the OLD key collided even though
-    the two blocks' matrices differ (opposite-sign m_F-odd terms). The key
-    must fold in a canonicalised description of the block's own kets."""
+def test_spec_hash_distinguishes_opposite_mF_blocks():
+    """Opposite-m_F blocks have distinct matrices and specification fingerprints,
+    even when their case, dimensions, terms, and conventions agree."""
     spec = thf_spec()
     kets = enumerate_kets(spec)
     ctx = ctx_from(spec, thf_v1())
     blocks = block_by_mF(kets)
     up = build_term_matrices(kets[blocks.index[1.5]], ctx)
     dn = build_term_matrices(kets[blocks.index[-1.5]], ctx)
-    # same case/dimension/terms/conventions -- the OLD key's entire input
+    # Equal metadata does not imply equal matrices.
     assert up.manifest["dimension"] == dn.manifest["dimension"]
     assert up.manifest["terms"] == dn.manifest["terms"]
     assert up.manifest["conventions"] == dn.manifest["conventions"]
     # ... but the matrices differ (an m_F-odd term, e.g. Zeeman, flips sign)
     assert not np.allclose(up.mats[up.names.index("zeeman_Gpar")],
                            dn.mats[dn.names.index("zeeman_Gpar")])
-    # so the key (and the dedicated spec_hash) must differ too
-    assert up.manifest["key"] != dn.manifest["key"]
     assert up.manifest["spec_hash"] != dn.manifest["spec_hash"]
 
 
 def test_unknown_knob_symbol_raises_naming_it_and_the_known_ones(block):
-    """Fix round 1, finding 3: a typo'd knob symbol used to be silently
-    dropped (`pset.value` / `_knob` fall through to a default), so
-    `sweep_coefficients(tm, pset, {"NOPE": ...})` returned a valid-looking
-    array with no warning. It must raise, naming the bad symbol and listing
-    the known ones, in every entry point that accepts a knobs mapping."""
+    """All knob-mapping entry points reject unknown symbols with useful diagnostics."""
     kets, ctx = block
     tm = build_term_matrices(kets, ctx)
     pset = thf_v1()
@@ -323,9 +304,7 @@ def test_unknown_knob_symbol_raises_naming_it_and_the_known_ones(block):
 
 
 def test_sweep_coefficients_wrong_length_array_raises_a_clear_error(block):
-    """Fix round 1, finding 3: two knob arrays with incompatible (non-
-    broadcastable) lengths must raise a clear error naming the symbols and
-    shapes involved, not an opaque bare numpy broadcast message."""
+    """Incompatible knob arrays raise with the symbols and shapes involved."""
     kets, ctx = block
     tm = build_term_matrices(kets, ctx)
     pset = thf_v1()
@@ -337,11 +316,7 @@ def test_sweep_coefficients_wrong_length_array_raises_a_clear_error(block):
 
 
 def test_complex_term_promotes_H_only_when_its_coefficient_is_nonzero():
-    """Fix round 1, finding 4: build_term_matrices used to compute one
-    np.result_type across ALL terms and cast the whole stack, so a single
-    complex term promoted every assembled H regardless of whether that term
-    was even active. Each term now keeps its own dtype at build; hamiltonian
-    (and hamiltonian_batch) promote only when an ACTIVE term is complex."""
+    """Keep per-term dtype at build; promote H only for active complex terms."""
     from heff.terms import Rules, term
 
     reg = {}

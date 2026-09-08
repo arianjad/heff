@@ -1,9 +1,9 @@
-"""Task 7 gates: the rank-K effective two-photon (2 x E1) operator within X 3Delta1.
+"""Rank-K effective two-photon (2 x E1) operator gates within X 3Delta1.
 
 Sources, in the order the gates use them:
   [HAM] = docs/thf-plus-x3delta1-effective-hamiltonian.md S9.5 (S9.5.1 the rank
           decomposition and the closure form, S9.5.2 which (K, dOmega) channels
-          exist, S9.5.3 the OPEN-21 ruling on K = 1, S9.5.4 the selection rules
+          exist, S9.5.3 the OPEN-21 scope for K = 1, S9.5.4 the selection rules
           as data, S9.5.5 validity)
   [2g]  = docs/digest-literature-two-photon.md S0 item 6, S3.0, S3.3
   B&C   = Brown & Carrington Eqs. (5.141), (5.142), PDF p.198 / book p.166
@@ -176,7 +176,7 @@ def test_rank_K_sum_rule_and_reciprocity():
     the rank-K form of gate B7b. THIS is the phase check: the sum rule above
     sums squares and no unimodular phase can move it (v1's own correction to
     B7's docstring), so a missing (-1)^(F'-m'_F) is invisible there and visible
-    here. The FAIL demo is the next test.
+    here. The next test supplies the negative control.
     """
     kets3, ctx3 = setup_229(J_max=3)
     for K, dOm in CHANNELS:
@@ -277,8 +277,7 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
         eps1 = sigma+, eps2 = sigma+  ->  legs (p_a, p_b) = (-1, +1)  ->  P = 0
         eps1 = sigma+, eps2 = sigma-  ->  legs (p_a, p_b) = (+1, +1)  ->  P = +2
 
-    The task brief states the opposite pairing (sigma+sigma- -> 0 and
-    sigma+sigma+ -> +2); that is the LADDER reading (rows e of the same table,
+    The ladder reading (rows e of the same table,
     and the [2g] S3.3 probe, whose rows are labelled by the LEG components
     (p_a, p_b), not by the two beams). The reachable SET {0, +-2} is the same
     either way -- only the labelling differs -- and [HAM] S9.5.1(3) is the
@@ -386,7 +385,7 @@ def test_dyad_weights_reconstruct_the_ordered_polarization_product():
 # --------------------------------------------------- registry containment
 
 def test_K2_entries_are_declared_non_hermitian_and_the_builder_accepts_the_registry():
-    """Fix round 1, finding 1: the registered fn evaluates the operator at
+    """The registered function evaluates the operator at
     P = Delta m_F (heff.terms' fn(bra, ket, ctx) contract), and by reciprocity
     (M_P(a, b) = (-1)^P M_{-P}(b, a), test_rank_K_sum_rule_and_reciprocity)
     that object is antisymmetric under bra<->ket at odd Delta m_F. K = 0 stays

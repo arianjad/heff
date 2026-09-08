@@ -1,23 +1,9 @@
-"""Task 6: assembly and sweeps in the v2 (two-nuclear-spin) basis.
+"""Two-spin assembly, symmetry, sweep, and rotational-truncation contracts.
 
-Gates A5, B1, [HAM] V8/V9, and V23 (the J-truncation report), on 229ThF+ and
-227ThF+ through `build_term_matrices(..., case='c2', registry=REGISTRY_C2)` --
-the v1 gates in tests/test_terms.py and tests/test_assemble.py, transplanted.
-No new physics: this file wires the already-built v2 registry (Tasks 2-5)
-through the already-supported assemble/engine path.
-
-Controller rulings carried here (2026-09-05):
-  R3  V23 compares J_max = 1 vs J_max = 4 (not 2 vs 4 -- dropping the whole
-      Delta-J = +-1 coupling is the failure mode), thresholds 229 > 1 MHz,
-      232 < 10 kHz ([HAM] S2.5 puts the 19F second-order shift at 1.6-2.6 kHz).
-  R7  V23 gains a 227ThF+ row (same > 1 MHz threshold; its A_par_Th
-      placeholder makes the shift far larger). j_convergence is reported for
-      229 AND 227.
-  R14 conventions.a_par_th_sign does not exist; thf_v2's own
-      `a_par_th_sign=` keyword selects the signed A_par_Th Param.
-  Task 5 review minor 4: test_A5_holds_for_every_c2_term and the hermiticity
-      gate run at J_max = 3 (a J_max = 2 basis has no Delta-J = 2 pair, so a
-      spurious eQq0_Th/eQq2_Th element there would be invisible).
+Gates A5, B1, [HAM] V8/V9, and V23 exercise 229ThF+ and 227ThF+ through the
+case-``c2`` registry. V23 compares J_max = 1 with 4: 229/227 shifts exceed
+1 MHz, while the 232ThF+ control remains below 10 kHz ([HAM] S2.5). A J_max =
+3 basis exposes Delta-J = 2 Th-quadrupole elements; J_max = 2 cannot.
 """
 import numpy as np
 import pytest
@@ -155,14 +141,12 @@ def test_J_truncation_is_reported_and_the_report_is_non_vacuous():
                               n_levels=dims_J1["232"])["by_J_max"][1]["max_shift_MHz"]
 
     assert shift_229 > 1.0, shift_229          # positive control: MHz-scale
-    assert shift_227 > 1.0, shift_227          # R7: also MHz-scale (larger)
+    assert shift_227 > 1.0, shift_227          # also MHz-scale (larger)
     assert shift_232 < 1e-2, shift_232         # negative control: < 10 kHz = 1e-2 MHz
 
 
 def test_j_convergence_reports_229_and_227():
-    """R7: the reporting helper itself, at its own defaults, for both
-    isotopologues that carry Th hyperfine. Reports; never raises on a
-    magnitude."""
+    """The reporting helper covers both isotopologues with Th hyperfine."""
     for iso in ("229", "227"):
         report = j_convergence(iso)
         assert report["isotopologue"] == iso

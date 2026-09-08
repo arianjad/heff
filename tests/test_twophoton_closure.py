@@ -54,7 +54,7 @@ hence conjugated; the same reading heff.twophoton.dyad_weights implements).
 
   with Om_i = Om_g + q2. No spectator 6j enters this independent coefficient.
 
-K = 1, [HAM] S9.5.3 / ruling R10. This fixture's manifold is RESTRICTED in
+K = 1, [HAM] S9.5.3. This fixture's manifold is RESTRICTED in
 Omega (no Omega_i = +-2), which is the physical ThF+/HfF+ situation, so K = 1
 survives at O(1): the K = 1 piece is 6-9 % of the amplitude here (and exactly
 zero for sigma+sigma-, where the K = 1 dyad weights vanish). It is reported,
@@ -258,7 +258,7 @@ def test_V27_registered_channels_alone_carry_the_sigma_pair(fix):
     (eps2* is parallel to eps1, so eps2* x eps1 = 0), so the two registered
     channels alone must reproduce the whole resolved amplitude. For the other
     three pairs they cannot, and the shortfall IS the K = 1 piece -- printed,
-    not asserted against ([HAM] S9.5.3, ruling R10: this fixture's manifold is
+    not asserted against ([HAM] S9.5.3: this fixture's manifold is
     restricted in Omega, so K = 1 survives at O(1)).
     """
     w1 = dyad_weights(V.SIGMA_P, V.SIGMA_M)
@@ -329,7 +329,7 @@ def test_closure_fails_with_a_truncated_intermediate_J(fix):
 
 
 def test_K1_vanishes_when_the_manifold_is_complete(fix):
-    """[HAM] S9.5.3, ruling R10, with both outcomes reachable.
+    """[HAM] S9.5.3, with both outcomes reachable.
 
     S9.5.3 is explicit that two suppressions of K = 1 must not be conflated:
     COMPLETENESS of the intermediate manifold (exact zero) and COMMONNESS of

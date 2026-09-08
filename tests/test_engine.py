@@ -1,7 +1,7 @@
-"""The 1D/2D sweep entry point that C2V-Molecules does not have: one that
-returns EIGENVECTORS. C2V's batch_diagonalize_scan returns (evals, expects) and
-discards vectors (C2V digest Q3, explicit); v1 needs vectors for TDMs, parity
-labels and expectation values, so this is not optional.
+"""Sweep and batched-eigensolver contracts.
+
+Sweeps return eigenvectors as well as eigenvalues so downstream code can
+compute transition dipoles, parity labels, and expectation values.
 """
 import numpy as np
 import pytest
@@ -36,10 +36,11 @@ def test_eigh_batch_matches_per_point_eigh_and_respects_chunking():
 
 
 def test_eigh_batch_default_chunk_bytes_forces_chunking_and_agrees_with_unchunked():
-    """Ruling 1: chunk sizing is driven by a chunk_bytes memory budget, not a
-    hardcoded point count. A budget too small for even one point's worth of
-    slack still yields one point per chunk (n=10, so >= 3 chunks) and must
-    still agree with a single unchunked call."""
+    """`chunk_bytes` controls chunk sizing instead of a fixed point count.
+
+    A budget below one point's working space still yields one point per chunk
+    and agrees with one unchunked call.
+    """
     rng = np.random.default_rng(99)
     H = rng.standard_normal((10, 6, 6))
     H = H + np.transpose(H, (0, 2, 1))
@@ -50,11 +51,11 @@ def test_eigh_batch_default_chunk_bytes_forces_chunking_and_agrees_with_unchunke
 
 
 def test_eigh_batch_promotes_int_input_instead_of_silently_zeroing_it():
-    """Ruling 4: `v = np.empty(H.shape, dtype=H.dtype)` silently returns
-    int-truncated (all-zero, since eigenvector components are non-integer)
-    eigenvectors for an int-typed H. np.result_type(H.dtype, np.float64)
-    promotes int/bool to float64 (complex input stays complex) and the
-    eigenvectors come out correct."""
+    """Integer and Boolean Hamiltonians promote to float64 for eigenvectors.
+
+    Complex input remains complex; using the integer input dtype would truncate
+    non-integer eigenvector components.
+    """
     H = np.array([[[2, 1], [1, 2]]], dtype=np.int64)
     w, v = eigh_batch(H)
     assert v.dtype.kind == "f"
@@ -87,9 +88,7 @@ def test_sweep_agrees_with_point_by_point_assembly(tm):
 
 
 def test_sweep_result_carries_the_label_convention_and_the_active_terms(tm):
-    """C2V's hardest-won lesson (wart #9): the label convention must travel
-    INSIDE the artifact, or a dataset repaired under one convention silently
-    invalidates a catalogue built on the other."""
+    """The sweep manifest carries the label convention used to produce it."""
     res = sweep(tm, thf_v1(), {"E_z": np.zeros(3), "B_z": np.linspace(0.5, 1.0, 3)})
     assert res.order == "energy" and res.gauge == "none"
     assert "zeeman_Gpar" in res.active_terms and "stark_z" not in res.active_terms
@@ -97,14 +96,13 @@ def test_sweep_result_carries_the_label_convention_and_the_active_terms(tm):
 
 
 def test_sweep_result_carries_the_assignment_strategy(tm):
-    """Ruling 2: the assignment strategy used for tracking travels on the artifact too."""
+    """The sweep result records the tracking assignment strategy."""
     res = sweep(tm, thf_v1(), {"E_z": np.zeros(2), "B_z": np.zeros(2)}, assignment="hungarian")
     assert res.assignment == "hungarian"
 
 
 def test_sweep_result_carries_the_zero_field_reference(tm):
-    """Ruling 5: `reference` (default 0) travels on the artifact so a reader
-    knows which grid index adiabatic_zero_field anchored to."""
+    """The sweep result records the grid index that anchors zero-field tracking."""
     res = sweep(tm, thf_v1(), {"E_z": np.zeros(2), "B_z": np.zeros(2)})
     assert res.reference == 0
     res = sweep(tm, thf_v1(), {"E_z": np.zeros(2), "B_z": np.zeros(2)}, reference=1)

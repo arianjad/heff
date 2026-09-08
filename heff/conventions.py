@@ -1,9 +1,8 @@
 """The convention contract, in exactly one module.
 
-Every phase in the package comes from here (spec S3.2). Defaults are the v1
-block agreed with Arian on 2026-09-05 and recorded in the plan's Global
-Constraints; each has a live fork in the ThF+ literature, listed with its
-open-item number in docs/thf-plus-x3delta1-effective-hamiltonian.md S7.
+Every phase in the package is selected here. The available conventions and
+their literature basis are documented in
+``docs/thf-plus-x3delta1-effective-hamiltonian.md``.
 """
 from dataclasses import dataclass
 

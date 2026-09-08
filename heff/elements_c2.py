@@ -1,11 +1,9 @@
 """Case (c) matrix elements for the two-nuclear-spin basis |((J I_Th) F1, I_F) F, m_F>.
 
-EVERY element in this file is copied from docs/thf-plus-x3delta1-effective-
-hamiltonian.md section 9 -- the single source for the v2 recoupling -- with its
-Brown & Carrington equation number and PDF/book page carried into the decorator,
-in exactly the style heff/elements_c.py uses for v1. Nothing here was
-re-derived. If a check disagrees with one of these forms, report both with
-citations -- do not adjust a sign (Arian's standing rule).
+The recoupling formulas are documented in
+docs/thf-plus-x3delta1-effective-hamiltonian.md section 9. Decorators carry
+Brown & Carrington equation and page citations. Resolve disagreements with
+the cited equations before changing a sign.
 
 Notation contract, [HAM] S9 preamble, stated once because it is the commonest
 way to get a phase backwards:
@@ -13,12 +11,11 @@ way to get a phase backwards:
     labels are the ket in (5.172)-(5.176), (5.186), (9.50)-(9.53)); every form
     below is the primes-moved-onto-the-bra rewrite that [HAM] S9 prints.
   * Coupling scheme F1 = J + I_Th, F = F1 + I_F, inner-spin-first. I_F is
-    ctx.I; I_Th is ctx.spins[0].I (Task 3's Ctx contract).
+    ctx.I; I_Th is ctx.spins[0].I.
   * Molecule-frame component q = Om_bra - Om_ket ([HAM] S9 preamble).
 
 Registry: this module registers into REGISTRY_C2, NOT into heff.terms.REGISTRY.
-The v1 registry and heff/elements_c.py are untouched, so a v1 session behaves
-identically whether or not this module was imported.
+Importing this module leaves the one-spin registry independent.
 """
 from dataclasses import replace
 
@@ -46,13 +43,7 @@ def _term_c2(**kw):
 
 
 def _spins(ctx):
-    """(I_Th, I_F) for the two-spin basis.
-
-    ctx.I is the 19F spin and ctx.spins[0] is the inner (Th) spin -- Task 3's
-    contract. A one-spin Ctx has no inner spin, which is a caller error here,
-    not a zero: raising beats silently evaluating the whole v2 registry at
-    I_Th = 0.
-    """
+    """Return (I_Th, I_F); require an explicit inner spin in the two-spin Ctx."""
     if not ctx.spins:
         raise ValueError(
             "case 'c2' needs a two-spin Ctx (ctx.spins is empty); build it from a "
@@ -204,8 +195,7 @@ def _delegate(fn):
     F1, F and m_F, so their matrix elements are the v1 formulas unchanged. The
     v1 functions already read their arguments by field name, and KET_C2 is
     KET_C plus one field, so the only thing the adapter adds is the F1
-    diagonality the v1 function cannot know about. One indirection, no new
-    algebra (controller ruling: delegate, do not re-implement).
+    diagonality required by the two-spin basis.
     """
     def wrapped(bra, ket, ctx):
         if bra["F1"] != ket["F1"]:
@@ -506,7 +496,7 @@ spin_rotation_cI_Th = _term_c2(
                "convention as zeeman_nuclear_F, -g_N mu_N. Delta F1 = 0, +-1 "
                "and Delta F = 0, +-1 from the two rank-1 6j triangles. Pinned "
                "element by element against a decoupled-basis rebuild in "
-               "tests/test_elements_c2_th.py (controller ruling R13); the "
+               "tests/test_elements_c2_th.py; the "
                "bra/ket-F1 phase swap is invisible to Hermiticity and is caught "
                "there. [HAM] S9.2.1, S2.8")
 def zeeman_nuclear_Th(bra, ket, ctx):
@@ -533,33 +523,19 @@ def zeeman_nuclear_Th(bra, ket, ctx):
 
 # ------------------------------------------------------ the Th quadrupole
 
-# The explicit -1 that encodes conventions.quadrupole_convention =
+# The sign returned by _q0_sign encodes conventions.quadrupole_convention =
 # 'bc_q0_is_negative_efg'. B&C (9.52) prints the prefactor -(1/2) eQ
 # <T2_q(grad E)>; their constant is defined by "q0 is the negative of the
 # electric field gradient", i.e. eq_qQ = -2 eQ <T2_q(grad E)> ([HAM] S9.4.1,
 # read off by comparing (9.52) at q = 0 with (9.53)). Read with the OPPOSITE
 # convention (q0 = +EFG) the element would be -eq_qQ/4; B&C's convention turns
-# that into +eq_qQ/4, and this factor is that turn, written out instead of
-# folded into a +1/4 literal. Drop it and every quadrupole splitting flips
-# sign: gate V20's uniform ratio of -1 against the textbook Casimir function
-# becomes +1 ([HAM] S9.4.2, [TH] S3.4).
-_Q0_IS_NEGATIVE_EFG = -1.0
-
-# The smallest I that HAS a quadrupole moment: <I||T2(Q)||I> needs the triangle
-# (I, 2, I). Named rather than inlined so gate V21's FAIL demonstration can
-# monkeypatch it to 0.0 and run the REAL product path unguarded (which is where
-# the 0/0 lives), instead of a hand copy of the formula.
-_MIN_I_FOR_QUADRUPOLE = 1.0
+# that into +eq_qQ/4 ([HAM] S9.4.2, [TH] S3.4).
 
 
 def _q0_sign(ctx):
-    """conventions.quadrupole_convention -> the sign factor above.
+    """Return -1 for B&C's negative-EFG q0 convention ([HAM] S9.4.1).
 
-    Mirrors quadrupole_eQq2_Th's eqq2_norm guard: the constant is a convention
-    field's consequence, so it is read from the Ctx rather than hardcoded, and
-    an unrecognised fork raises instead of silently keeping B&C's. _ALLOWED
-    currently lists one value, so the raise is a tripwire for the day a second
-    q0 convention is added, not a branch reachable through a valid Conventions.
+    Reject unsupported conventions rather than assuming their sign.
     """
     conv = ctx.conventions.quadrupole_convention
     if conv != "bc_q0_is_negative_efg":
@@ -569,7 +545,7 @@ def _q0_sign(ctx):
             "NEGATIVE of the electric field gradient, [HAM] S9.4.1). A new fork "
             "needs its own sign derived from its own printed equations, not a "
             "guess.")
-    return _Q0_IS_NEGATIVE_EFG
+    return -1.0
 
 
 def _quadrupole_body(bra, ket, ctx, q):
@@ -604,7 +580,7 @@ def _quadrupole_body(bra, ket, ctx, q):
     if not _same(bra, ket, "F1", "F", "mF"):
         return 0.0
     I_Th, _ = _spins(ctx)
-    if I_Th < _MIN_I_FOR_QUADRUPOLE:
+    if I_Th < 1.0:
         return 0.0
     J1, Om1 = float(ket["J"]), float(ket["Om"])
     J2, Om2 = float(bra["J"]), float(bra["Om"])
@@ -696,35 +672,18 @@ def quadrupole_eQq2_Th(bra, ket, ctx):
 # --------------------------------------------------- J-truncation reporting
 
 def j_convergence(isotopologue, *, J_maxes=(2, 4, 6), mF=None, n_levels=8, knobs=None):
-    """Report how the lowest `n_levels` levels move as J_max is truncated.
+    """Report the largest shift of the lowest `n_levels` energies versus J_max.
 
-    A REPORTING helper (task-6 brief): it never raises on a magnitude, only
-    on a structural mismatch (an m_F the requested block does not hold). Each
-    J_max's own lowest `n_levels` eigenvalues are compared to the largest
-    J_max's (the "converged" reference), and the largest absolute difference,
-    in MHz, is what is reported -- this is what [HAM] S2.5/S9.2's Th
-    Delta-J = +-1 hyperfine (a ~2 GHz off-diagonal element, [TH] S4.2) needs a
-    convergence table for, and V23 (tests/test_assemble_c2.py) is a direct
-    demonstration of this function, not a parallel computation.
+    Compare energy-ordered levels with the largest requested cutoff and report
+    differences in MHz. The reference cutoff is not a convergence guarantee.
+    Raise for an unavailable m_F block, not for the size of an energy shift.
 
-    Field-free by default (knobs=None): all field knobs (E_z, B_z) are absent
-    from thf_v2's own ParamSet, so `hamiltonian`'s knob lookup defaults them
-    to 0 -- J-truncation is a Hamiltonian-structure question, not a Stark/
-    Zeeman one. Pass `knobs` to report the same convergence at a field point.
-
-    `mF` has no single value that is a level of all three isotopologues:
-    F (and so m_F) is INTEGER for 229ThF+ and 227ThF+ (I_Th half-integer + 19F
-    1/2 -> F1 half-integer -> F integer, [HAM] S9's coupling scheme) and
-    HALF-INTEGER for 232ThF+ (the v1 F = J +- 1/2 basis) -- verified
-    numerically, not assumed. The default is therefore per-isotopologue:
-    0.0 for '229'/'227', 0.5 for '232'.
-
-    '232' has no coupled Th spin (thf_spec('232').spins == ()), so it builds
-    on the v1 KET_C basis through the default (v1) registry -- gate V16
-    (tests/test_elements_c2_reduction.py) already proves every REGISTRY_C2
-    term equals its v1 twin at I_Th = 0, so this is not a second code path,
-    just the one thf_spec('232') already hands back. '229' and '227' build on
-    KET_C2 through REGISTRY_C2.
+    Fields default to zero; pass `knobs` to check convergence at a field point.
+    Default mF is 0 for '229'/'227' (integer F) and 0.5 for '232'
+    (half-integer F), following the coupling scheme in [HAM] S9.
+    '232' uses KET_C and the one-spin registry; '229'/'227' use KET_C2 and
+    REGISTRY_C2. The I_Th = 0 reduction is checked in
+    tests/test_elements_c2_reduction.py.
     """
     from .assemble import build_term_matrices, hamiltonian
     from .params import thf_v2

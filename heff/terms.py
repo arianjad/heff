@@ -1,19 +1,12 @@
 """The term registry: one decorated function plus one parameter entry per term.
 
-No dispatch dicts. This is the single largest simplification versus
-Molecule-Structure, where a state outside the pre-existing envelope needs new
-keys in nine collect_* dicts (spec S3.2).
-
-`rules` earns its place three ways: the assembler uses it as a sparsity mask so
-only allowed (i, j) are evaluated (the dominant build cost); it answers "which
-terms are non-zero in this basis?" without building anything; and it is one half
-of gate A5, the formula-vs-declared-rules consistency check that catches dead
-operators.
+``rules`` serves as the assembler's sparsity mask, identifies terms that can be
+nonzero in a basis, and makes declared selection rules available for validation.
 
 A term's `param` is a TUPLE of knob symbols whose PRODUCT is the coefficient --
 ('d_mf', 'E_z') for the Stark term, ('G_par', 'B_z') for the Zeeman one. Fields
-and Hamiltonian parameters are therefore one flat catalogue (spec S2.1(2)), which
-is what makes dH/d(knob) available for free (heff.assemble.vertex).
+and Hamiltonian parameters form one flat catalogue, allowing
+``heff.assemble.vertex`` to evaluate derivatives with respect to a knob.
 """
 from dataclasses import dataclass
 from typing import Callable
@@ -23,7 +16,7 @@ from typing import Callable
 class Rules:
     """Declared selection rules, as DATA, separate from the formula.
 
-    dF1 is v2-only (spec-v2 S2.2): it is ignored -- not enforced -- when it
+    ``dF1`` applies only to two-spin kets. It is ignored when it
     is None (the default) or when the ket dtype has no F1 field, so a v1
     Rules() and a v1 KET_C basis are both untouched.
     """
@@ -47,17 +40,14 @@ class Rules:
 class Ctx:
     """Everything an element needs that is not a named knob.
 
-    No defaults for S, Lambda, I, mu_B, mu_N (spec S3.2): Molecule-Structure's
-    `S = 1/2` keyword default is the entire reason S is never threaded there and
-    every element silently evaluates at S = 1/2. A signature with no defaults
-    turns that whole bug class into a TypeError at first call.
+    ``S``, ``Lambda``, ``I``, ``mu_B``, and ``mu_N`` have no defaults so every
+    element receives its molecular and unit conventions explicitly.
 
     `frame` is the StateSpec label carried through so the term-matrix manifest
     can record it; no element reads it (see StateSpec.frame).
 
-    `spins` is the v2 coupled-nuclear-spin chain, carried through from
-    StateSpec.spins (spec-v2 S2.2). Empty is the v1 default, so a v1 Ctx() is
-    unchanged.
+    ``spins`` is the coupled-nuclear-spin chain carried through from
+    ``StateSpec.spins``. Its empty default represents a one-spin context.
     """
     S: float
     Lam: float
@@ -124,13 +114,12 @@ def terms_for_case(case, *, names=None, registry=REGISTRY):
 
 
 def check_selection_rules(t, kets, ctx, *, tol=1e-12):
-    """Gate A5: is the formula non-zero somewhere inside its declared rules,
-    and exactly zero outside them?
+    """Check whether a formula is nonzero inside its declared rules and zero
+    outside them.
 
     A rule set NARROWER than the formula fails loudly (non-zero outside). A rule
-    set WIDER than the formula degrades the gate to "non-zero somewhere", which
-    is still the check that catches the dead-operator case -- graceful in the
-    direction that matters (spec S3.2).
+    set WIDER than the formula reports the nonzero values it finds inside the
+    declared region.
     """
     n_allowed = n_inside = n_outside = 0
     max_outside = 0.0

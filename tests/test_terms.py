@@ -71,7 +71,7 @@ def test_A5_passes_for_an_honest_term(basis, ctx):
     """PASS side of gate A5: a formula that matches its declared rules is
     non-zero somewhere inside them and zero everywhere outside.
 
-    Companion FAIL demos below (test_A5_catches_a_dead_operator,
+    Companion negative controls below (test_A5_catches_a_dead_operator,
     test_A5_catches_a_term_that_leaks_outside_its_rules) show the two failure
     modes this gate catches: a dead operator (rules and formula disagree, so
     the formula is zero everywhere) and a leaky operator (formula wider than
@@ -94,7 +94,7 @@ def test_A5_passes_for_an_honest_term(basis, ctx):
 
 
 def test_A5_catches_a_dead_operator(basis, ctx):
-    """FAIL demo 1: the Molecule-Structure LambdaDoubling_q bug, transplanted.
+    """Detect a dead LambdaDoubling_q-like operator.
 
     The rules declare Delta-Omega = +-2, but the formula's selector and its
     3j-analogue disagree in sign, so the element is identically zero.
@@ -117,7 +117,7 @@ def test_A5_catches_a_dead_operator(basis, ctx):
 
 
 def test_A5_catches_a_term_that_leaks_outside_its_rules(basis, ctx):
-    """FAIL demo 2: a formula wider than its declared rules."""
+    """Detect a formula wider than its declared rules."""
     reg = {}
 
     @term(name="leaky", param=("B0",), cases=("c",),

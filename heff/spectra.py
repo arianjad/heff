@@ -6,14 +6,13 @@ primitive basis, sandwich it between the two eigenvector sets, and take line
 positions from eigenvalue differences.
 
 AMPLITUDES ARE SUMMED AND THEN SQUARED (thesis p.161), so intensity-borrowing
-paths interfere. That is a one-line ordering choice with a factor-of-anything
-consequence, so it is encoded once, here, and gated by B8.
+paths interfere. The package implements that ordering once in
+``_strengths_from_matrices``.
 
 Within X the E1 operator is the same molecule-frame dipole as the Stark term,
 evaluated at p = +-1, 0 -- so this module calls heff.elements_c.dipole_geometry
 rather than re-deriving anything. A transition connects different m_F, hence
-different blocks: pass the two blocks' kets and eigenvectors (spec S3.6, task
-brief controller ruling 3) -- dipole_matrix indexes purely by POSITION in the
+different blocks: pass the two blocks' kets and eigenvectors. ``dipole_matrix`` indexes purely by POSITION in the
 kets_a/kets_b arrays the caller passes, never by any assumed ordering in the
 full basis, so a caller's Blocking.index selection is what places kets.
 
@@ -78,7 +77,7 @@ def dipole_matrix(kets_a, kets_b, ctx, p, *, geometry=None):
 
 
 def _strengths_from_matrices(evals_a, evecs_a, evals_b, evecs_b, mats, *, weights=None):
-    """Sum the amplitudes over polarisation, THEN square (gate B8).
+    """Sum the amplitudes over polarisation, then square.
 
     evecs_a: (d_a, n_a) with eigenvector k in column k; mats: {p: (d_a, d_b)}.
     weights are cast with `complex(...)` (a real weight, e.g. from the
@@ -157,17 +156,12 @@ def label_lines(kets, evecs, S, *, rule, ell, s):
     halves are separate kets of the basis, so a perfectly clean, perfectly
     assigned state has purity 0.5 exactly. Values near 0.5 mean a well-defined
     (J, F1, F); values well below it mean the label is a dominant-component
-    assignment over a genuinely mixed state. Measured on the field-free m_F = 0
-    block at J_max = 3 (2026-09-06): 229ThF+ runs 0.496-0.500, i.e. at the
-    ceiling, while 227ThF+ runs 0.314-0.500 -- there the Th hyperfine is
-    comparable to the rotational spacing and J itself is not a good quantum
-    number ([HAM] S9.6). A v1 `KET_C` basis (no `F1` field) gets neither key, so the returned
-    dict is unchanged from before this was added.
+    assignment over a mixed state. A `KET_C` basis (no `F1` field) gets neither
+    the `F1` nor the `purity` key.
 
     Labels are recorded on the output for a caller to report; `line_strengths`
     itself never calls this and a line's strength/frequency never depends on
-    it -- labelling does not decide which transitions get computed (controller
-    ruling on task 10 finding 3), it only names states after the fact.
+    it -- labelling only names states after the transition calculation.
 
     The superposition parity comes from `heff.conventions.parity_operator`,
     which is built from the same +-Omega ket pairing used by

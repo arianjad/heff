@@ -1,4 +1,4 @@
-"""Task 9 -- E1 spectra in the two-spin basis: `spectra.dipole_matrix`'s
+"""E1 spectra in the two-spin basis: `spectra.dipole_matrix`'s
 `geometry=` keyword, F1 in `label_lines`, and the two-spin gates.
 
 No new algebra: `geometry=None` keeps `heff.elements_c.dipole_geometry` (v1);
@@ -162,8 +162,8 @@ def test_E1_selection_rules_in_the_two_spin_basis():
 def test_label_lines_reports_F1_and_its_purity():
     """Each eigenvector column gets its dominant F1 and the |amplitude|^2
     ("purity") of that dominant component -- the same argmax `label_lines`
-    already uses for J and F, just read one field further (controller
-    ruling), so the notebook can *show* F1 is a good (not exact -- [TH] S4.5
+    uses for J and F, extended to F1, so the notebook can *show* F1 is a good
+    (not exact -- [TH] S4.5
     predicts a further second-order Delta F1 mixing shift <= 25 kHz)
     quantum number rather than asserting it."""
     spec = thf_spec("229", J_max=2)

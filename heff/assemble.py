@@ -1,26 +1,9 @@
-"""Term-matrix cache and Hamiltonian assembly.
+"""Reusable term matrices and Hamiltonian assembly.
 
-The cache IS the architecture. Molecule-Structure measured 0.88 s to build a
-dim-64 Hamiltonian with ~14 terms -- roughly 57 k sympy-Wigner evaluations. The
-ThF+ slice at dim 96 with 11 terms is comparable, PER PARAMETER SET; ten
-thousand trial sets would be hours of arithmetic that should be a dot product.
-Here it is one build plus 10^4 resums (spec S3.3).
-
-The sweep is a single tensor contraction: stack coefficients as c[n_sets,
-n_terms] and term matrices as M[n_terms, d, d], then
-H_batch = np.tensordot(c, M, axes=1).
-
-Raising is reserved for STRUCTURE -- a term matrix whose shape disagrees with
-the block, a missing term, a non-Hermitian matrix from a term declared
-Hermitian. Nothing raises on a hash, ever; the manifest is a record: v1 has no
-disk cache backend, so there is no fingerprint-mismatch code path here at all
-(the key is designed now for that future one-function backend swap) --
-task-7-report.md records this as the reconciliation for controller ruling 4.
-
-The cache key is block-aware: it folds in a hash of the block's own kets (not
-just case/dimension/term-names/conventions), because two blocks can share
-every one of those and still hold different matrices -- e.g. the +m_F = 3/2
-and -m_F = 3/2 blocks of one spec (fix round 1, finding 1).
+Build parameter-free matrices once per basis, then assemble sweeps by the
+tensor contraction H[n, i, j] = sum_k c[n, k] M[k, i, j]. The manifest records
+sources, conventions, and a basis-aware specification fingerprint; it is
+provenance metadata, not a disk cache.
 """
 import hashlib
 import json
@@ -34,12 +17,10 @@ from .terms import REGISTRY, terms_for_case
 
 @dataclass(frozen=True)
 class TermMatrices:
-    """Parameter-free matrices for one block, plus the manifest that travels with them.
+    """Parameter-free matrices for one block with their provenance manifest.
 
-    `mats` is a tuple of per-term (d, d) arrays, EACH IN ITS OWN DTYPE (real or
-    complex) -- promotion to a common dtype happens at assembly, not here, and
-    only for terms actually active in that assembly (spec S3.3; fix round 1,
-    finding 4).
+    Each (d, d) matrix retains its own real or complex dtype. Assembly promotes
+    to a common dtype using only terms with nonzero coefficients.
     """
     names: tuple
     params: tuple
@@ -56,17 +37,12 @@ def build_term_matrices(kets, ctx, *, case="c", registry=REGISTRY, term_names=No
     """
     terms = terms_for_case(case, names=term_names, registry=registry)
     if not terms:
-        # Name the actual fix per case: the v2 two-spin terms live in their own
-        # registry and are NOT reachable by importing a module (importing
-        # heff.elements_c2 registers them into REGISTRY_C2, not the global one).
+        # Two-spin terms use REGISTRY_C2; importing them does not fill REGISTRY.
         fix = ("pass registry=heff.elements_c2.REGISTRY_C2" if case == "c2"
                else "import heff.elements_c")
         raise ValueError(f"no terms registered for case {case!r}; {fix}")
     d = len(kets)
-    # Refuse to block a Delta-m_F != 0 term into a single-m_F block (spec S3.1
-    # "what could go wrong" (iv)): the rules mask would zero every element the
-    # term actually has and the caller would get a silent all-zero matrix
-    # instead of a transverse/rotating-field coupling. Structural, so it raises.
+    # Transverse/rotating-field terms need a basis spanning their m_F couplings.
     single_mF = len({float(v) for v in np.asarray(kets["mF"], dtype=float)}) == 1
     if single_mF:
         for t in terms:
@@ -88,9 +64,7 @@ def build_term_matrices(kets, ctx, *, case="c", registry=REGISTRY, term_names=No
         if t.hermitian and not np.allclose(M, M.conj().T, atol=1e-10, rtol=0):
             raise ValueError(f"term {t.name!r} is declared hermitian but its matrix is not")
         mats.append(M)
-    # Each term keeps its own dtype -- no cross-term dtype promotion at build
-    # (fix round 1, finding 4; spec S3.3 "complex vs real is decided at
-    # assembly, not at build").
+    # Preserve per-term dtype until the active terms are known.
     stack = tuple(mats)
     try:
         import sympy
@@ -109,19 +83,12 @@ def build_term_matrices(kets, ctx, *, case="c", registry=REGISTRY, term_names=No
         "wigner_version": wigner_version,
         "build_seconds": time.perf_counter() - t0,
     }
-    # The cache KEY is designed now even though v1 has no disk backend: canonical
-    # JSON of (case, dimension, sorted term names, conventions version, a hash
-    # of the block's own kets), so the backend is a one-function swap later
-    # (spec S3.3). It is a RECORD -- nothing gates on it, a mismatch would warn
-    # and rebuild. The ket hash is what makes the key BLOCK-aware: two blocks
-    # with identical case/dimension/terms/conventions (e.g. +-m_F = 3/2) still
-    # get different keys because their kets differ (fix round 1, finding 1).
+    # Include kets so equal-sized blocks (e.g. opposite m_F) remain distinct.
     ket_hash = hashlib.sha256(np.ascontiguousarray(kets).tobytes()).hexdigest()
     spec_desc = {"case": case, "dimension": d, "terms": sorted(manifest["terms"]),
                  "conventions": manifest["conventions"], "ket_hash": ket_hash}
     manifest["spec_hash"] = hashlib.sha256(
         json.dumps(spec_desc, sort_keys=True).encode()).hexdigest()
-    manifest["key"] = json.dumps(spec_desc, sort_keys=True)
     return TermMatrices(names=tuple(t.name for t in terms),
                         params=tuple(t.param for t in terms),
                         mats=stack, kets=kets, manifest=manifest)
@@ -133,9 +100,7 @@ def _known_knob_symbols(tm):
 
 
 def _validate_knobs(tm, knobs):
-    """Raise on a knob/override symbol that no registered term uses (fix round
-    1, finding 3) -- `sweep_coefficients(tm, pset, {"NOPE": ...})` used to
-    return a valid array with the typo silently dropped."""
+    """Reject knob/override symbols that no registered term uses."""
     if not knobs:
         return
     known = _known_knob_symbols(tm)
@@ -179,10 +144,7 @@ def active(tm, pset, knobs):
 def hamiltonian(tm, pset, knobs):
     """H = sum_k c_k M_k for one parameter set and one field point.
 
-    Promotion to complex happens HERE, not at build: each term matrix keeps
-    its own dtype (build_term_matrices), and the assembled H is promoted to
-    complex only if an ACTIVE (nonzero-coefficient) term is complex -- an
-    all-real active set stays float64 (spec S3.3; fix round 1, finding 4).
+    Complex dtype promotion includes only terms with nonzero coefficients.
     """
     return hamiltonian_batch(tm, coefficients(tm, pset, knobs))[0]
 
@@ -214,7 +176,7 @@ def sweep_coefficients(tm, pset, knob_arrays):
 def hamiltonian_batch(tm, c):
     """(n_sets, d, d) in one BLAS call. Chunking is the caller's job (heff.engine).
 
-    Same active-only promotion rule as `hamiltonian` (fix round 1, finding 4):
+    Same active-only promotion rule as `hamiltonian`:
     a term is active for the batch if any set gives it a nonzero coefficient.
     No hard float cast on `c` -- the caller's own dtype (always real for a
     physical field/parameter sweep) is preserved.

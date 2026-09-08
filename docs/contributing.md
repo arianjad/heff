@@ -20,6 +20,10 @@ Do not tune a constant or numerical tolerance merely to pass a check. A
 Hermitian matrix does not establish correct matrix elements, and a correct
 matrix does not establish accurate molecular parameters.
 
+Comments and docstrings describe current behavior, physical assumptions, and
+the reasons for non-obvious choices. Keep development history in Git or dated
+research records; retain source citations and unresolved scientific questions.
+
 ## Test commands
 
 Keep tests that exercise supported behavior, a reproduced bug, or an independent

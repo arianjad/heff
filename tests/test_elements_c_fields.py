@@ -86,7 +86,7 @@ def test_V14_stark_is_traceless_over_mF(basis, ctx):
 
 
 def test_dipole_geometry_supports_p_plus_minus_one_for_spectra(basis, ctx):
-    """heff.spectra (Task 10) needs p = +-1; the Stark term uses p = 0 only."""
+    """Spectra needs p = +-1; the Stark term uses p = 0 only."""
     i = _find(basis, 1, 1.0, 1.5, 0.5)
     j = _find(basis, 1, 1.0, 1.5, 1.5)
     assert elements_c.dipole_geometry(basis[i], basis[j], ctx.I, 0) == 0.0

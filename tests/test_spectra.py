@@ -7,7 +7,7 @@ interfere. A square-then-sum implementation passes every other test here.
 
 B7 is a closed-form MAGNITUDE identity (sums |amplitude|^2), so it cannot see a
 phase error; B7b is the companion identity that lives entirely in phases and
-signs (fix round 1, finding 1).
+signs.
 """
 import numpy as np
 import pytest
@@ -45,17 +45,13 @@ def test_B7_total_strength_out_of_a_state_is_independent_of_mF(setup):
     every J' a dipole transition can reach (J' = J, J +- 1). J = 4 would need
     J' = 5, which this basis truncates, so J = 4 gives 7/15 instead of 1 and
     is deliberately excluded from the loop below; it is not asserted anywhere
-    in this file (fix round 1, finding 1a).
+    in this file.
 
-    CORRECTED (fix round 1): this gate sums |amplitude|^2, and no unimodular
-    phase -- including a missing or misplaced (-1)^(F-m_F) -- can change that
-    sum, so it is NOT a phase gate and was previously mis-documented as one.
-    What it does catch is a wrong m-sum or a dropped polarisation channel,
-    which changes which terms enter the sum rather than just their sign or
-    phase. The phase itself is checked by spherical-tensor reciprocity below. Analogue of
-    Molecule-Structure test_sio_stark_tdm.py:130. F-independence is NOT
-    asserted; only m_F-independence, which is the part that follows from
-    orthogonality alone.
+    This gate sums |amplitude|^2, so no unimodular phase -- including a missing
+    or misplaced (-1)^(F-m_F) -- changes the sum. It detects a wrong m-sum or
+    dropped polarisation channel; B7b checks phase by spherical-tensor
+    reciprocity. Analogue of Molecule-Structure test_sio_stark_tdm.py:130.
+    The test asserts m_F-independence, not F-independence.
     """
     spec, kets, blocks, ctx = setup
     totals = {}
@@ -77,7 +73,7 @@ def test_B7_total_strength_out_of_a_state_is_independent_of_mF(setup):
 
 
 def test_B7b_transition_dipole_obeys_spherical_tensor_reciprocity(setup):
-    """Gate B7b (fix round 1, finding 1b): the phase check B7 cannot do.
+    """Gate B7b checks the phase relation that B7 cannot detect.
 
     dipole_geometry never returns a phase (report's self-review: always
     float64), so the general Wigner-Eckart Hermiticity relation
@@ -147,7 +143,7 @@ def test_line_strengths_frequencies_are_upper_minus_lower(setup):
 
 
 def test_line_strengths_accepts_complex_polarisation_weights(setup):
-    """Fix round 1, finding 2: a complex weight (e.g. a sigma+/sigma- phase)
+    """A complex weight (for example, a sigma+/sigma- phase)
     must not raise, and must give the same strength as an incoherent sum for
     a pair of DEFINITE-m_F blocks -- there is no interference to get wrong
     there (finding 4: the 3j selection rule already forces exactly one p
@@ -172,7 +168,7 @@ def test_line_strengths_accepts_complex_polarisation_weights(setup):
 
 
 def test_line_labels_are_present_and_the_strongest_J1_to_J2_lines_flip_parity(setup):
-    """Fix round 1, finding 3: label_lines records a superposition parity and
+    """`label_lines` records a superposition parity and
     an e/f name for every state, and the six strongest J = 1 -> J = 2 lines at
     zero field -- a Delta-m_F = 0 spectrum within one signed-m_F block -- all
     connect states of OPPOSITE parity (a real selection-rule consequence of

@@ -206,19 +206,16 @@ _ISOTOPOLOGUES_V2 = ("232", "229", "227")
 def thf_v2(isotopologue, *, a_par_th_sign="negative"):
     """The 232/229/227 ThF+ X 3Delta1 parameter set (spec-v2 S5).
 
-    Every value, unit, uncertainty, status and source/note is copied
-    verbatim from docs/superpowers/specs/2026-09-05-heff-v2-isotopologues-
-    two-photon.md S5, except the 227Th A_par_Th/g_N_Th placeholders, which
-    are Arian's Schmidt-moment ruling ([HAM] S9.6, OPEN-20) superseding the
-    spec's mu(227Th) = mu(229Th) row.
+    Records include values, units, uncertainty, status, and source notes.
+    The 227Th A_par_Th/g_N_Th defaults are Schmidt stress-test placeholders
+    ([HAM] S9.6, OPEN-20), not precision molecular estimates.
 
     `isotopologue` is one of '232' | '229' | '227'. Every isotopologue
     carries thf_v1()'s shared 19F/rotational/Stark/EDM knobs unchanged (S5.1)
     plus the two-photon alphas (S5.4). For odd isotopes the transferred
     measured/derived inputs are marked estimates with unquantified transfer
     uncertainty (the source-isotope error bars remain in their notes); '232' is spin-0 so its Th knobs are
-    held at zero (a gate requires thf_v2('232') to agree with thf_v1() on
-    every v1 symbol); '229' and '227' add the isotope-specific Th hyperfine/
+    held at zero, with shared symbols matching thf_v1(); '229' and '227' add the isotope-specific Th hyperfine/
     quadrupole knobs. eQq0_Th/eQq2_Th are STRUCTURALLY ABSENT for 227ThF+
     (I_Th = 1/2 has no rank-2 nuclear matrix element), not zero-valued.
 
@@ -336,7 +333,7 @@ def thf_v2(isotopologue, *, a_par_th_sign="negative"):
         }
     else:  # '227'
         schmidt_note = (
-            "PLACEHOLDER, Arian's ruling 2026-09-05 ([HAM] S9.6, OPEN-20): "
+            "Schmidt stress-test PLACEHOLDER ([HAM] S9.6, OPEN-20): "
             "the Schmidt single-particle moment for the tentative ENSDF "
             "(1/2+) odd-neutron ground state, ASSUMING a spherical s1/2 "
             "orbital (not implied by deformed I=1/2), gives g_s(n) = -3.826 "

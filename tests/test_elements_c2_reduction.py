@@ -18,9 +18,8 @@ from heff.params import thf_v1, thf_v2
 from heff.spec import Spin, StateSpec, block_by_mF, enumerate_kets, thf_spec
 from heff.terms import ctx_from, terms_for_case
 
-# v2 name -> v1 name. The five delegating terms keep their v1 names; the four
-# 19F terms are suffixed _F because Task 5 adds the Th partner under the bare
-# name (spec-v2 S2.3).
+# v2 name -> v1 name. The 19F terms use an `_F` suffix to distinguish their
+# Th counterparts ([SPEC-v2] S2.3).
 V2_TO_V1 = {
     "rotation": "rotation",
     "centrifugal": "centrifugal",
@@ -37,8 +36,8 @@ V2_TO_V1 = {
 
 # The v2 terms that have NO v1 counterpart, stated EXPLICITLY so that a term
 # added to REGISTRY_C2 without a line in V2_TO_V1 fails this file instead of
-# slipping through a subset check. Task 5's six Th terms are the members; every
-# one of them is identically zero at I_Th = 0 (asserted in
+# slipping through a subset check. The six Th terms are identically zero at
+# I_Th = 0 (asserted in
 # tests/test_elements_c2_th.py::test_every_th_term_vanishes_at_I_Th_zero),
 # which is why V16 is unaffected by their arrival.
 EXPECTED_NO_V1_COUNTERPART = {
@@ -51,7 +50,7 @@ def spec_with_I_Th_zero(J_max=4):
     """The v2 two-spin spec at I_Th = 0 -- the master gate's subject.
 
     Built through StateSpec directly and NOT through thf_spec('232'), which
-    deliberately returns the one-spin v1 object (controller ruling R9): the
+    deliberately returns the one-spin v1 object: the
     point of this gate is to run the KET_C2 dtype and the two-spin enumerator
     against the v1 answer, so the Th spin has to be present-and-zero, not absent.
     """
