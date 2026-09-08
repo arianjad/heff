@@ -1,8 +1,5 @@
 """Generate the ThF+ X 3Delta1 tutorial notebook.
 
-The notebook is generated from a script so it is reviewable as a diff and
-regenerable after an API change.
-
 Run:  python notebooks/build_tutorial.py
 Then: python -m jupyter nbconvert --to notebook --execute --inplace notebooks/ThF_plus_X3Delta1_Tutorial.ipynb
 """
@@ -25,33 +22,33 @@ CELLS = [
     md("""
 # ThF⁺ X ³Δ₁ with `heff`
 
-²³²Th¹⁹F⁺, X ³Δ₁, v = 0, J = 1–4, Hund's case (c) basis |J, Ω = ±1, F, m_F⟩ —
-96 states, block-diagonal in signed m_F for collinear static fields.
+We will work with ²³²Th¹⁹F⁺ in X ³Δ₁, v = 0, J = 1–4. In the Hund's case
+(c) basis |J, Ω = ±1, F, m_F⟩, these choices give 96 states. Collinear static
+fields preserve signed m_F, so the Hamiltonian separates into smaller blocks.
 
-`heff` writes a Hamiltonian as `H = Σ_k c_k M_k`. The term matrices `M_k` are
-built once per basis block; a parameter change is a weighted resum, a whole
-sweep is one `np.tensordot` plus a batched `eigh`, and every derivative is
-exact (`∂H/∂knob = Σ M_k`, Hellmann–Feynman) rather than a finite difference.
+The organizing idea in `heff` is `H = Σ_k c_k M_k`. Each matrix `M_k` contains
+the angular-momentum structure of one interaction, while `c_k` contains its
+molecular parameter or field strength. We build the matrices once per basis
+block and reuse them. A parameter change becomes a weighted sum, a sweep uses
+one `np.tensordot` followed by batched `eigh`, and Hellmann–Feynman gives the
+derivatives through `∂H/∂knob = Σ M_k` without finite differences.
 
-This notebook builds the basis, inspects the term catalogue and the assembled
-Hamiltonian, diagonalises it, labels the eigenstates by parity and e/f, maps
-the Stark and Zeeman structure, extracts g-factors, induced dipoles and the
-Ω-doublet Δg, shows the PT-odd shift, lists the J = 1 → 2 E1 lines, and closes
-with a 200-point parameter-set sweep done as one resum and one batched `eigh`.
+We use the native API so that the basis, term matrices, and observables stay
+visible. After assembling the zero-field Hamiltonian, we calculate Stark and
+Zeeman shifts and connect their slopes to g-factors,
+induced dipoles, and the Ω-doublet Δg. We then inspect PT-odd and E1 matrix
+elements and finish with a 200-point parameter sweep. If the model-file
+workflow is new to you, start with the repository [README](../README.md).
+The separate [three-isotope field plots](../results/thf-fields-2026-09-08/README.md)
+cover broader J = 1–3 scans with their own parameter sets.
 
-This is an advanced, native-API tutorial: it exposes the basis, term matrices,
-and observables used by `heff`, rather than hiding them behind a convenience
-wrapper. Start with the repository [README](../README.md), including its TOML
-model quickstart, and use the separate [three-isotope field plots](../results/thf-fields-2026-09-08/README.md)
-for the broader J = 1–3 exploratory scans.
+The physics source is [HAM](../docs/thf-plus-x3delta1-effective-hamiltonian.md),
+and every matrix element carries its citation in `term.cite`. The calculations
+show what follows from this effective Hamiltonian and its selected inputs.
+Software tests check implementation identities and regressions; they do not
+establish that the model is physically complete.
 
-Physics source: [HAM](../docs/thf-plus-x3delta1-effective-hamiltonian.md).
-Every matrix element carries its citation in `term.cite`. The calculations
-illustrate the selected effective Hamiltonian and its inputs. Software tests
-check implementation identities and regressions; they do not establish the
-physical truth or completeness of this model.
-
-Conventions in force (all defaults, all documented forks): n̂ from F to Th
+We use the following defaults: n̂ from F to Th
 (JILA), e/f by Brown 1975, Zeeman `+G∥ μ_B (J·n̂)(n̂·B)`, `E = −g μ_B B m_F`,
 `Δg = g^u − g^ℓ`, eEDM with no Leanhardt ½.
 """),
@@ -81,9 +78,9 @@ for key, val in pset.conventions.stamp().items():
     md("""
 ## 1. The basis
 
-`thf_spec()` is the frozen state spec; `enumerate_kets` is the only code that
-knows the coupling case. The per-block dimensions are computed here, not
-asserted from the document.
+`thf_spec()` fixes the state specification, and `enumerate_kets` turns it into
+the coupled basis. We then
+group the states by signed m_F and let the code report each block dimension.
 """),
 
     code("""
@@ -100,11 +97,11 @@ print(kets[:4])
     md("""
 ## 2. The term catalogue
 
-Adding a term is one decorated function plus one parameter entry. Each carries
-its declared selection rules as data (a gate checks the formula against them)
-and its primary-source citation. The coefficient of a term is the product of
-its knob symbols, so `stark_z` is off whenever `E_z = 0` and the two PT-odd
-terms are off whenever `d_e = k_TP = 0` — which is their default.
+Each Hamiltonian term pairs a matrix-element function with a coefficient.
+Its selection rules are stored as data and checked against the formula;
+its primary-source citation travels with the term. A term's coefficient is the
+product of its knob symbols. Thus `stark_z` vanishes at `E_z = 0`, while the
+two PT-odd terms vanish at their default `d_e = k_TP = 0`.
 """),
 
     code("""
@@ -116,16 +113,17 @@ for t in terms_for_case('c'):
     md("""
 ## 3. Term matrices for two blocks
 
-Built once each. Every Hamiltonian after this is a weighted sum — one BLAS
-call per parameter set instead of a fresh sweep of Wigner symbols.
+We now build one term-matrix set for each of two m_F blocks. Every Hamiltonian
+after this is a weighted sum, so a new parameter set needs one BLAS call rather
+than another sweep over Wigner symbols.
 
 Two blocks are used in what follows, and the choice matters for what you see:
 
-- **m_F = +3/2** (dim 14) — the *stretched* doublet. At J = 1 only F = 3/2 can
+- `m_F = +3/2` (dim 14) contains the *stretched* doublet. At J = 1 only F = 3/2 can
   carry m_F = 3/2, so the Ω-doublet is clean and the closed forms for the Stark
   shift and the g-factor apply exactly. This is the doublet the JILA eEDM
   measurement uses, and it is what §7–§14 work in.
-- **m_F = +1/2** (dim 16) — carries **both** F = 1/2 and F = 3/2 at J = 1, so
+- `m_F = +1/2` (dim 16) contains both F = 1/2 and F = 3/2 at J = 1, so
   it is the block that shows the axial hyperfine structure. §4–§6, the line
   list in §15 and the parameter sweep in §16 use it.
 
@@ -149,9 +147,9 @@ print("spec_hash:", tm.manifest['spec_hash'][:16], " wigner:", tm.manifest['wign
 """),
 
     md("""
-Energies are quoted throughout relative to the J = 1 rotational energy
-`2B₀`, so what is on screen is the hyperfine and Ω-doubling structure rather
-than 14.5 GHz of rotation. The 4 × 4 corner below is the J = 1 and J = 2,
+We subtract the J = 1 rotational energy `2B₀` throughout. This exposes the
+hyperfine and Ω-doubling structure instead of placing it on top of 14.5 GHz of
+rotation. The 4 × 4 corner below is the J = 1 and J = 2,
 F = 3/2 part of the m_F = +3/2 Hamiltonian at zero field.
 """),
 
@@ -174,15 +172,15 @@ print(f"H[0,2]       = {H0[0, 2]:+.6f} MHz   "
 """),
 
     md("""
-## 4. Zero-field structure — hyperfine and Ω-doubling
+## 4. Zero-field hyperfine and Ω-doubling structure
 
-This runs in the **m_F = +1/2** block, which is the one that carries both
+We use the `m_F = +1/2` block because it carries both
 F = 1/2 and F = 3/2 at J = 1. Two intervals are visible in the four J = 1
 levels: the Ω-doublet splitting `ω_ef J(J+1)/2 = 5.29 MHz` at J = 1, and the
 axial hyperfine interval, whose leading closed form is `(3/4)|A∥| = 15.075 MHz`
 with F = J − ½ lying *above* F = J + ½ because A∥ < 0. The model value comes
 out slightly smaller because `c_I` and the ΔJ = ±1 hyperfine also contribute;
-the cell prints both so the difference is visible rather than asserted.
+the cell prints both values so we can see the correction directly.
 """),
 
     code("""
@@ -216,18 +214,18 @@ print(f"hyperfine interval F = 1/2 minus F = 3/2: {w0[i12].mean() - w0[i32].mean
     md("""
 ## 5. Parity and e/f labels
 
-At zero field the eigenstates are Ω-doublet superpositions with definite
-parity, and `⟨P⟩` below comes out at exactly ±1. The e/f label follows Brown
-1975 (`ef_rule='brown1975'`); applying the thesis rule `P = (−1)^{J−S−ℓ}` to
-S = 1 would invert every label ([HAM] §2.3 TRAP, OPEN-2). `label_lines` does
-the labelling — the labels below are read off the eigenvectors, not typed in.
+At zero field, the Ω = ±1 basis states combine into eigenstates of definite
+parity. Accordingly, `⟨P⟩` below is exactly ±1. The e/f label follows Brown
+1975 (`ef_rule='brown1975'`). Applying the thesis rule `P = (−1)^{J−S−ℓ}` to
+S = 1 would invert every label ([HAM] §2.3, OPEN-2). `label_lines` reads
+the labels from the eigenvectors.
 
 The upper component of each doublet has parity `(−1)^J`, i.e. e lies above f
-uniformly in J. That ordering is **OQ-A** in `docs/open-questions.md`: it is
-what Ng 2022 Fig. 2 and Gresh 2016's `k″ < 0` show, and reproducing it is why
-`omega_doubling` carries `−ω_ef J(J+1)/4` rather than Ng Eq. C.3's literal
-`(−1)^J` prefactor. The splitting magnitude is the same either way. This
-ordering was confirmed by Arian on 2026-09-05; OQ-A is closed.
+uniformly in J (Ng 2022 Fig. 2; [HAM] §2.3, OPEN-2).
+`omega_doubling` uses `−ω_ef J(J+1)/4`; Ng Eq. C.3 prints an additional
+`(−1)^J` prefactor. The splitting magnitude is the same either way.
+Gresh 2016's `k″ < 0` also depends on upper-state branch bookkeeping, so its
+sign alone does not determine this ordering ([HAM] OPEN-13).
 """),
 
     code("""
@@ -243,9 +241,10 @@ for s in range(8):
     md("""
 ## 6. Selecting eigenstates by quantum number
 
-The analogue of the RaF tutorial's `select_q`: label each eigenvector by its
-dominant basis ket, then filter. This is a display convenience — a state that
-is not dominated by one (J, F) still gets a label, just a less useful one.
+To select states, we label each eigenvector by its dominant basis ket and then
+filter those labels with `select_q`. This is only a display
+convenience. A strongly mixed state still receives a (J, F) label, but that
+label describes it poorly.
 """),
 
     code("""
@@ -270,16 +269,16 @@ print(f"J = 2 states in this block: {select_q(sub_h, v0, J=2.0)}")
     md("""
 ## 7. Stark map
 
-Back to the stretched **m_F = +3/2** block. The Ω-doublet polarises where
+Return to the stretched `m_F = +3/2` block. The Ω-doublet starts to polarise when
 `γ_F m_F d_mf E = ω_ef/2`; with `γ_{F=3/2}(J=1) = 1/3` that is ≈ 3.1 V/cm. Well
 above it the two components separate linearly, and at the JILA field of
 60 V/cm the half-splitting is ≈ 51 MHz. The two-level closed form
 `√((γ_F m_F d_mf E)² + (ω_ef/2)²)` is printed next to the model value; they
-differ by the J-mixing the two-level form leaves out.
+differ because the two-level expression omits J-mixing.
 
-The two panels are separated because J = 2 sits 4B₀ ≈ 29 GHz above J = 1: put
-them on one axis and the hyperfine and Stark structure both vanish into the
-line width. Each panel is referred to its own rotational origin.
+J = 2 sits 4B₀ ≈ 29 GHz above J = 1, so we refer each panel to its own
+rotational origin. On a shared absolute-energy axis, both the hyperfine and
+Stark structure would disappear into the line width.
 """),
 
     code("""
@@ -315,12 +314,12 @@ print(f"order = {res_E.order!r}, gauge = {res_E.gauge!r}, reference index = {res
     md("""
 ## 8. Zeeman maps, at zero field and at the operating field
 
-Plotted as the shift from B = 0, so the Zeeman slope itself is visible rather
-than the 100 MHz of Stark splitting it sits on.
+We plot the shift from B = 0. This makes the Zeeman slope visible beside the
+roughly 100 MHz Stark splitting.
 
 At E = 0 the Zeeman shift is even in Ω, so the two doublet components move
 together: `g^u = g^ℓ` exactly, and the right panel is identically zero. The
-whole differential g-factor of §12 therefore has to come from the E field —
+differential g-factor in §12 therefore comes from the E field:
 at 60 V/cm the two slopes differ by about 4.5 parts in a thousand, which is
 `Δg/ḡ`, twice the `δg/g` of §12.
 """),
@@ -352,15 +351,13 @@ print(f"|g| mu_B B m_F at B = 5 G, |g| = 0.0149, m_F = 3/2: "
     md("""
 ## 9. A 2D (E, B) map
 
-One `sweep` call over 2501 field points. The knob arrays are broadcast, the
-Hamiltonians come out of a single `tensordot`, and `eigh` runs in chunks sized
-to a memory budget. What is mapped is again the Zeeman part alone —
-`E(E_z, B_z) − E(E_z, 0)` — because the Stark shift is three orders of
-magnitude larger and would be the only thing visible otherwise. What is left is
-linear in B and, at this colour scale, flat in E_z — g moves by only a fraction
-of a percent across 0–60 V/cm for this level, which is why §14 gives the J = 1
-pair a second, fractional-change panel where that sub-percent, opposite-signed
-motion is resolved. The cell prints the size of that residual E dependence.
+One `sweep` call covers all 2501 field points. Broadcasting produces the
+Hamiltonians with a single `tensordot`, and `eigh` works through memory-sized
+chunks. We again map only the Zeeman contribution,
+`E(E_z, B_z) − E(E_z, 0)`, because the Stark shift is three orders of magnitude
+larger. The remaining shift is linear in B and nearly flat in E_z: this level's
+g-factor changes by only a fraction of a percent across 0–60 V/cm. Section 14
+resolves that motion on a fractional scale, and the cell below prints its size.
 """),
 
     code("""
@@ -404,14 +401,14 @@ display_levels(tm, pset, {'E_z': 24.0, 'B_z': 1.0})
 """),
 
     md("""
-## 11. g-factors and induced dipoles — exact, not finite differences
+## 11. g-factors and induced dipoles from exact derivatives
 
-`g = −(∂E/∂B_z)/(μ_B m_F)` and `d_eff = −∂E/∂E_z`, both from one
-Hellmann–Feynman kernel: `∂H/∂knob` is already in the catalogue as a sum of
-term matrices, so no field step is chosen and no differencing noise enters.
+Both `g = −(∂E/∂B_z)/(μ_B m_F)` and `d_eff = −∂E/∂E_z` come from the same
+Hellmann–Feynman kernel. Because `∂H/∂knob` is already a sum of catalogue
+matrices, we need neither a field step nor a finite-difference subtraction.
 
-At zero field the closed form is `g_F = −G∥ γ_F + g_N (μ_N/μ_B) κ_F` — Ng
-Eq. C.6's relation, the same as Petrov Eqs. 2–3 — and `d_eff = 0` because the
+At zero field the closed form is `g_F = −G∥ γ_F + g_N (μ_N/μ_B) κ_F`
+(Ng Eq. C.6's relation, also Petrov Eqs. 2–3), and `d_eff = 0` because the
 unpolarised doublet has no space-fixed dipole. At 60 V/cm `d_eff` approaches
 the fully polarised `γ_F m_F d_mf`.
 """),
@@ -440,15 +437,15 @@ print("m_F of this block:", res_g0['mF'], " conventions:", res_g0['conventions']
 ## 12. The differential g-factor Δg
 
 The two Stark components of the J = 1, F = 3/2 doublet acquire slightly
-different J = 2 admixtures, so their g-factors differ. This is the eEDM
-experiment's headline systematic, and the difference is a *named pair*, so it
-goes through `pair_differential`, which keeps the sign and stamps which of the
-two circulating definitions it used.
+different J = 2 admixtures, so their g-factors differ. This difference is an
+important systematic in the eEDM experiment. We evaluate the named pair with
+`pair_differential`, which preserves its sign and records which of the two
+circulating definitions was used.
 
-Note in advance ([HAM] §1.2): a single-electronic-state model is expected to
+The comparison has a known limitation ([HAM] §1.2): a single-electronic-state model is expected to
 miss δg/g by about 15 %, because the ³Δ₂ coupling is not in the basis. Ng's own
-32-level Ω = ±1 model gives −0.00223 against a measured −0.00255(6). That is a
-finding, not a failure.
+32-level Ω = ±1 model gives −0.00223 against a measured −0.00255(6). We should
+therefore interpret a discrepancy at this scale as a limitation of the basis.
 """),
 
     code("""
@@ -480,19 +477,19 @@ print(f"Leanhardt Eq. 67 at 60 V/cm   = {-9 * d_mf * 60 / (40 * pset.value('B0')
     md("""
 ## 13. PT-odd shifts
 
-`H_PT = −(d_e E_eff + W_TP k_TP) Ω/|Ω|` — Ng Eq. C.8, no Leanhardt ½, which is
-what `edm_factor='ng'` selects; the sign of Ω is fixed by `n_hat='F_to_Th'`,
+We use `H_PT = −(d_e E_eff + W_TP k_TP) Ω/|Ω|` (Ng Eq. C.8), with no
+Leanhardt ½, as selected by `edm_factor='ng'`. The sign of Ω is fixed by `n_hat='F_to_Th'`,
 i.e. n̂ points from F to Th. The observable in the experiment is
 `f^BD = 2 d_e E_eff`.
 
-Both PT-odd terms are off in `thf_v1()` (`d_e = k_TP = 0`), so nothing here
-changes any energy above. What is plotted is the *matrix* the term contributes,
-`−Ω/|Ω|`, evaluated as a first-order expectation value `⟨ψ|M|ψ⟩` on the Stark
+Both PT-odd terms are off in `thf_v1()` (`d_e = k_TP = 0`). We can still inspect
+their response through the matrix `−Ω/|Ω|`. We plot its first-order expectation
+value `⟨ψ|M|ψ⟩` on the Stark
 eigenstates: it runs from 0 at zero field to ∓1 when the doublet is fully
 polarised, and multiplying it by `d_e E_eff` gives the shift. Taking the shift
 as an eigenvalue difference instead would put a 35 µHz number on top of a
-14.5 GHz rotational energy — within a factor of ~30 of float64 resolution —
-whereas the expectation value is clean.
+14.5 GHz rotational energy (within a factor of ~30 of float64 resolution).
+The expectation value avoids subtracting these nearly equal energies.
 """),
 
     code("""
@@ -525,13 +522,13 @@ print(f"W_TP k_TP at k_TP = 1e-9    = {pset.value('W_TP') * 1e-9 * 1e12:.1f} uHz
     md("""
 ## 14. g-factor vs field
 
-The same exact-derivative kernel, swept. Levels are ordered by energy at each
-field point, so a label follows an energy slot rather than a character — the
-two J = 1 components (0 and 1) never cross here, the J = 2 slots do rearrange.
+We now evaluate the same derivatives across the field sweep. Levels are ordered
+by energy at each field point. The two J = 1 components (0 and 1) never cross
+here, but the J = 2 slots rearrange, so their labels can change state character.
 
 The left panel plots all six levels on one g-factor axis, where the J = 1
-pair's motion is sub-pixel — §9 already flagged this as a fraction of a
-percent. The right panel isolates levels 0 and 1 and plots the fractional
+pair's motion is smaller than a pixel (§9 gives the fractional scale).
+The right panel isolates levels 0 and 1 and plots the fractional
 change `(g − g(E_ref)) / |g(E_ref)|` relative to `E_ref = 10 V/cm` (the first
 field point, past the low-field polarisation knee), which resolves the ∓0.4 %
 opposite-signed motion that is Δg.
@@ -570,12 +567,12 @@ for s in (0, 1):
     md("""
 ## 15. E1 line strengths, J = 1 → 2
 
-Transition dipoles between two separately diagonalised m_F blocks:
+We calculate transition dipoles between two separately diagonalised m_F blocks:
 m_F = +1/2 → +3/2, so the 3j selection rule `m_bra = m_ket + p` picks
 p = −1. Amplitudes are summed over polarisation and then squared, so
 intensity-borrowing paths interfere; strengths come out in units of `d_mf²`.
 
-Evaluated at zero field, where parity is exact — and every line below connects
+At zero field, parity is exact and every line below connects
 opposite parities, as E1 requires. Labels come from `label_lines`, which reads
 the dominant (J, F) and the superposition parity off each eigenvector;
 `line_strengths` never sees them, so labelling does not decide which
@@ -615,13 +612,12 @@ plt.show()
 """),
 
     md("""
-## 16. A parameter-set sweep — 200 sets, one resum, one batched `eigh`
+## 16. A sweep over 200 parameter sets
 
-This is what the term-matrix catalogue buys, and what an engine that rebuilds
-the Hamiltonian per parameter set cannot do. The coefficients are broadcast
-into `c[200, n_terms]`, the Hamiltonians come out of a single `tensordot`, and
-`eigh` runs once over the batch. Nothing is re-derived: `A_par` and `omega_ef`
-are ordinary knobs, exactly like `E_z` and `B_z`.
+We can vary molecular parameters just as we varied the fields. The coefficients
+are broadcast into `c[200, n_terms]`, a single `tensordot` assembles the
+Hamiltonians, and `eigh` diagonalises the batch. The matrices stay fixed while
+`A_par` and `omega_ef` change, just as they did for `E_z` and `B_z`.
 
 Two observables from the same 200 diagonalisations, in the m_F = +1/2 block:
 the J = 1, F = 3/2 Ω-doublet splitting, which tracks `ω_ef` and is flat in A∥;
@@ -670,34 +666,34 @@ print(f"hyperfine interval at A_par = -20 MHz  (closed form (3/4)|A| - (3/2)c_I 
 """),
 
     md("""
-## 17. What this model does and does not contain
+## 17. Model scope
 
-**In** — nine Hamiltonian terms plus an opt-in PT-odd pair: rotation,
+The model includes nine Hamiltonian terms plus an opt-in PT-odd pair: rotation,
 centrifugal distortion, Ω-doubling, axial hyperfine ΔJ = 0 and ΔJ = ±1 (one
 parameter, A∥, for both), nuclear spin–rotation `c_I`, Stark, `+G∥` Zeeman,
 nuclear Zeeman; then `pt_odd_edm` and `pt_odd_scalar_pseudoscalar`.
 
-**Out, and why** — sizes from [HAM] §5:
+The following interactions are omitted (scales from [HAM] §5):
 
 - Ω = ±2, ±3 (³Δ₂, ³Δ₃): mixing ≤ 1.4 × 10⁻³, energy effect linear in J(J+1)
-  and therefore absorbed into B₀; residual ≤ 38 Hz at J = 4. Costs 15 % of δg,
-  which is the gap §12 shows.
-- `e_Δ`, the hyperfine-dependent Ω-doubling: 1–10 kHz **estimate**, the only
-  dropped term above the kHz line — **OPEN-8**.
+  and therefore absorbed into B₀; residual ≤ 38 Hz at J = 4. Omitting it accounts
+  for the 15 % discrepancy in δg discussed in §12.
+- `e_Δ`, the hyperfine-dependent Ω-doubling: 1–10 kHz estimate, the only
+  dropped term above the kHz line (OPEN-8).
 - Parity-dependent Zeeman (`g_rS`, `g'_rS`): ≈ 1 kHz at 1 G; required for any
-  zero-field Δg — **OPEN-10**.
+  zero-field Δg (OPEN-10).
 - Rotational `g_r`: ≤ 0.6 % of g_F, absorbed into the fitted G∥ at J = 1, so
-  the predicted g at J = 2–4 carries an unquantified ~1 % error — **OPEN-7**.
+  the predicted g at J = 2–4 carries an unquantified ~1 % error (OPEN-7).
 - Rotating-frame `ħω_rot F_x`: not a static-field term, and it breaks m_F
   blocking.
 
-**Statuses that matter.** `c_I = 20 kHz` is an analogy-based sensitivity
+`c_I = 20 kHz` is an analogy-based sensitivity
 estimate: its sign and accuracy in ThF⁺ are not established, and no universal
-numeric uncertainty bound is assigned (**OPEN-6**). The sign of g_F is not
-measured, only |g| (**OPEN-4**); E_eff is 35 vs 37.3 GV/cm across sources
-(**OPEN-14**).
+numeric uncertainty bound is assigned (OPEN-6). The sign of g_F is not
+measured, only |g| (OPEN-4); E_eff is 35 vs 37.3 GV/cm across sources
+(OPEN-14).
 
-**Current conventions and limitations** — [the model guide](../docs/models.md)
+For the conventions and parameter limits, see [the model guide](../docs/models.md)
 and [scientific limitations](../docs/open-questions.md):
 
 - The upper Ω-doublet component has parity `(−1)^J` in the implemented

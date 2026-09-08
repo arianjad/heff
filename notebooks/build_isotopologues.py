@@ -1,12 +1,5 @@
 """Generate the ThF+ isotopologue and two-photon notebook.
 
-The notebook is generated from a script so it is reviewable as a diff and
-regenerable after an API change -- same shape as notebooks/build_tutorial.py:
-a CELLS list of md(...)/code(...) tuples, a build() that writes the .ipynb via
-nbformat, and `if __name__ == "__main__": build()`. Nothing is imported from
-build_tutorial.py; the helper patterns (write_state, dominant, select_q,
-display_levels) are re-implemented here for the two-spin basis.
-
 Run:  python notebooks/build_isotopologues.py
 Then: python -m jupyter nbconvert --to notebook --execute --inplace notebooks/ThF_plus_Isotopologues.ipynb
 """
@@ -25,24 +18,13 @@ def code(text):
     return ("code", text.strip("\n"))
 
 
-# Reused verbatim in every 229/227 figure caption (review finding #2) so the
-# wording never drifts between cells.
-STATUS_229 = (
-    "**Status behind every number above**: `A_par_Th` is **ab-initio**, sign "
-    "unresolved between two calculations that agree in magnitude (OPEN-16); "
-    "`eQq0_Th` and `eQq2_Th` are **uncalibrated placeholders** used for "
-    "sensitivity calculations, not estimates or uncertainty bounds (OPEN-18, "
-    "OPEN-17); `c_I(Th)` is held at **0** because an input is missing "
-    "(OPEN-19)."
-)
+# The level diagram and scope summary use the same parameter caveat.
 STATUS_227 = (
-    "**Status behind every ²²⁷ number above**: `A_par_Th` = "
-    "**+39.8 GHz** is the native model's **Schmidt stress-test placeholder** "
-    "for a tentative **(1/2⁺)** assignment. It is not a calibrated moment "
-    "prediction. The separate [field-plot study](../results/thf-fields-2026-09-08/README.md) "
-    "uses the Minkov et al. nuclear-theory alternative, **+1.79 GHz**, and "
-    "does not change this notebook's native parameters. ²²⁷Th (I = 1/2) "
-    "has no quadrupole moment — structurally absent, not merely small "
+    "For ²²⁷Th, `A_par_Th` = +39.8 GHz is a Schmidt stress-test placeholder "
+    "for the tentative (1/2⁺) assignment, not a calibrated moment prediction. "
+    "The separate [field plots](../results/thf-fields-2026-09-08/README.md) use "
+    "Minkov et al.'s +1.79 GHz nuclear-theory alternative. This notebook keeps "
+    "the stress-test value. ²²⁷Th (I = 1/2) has no quadrupole moment "
     "([HAM] §9.6, OPEN-20)."
 )
 
@@ -52,44 +34,45 @@ CELLS = [
     md("""
 # ThF⁺ isotopologues and the two-photon operator, with `heff`
 
-The X ³Δ₁ ground vibronic state of ²³²Th¹⁹F⁺, ²²⁹Th¹⁹F⁺ and ²²⁷Th¹⁹F⁺, J = 1–4.
-²³²Th is spin-0 (no Th hyperfine), so this notebook's ²³² panels use `heff`'s
-v1 one-spin basis `|J, Ω, F, m_F⟩` (`KET_C`, half-integer `F`/`m_F`, F = J ± ½
-from ¹⁹F alone). ²²⁹Th (I = 5/2) and ²²⁷Th (I = 1/2) each add a second coupled
+We now compare ²³²Th¹⁹F⁺, ²²⁹Th¹⁹F⁺ and ²²⁷Th¹⁹F⁺ in the X ³Δ₁ ground
+vibronic state, J = 1–4. Changing the thorium isotope changes the nuclear spin.
+²³²Th is spin-0, so only ¹⁹F contributes nuclear hyperfine structure. Its panels
+use the one-spin basis `|J, Ω, F, m_F⟩` (`KET_C`, half-integer `F`/`m_F`,
+F = J ± ½ from ¹⁹F alone). ²²⁹Th (I = 5/2) and ²²⁷Th (I = 1/2) add a second coupled
 nuclear spin, giving the two-spin basis `|((J I_Th) F₁, I_F) F, m_F⟩`
 (`KET_C2`, integer `F`/`m_F`).
 
-This is an advanced, native-API notebook: it constructs the coupled bases and
-term matrices directly so the model choices remain visible. Start with the
-repository [README](../README.md), including its TOML model quickstart. The
+We construct the coupled bases and term matrices directly. For the TOML
+workflow, start with the repository [README](../README.md). The
 separate [three-isotope field plots](../results/thf-fields-2026-09-08/README.md)
 use larger exploratory bases and document their own parameter sets.
 
-**Conventions in force**, stamped from `pset.conventions.stamp()` — printed
-below. The v1 tutorial (`ThF_plus_X3Delta1_Tutorial.ipynb`) already fixes
+The code prints the conventions using `pset.conventions.stamp()`.
+The [232Th tutorial](ThF_plus_X3Delta1_Tutorial.ipynb) defines
 `n_hat`, `ef_rule`, `zeeman_sign`, `zeeman_energy`, `dg_def`, `edm_factor`,
-`dipole_origin`, `formalism`. This notebook adds the four v2 conventions:
+`dipole_origin`, `formalism`. This notebook adds four conventions:
 `quadrupole_convention` (B&C's q₀-is-negative-EFG sign, single-valued),
-`eqq2_norm` (B&C (9.52)'s q = ±2 normalisation — `'bc_9p52_q2'`, the only
+`eqq2_norm` (B&C (9.52)'s q = ±2 normalisation, `'bc_9p52_q2'`, the only
 implemented value; `'petrov2018_eq23'` raises, OPEN-17), `two_photon_norm`
 (`'bc_5p142_reduced'`, unit reduced one-photon elements per channel), and the
 `version` tag itself, `'thf-v2'`.
 
-**Standing caveat, read this before any ²²⁹/²²⁷ number below**: no Th
-hyperfine constant has been measured for a ThF⁺ isotopologue ([TH] §2.1,
+No Th hyperfine constant has been measured for a ThF⁺ isotopologue ([TH] §2.1,
 gap G5). The ²²⁹ magnetic hyperfine value is an ab-initio scale with an
 unresolved sign choice; its quadrupole values are uncalibrated sensitivity
 placeholders. The native ²²⁷ value is a Schmidt stress test, while the field
 plots separately show the Minkov nuclear-theory alternative. These statuses
-limit the physical interpretation of the figures. Software tests exercise
-code identities and regressions; they do not prove the physical truth of any
-placeholder or of the selected effective Hamiltonian.
+limit what we can infer from the figures. Tests check code identities and
+regressions; they cannot determine these unknown molecular inputs.
 
-Physics sources cited throughout: [HAM] = `docs/thf-plus-x3delta1-effective-
-hamiltonian.md`, [TH] = `docs/digest-literature-th-hyperfine.md`,
-[2γ] = `docs/digest-literature-two-photon.md`, [SPEC-v2] = `docs/superpowers/
-specs/2026-09-05-heff-v2-isotopologues-two-photon.md`. Every non-trivial
-number shown below is computed by the code on screen, rather than transcribed.
+References used below are the [Hamiltonian reference][HAM],
+[thorium hyperfine digest][TH], [two-photon digest][2γ], and
+[isotopologue model specification][SPEC-v2].
+
+[HAM]: ../docs/thf-plus-x3delta1-effective-hamiltonian.md
+[TH]: ../docs/digest-literature-th-hyperfine.md
+[2γ]: ../docs/digest-literature-two-photon.md
+[SPEC-v2]: ../docs/superpowers/specs/2026-09-05-heff-v2-isotopologues-two-photon.md
 """),
 
     # ------------------------------------------------------------- 2 -----
@@ -97,18 +80,18 @@ number shown below is computed by the code on screen, rather than transcribed.
 ## 1. The basis
 
 `|J, Ω, F₁, F, m_F⟩` with `F₁ = J + I_Th` (the inner coupling) and
-`F = F₁ + I_F` (¹⁹F the outer spin) — inner-spin-first, `[SPEC-v2] §2.1, [HAM]
-§9` preamble. ²³²Th (I = 0) collapses this to the v1 `F = J + I_F` basis
-exactly (`KET_C`; V16 proves every `REGISTRY_C2` term equals its v1 twin at
-`I_Th = 0`), so `thf_spec('232')` returns the same object as `thf_spec()`.
+`F = F₁ + I_F` (¹⁹F the outer spin). We couple thorium first ([SPEC-v2] §2.1,
+[HAM] §9). At ²³²Th's `I_Th = 0`, this reduces exactly to the one-spin
+`F = J + I_F` basis (`KET_C`), including the `REGISTRY_C2` matrix elements.
+`thf_spec('232')` therefore returns the same object as `thf_spec()`.
 
-**Why coupled, not decoupled.** Petrov 2018's alternative is the fully
+Petrov 2018 uses the fully
 decoupled product basis `|J, m_J⟩|I_Th, m_1⟩|I_F, m_2⟩` ([SPEC-v2] §2.1). The
 coupled `F₁` scheme is used here because it is what B&C's spectator theorems
 ((5.172), (5.174), (5.186)) are written for, and because `F₁` turns out to be
-an (almost) good quantum number — [TH] §4.5 finds `ΔF₁ = ±1` mixing is a
-25 kHz-level effect against 190–2670 MHz `F₁` spacings, so the coupled basis
-is not just formally convenient, it tracks the real near-conserved quantity.
+an approximately good quantum number. [TH] §4.5 finds `ΔF₁ = ±1` mixing at
+the 25 kHz level against 190–2670 MHz `F₁` spacings. This makes `F₁` a useful
+label for interpreting the levels.
 
 The dimension closed form ([SPEC-v2] §2.2): `(2I_Th+1)(2I_F+1) Σ_{J=1}^{J_max}
 2(2J+1)` for the two-spin case; `(2I_F+1) Σ 2(2J+1)` for ²³² (`I_Th = 0`).
@@ -178,36 +161,35 @@ for iso in ISOTOPOLOGUES:
 
 `terms_for_case('c2', registry=REGISTRY_C2)` for ²²⁹/²²⁷; the default
 `terms_for_case('c')` for ²³². Every term below is registered with its
-declared selection rules (`Rules`, checked by gate A5) and a citation string
-(`term.cite`); the printout shows both, but the physics is the formula, so it
-is copied out here from [HAM] with its B&C equation numbers.
+selection rules (`Rules`) and a citation (`term.cite`). The printout shows
+both. The formulas below follow [HAM], with the corresponding B&C equations.
 
-**Case-(c) v1 terms** ([HAM] §2, `heff/elements_c.py`):
+The one-spin terms are ([HAM] §2, `heff/elements_c.py`):
 
-- **Rotation + centrifugal** (§2.1): `H_rot = B₀ J(J+1) − D₀ [J(J+1)]²`,
+- Rotation + centrifugal (§2.1): `H_rot = B₀ J(J+1) − D₀ [J(J+1)]²`,
   diagonal.
-- **Ω-doubling** (§2.3, Ng Eq. C.3): off-diagonal element between `Ω = ±1` at
+- Ω-doubling (§2.3, Ng Eq. C.3): off-diagonal element between `Ω = ±1` at
   fixed `J`, `−ω_ef J(J+1)/4`; splitting `ω_ef J(J+1)/2`. Ng's own printed
   operator carries an extra `(−1)^J` prefactor on this element; `heff` uses
-  the J-independent sign by convention ([HAM] §2.3) — both give the identical
+  the J-independent sign by convention ([HAM] §2.3). Both give the identical
   physical splitting law, `ω_ef J(J+1)/2`, and only the J-dependent phase of
   the off-diagonal element differs.
-- **¹⁹F hyperfine, ΔJ = 0** (§2.4, B&C (9.50)): diagonal,
+- ¹⁹F hyperfine, ΔJ = 0 (§2.4, B&C (9.50)): diagonal,
   `A∥ [F(F+1) − I(I+1) − J(J+1)] / [2J(J+1)]`.
-- **¹⁹F hyperfine, ΔJ = ±1** (§2.5, B&C (9.51)): off-diagonal in `J`, same
+- ¹⁹F hyperfine, ΔJ = ±1 (§2.5, B&C (9.51)): off-diagonal in `J`, same
   `A∥`, dropped by Ng but above the kHz floor.
-- **Nuclear spin–rotation c_I** (§2.6, B&C (8.7)/(8.20)):
+- Nuclear spin–rotation c_I (§2.6, B&C (8.7)/(8.20)):
   `c_I [F(F+1) − I(I+1) − J(J+1)] / 2`.
-- **Stark** (§2.7): `−n̂_sign · d_mf E_z` × the rank-1 axial geometry
+- Stark (§2.7): `−n̂_sign · d_mf E_z` × the rank-1 axial geometry
   (`elements_c.dipole_geometry`), `Δm_F = 0`, parity-odd.
-- **Zeeman `+G∥`** (§2.8, sign corrected from Ng Eq. C.6): `+G∥ μ_B Ω (J·n̂)(n̂·B)`.
-- **Nuclear Zeeman, PT-odd EDM and scalar–pseudoscalar** (§2.8, §2.12): opt-in,
+- Zeeman `+G∥` (§2.8, sign corrected from Ng Eq. C.6): `+G∥ μ_B Ω (J·n̂)(n̂·B)`.
+- Nuclear Zeeman, PT-odd EDM and scalar–pseudoscalar (§2.8, §2.12): opt-in,
   zero by default.
 
-**Case-(c2) v2 terms, added on top** ([HAM] §9, `heff/elements_c2.py`) — every
-element below is `axial_geometry`'s master formula (the two-spectator chain,
-B&C (5.172) + (5.174) twice + (5.186)) at the rank/component the physics needs,
-or a v1 formula run through a field adapter:
+The two-spin terms use `axial_geometry` ([HAM] §9, `heff/elements_c2.py`).
+Each element below follows the two-spectator chain
+B&C (5.172) + (5.174) twice + (5.186) at the required rank and component,
+or adapts a one-spin formula:
 
 ```
 <J',Om',F1',F',m'| T^k_p(molecule-frame, component q) |J,Om,F1,F,m>
@@ -218,24 +200,24 @@ or a v1 formula run through a field adapter:
 ```
 
 with `q = Om' − Om`, `Δm_F` forced to `p` by the first 3j. [HAM] §9.1: this
-reduces analytically to the v1 element at `I_Th = 0` — an identity, not an
+reduces analytically to the one-spin element at `I_Th = 0`, an identity, not an
 approximation.
 
-- **Five v1 diagonal-in-`F₁` terms** (rotation, centrifugal, Ω-doubling,
+- Five v1 diagonal-in-`F₁` terms (rotation, centrifugal, Ω-doubling,
   the two PT-odd terms) are the v1 formulas unchanged (§9.2, B&C (5.176):
   operators built from `J`/`Ω` alone are diagonal in `F₁`, `F`, `m_F`).
-- **`hyperfine_A_par_Th`, `hyperfine_A_par_Th_dJ1`, `spin_rotation_cI_Th`**
+- `hyperfine_A_par_Th`, `hyperfine_A_par_Th_dJ1`, `spin_rotation_cI_Th`
   (§9.2 substitution table): the v1 `elements_c.hyperfine_A_par` /
   `hyperfine_A_par_dJ1` / `spin_rotation_cI` formulas with `(I, F) → (I_Th,
-  F₁)` — B&C (9.50)/(9.51)/(8.20) again, same equations, `I_Th`/`F₁` in place
+  F₁)` (B&C (9.50)/(9.51)/(8.20)), with `I_Th`/`F₁` in place
   of `I`/`F`.
-- **`zeeman_nuclear_Th`** (§9.2.1): the one Th operator the substitution rule
-  does *not* cover (a lab-frame rank-1 operator, not a scalar) — the
+- `zeeman_nuclear_Th` (§9.2.1): the one Th operator the substitution rule
+  does *not* cover. It is a lab-frame rank-1 operator and uses the
   two-spectator chain at `k = 1`.
-- **`hyperfine_A_par_F`, `hyperfine_A_par_F_dJ1`, `spin_rotation_cI_F`**
-  (§9.3): the ¹⁹F operators recoupled with `I_Th` now a spectator — `ΔF₁ =
+- `hyperfine_A_par_F`, `hyperfine_A_par_F_dJ1`, `spin_rotation_cI_F`
+  (§9.3): the ¹⁹F operators recoupled with `I_Th` now a spectator, with `ΔF₁ =
   0, ±1` (¹⁹F is the *outer* spin, so B&C (5.176) does not apply to it).
-- **`quadrupole_eQq0_Th`, `quadrupole_eQq2_Th`** (§9.4, B&C (9.52)/(9.53)):
+- `quadrupole_eQq0_Th`, `quadrupole_eQq2_Th` (§9.4, B&C (9.52)/(9.53)):
   the Th electric quadrupole, `q = 0` diagonal and `q = ±2` mixing `Ω = ±1`.
   Structurally absent (not zero) for `I_Th < 1`, i.e. for ²²⁷Th and ²³²Th.
 """),
@@ -259,17 +241,15 @@ for t in terms_for_case('c2', registry=REGISTRY_C2):
 
 The v1 basis, no Th hyperfine. Per J, referred to `B₀ J(J+1)`: the ¹⁹F
 hyperfine (`(3/4)|A∥| = 15.07 MHz` at J = 1, [HAM] §2.4) and the Ω-doubling
-(`ω_ef J(J+1)/2`, [HAM] §2.3). `A_par` is **measured** (Ng 2022 Table I);
-`omega_ef` is **measured** (Ng 2022 Table I) — both carried unchanged by
+(`ω_ef J(J+1)/2`, [HAM] §2.3). `A_par` is measured (Ng 2022 Table I);
+`omega_ef` is measured (Ng 2022 Table I). Both are carried unchanged by
 `thf_v2('232')` from `thf_v1()`.
 
-**e/f labels**: the upper Ω-doublet component has parity `(−1)^J` at every
-J — equivalently, e lies `ω_ef J(J+1)/2` above f, uniformly in J (Brown 1975
-convention). This is **OQ-A**, closed 2026-09-05 (`docs/open-questions.md`);
-"true parity" here means the parity of the actual eigenstate — the e/f label
-already has the J(J+1)-dependent rotation factored out, so "true parity
-`(−1)^J`" and "e above f uniformly" are the same statement, not two different
-orderings.
+e/f labels: the upper Ω-doublet component has parity `(−1)^J` at every
+J. Equivalently, e lies `ω_ef J(J+1)/2` above f, uniformly in J (Brown 1975
+convention; [HAM] §2.3, OPEN-2). Here parity refers to the eigenstate's parity,
+while the e/f label includes the J-dependent convention. Thus upper-state
+parity `(−1)^J` gives e above f at every J.
 """),
 
     code("""
@@ -308,30 +288,24 @@ print("blue = e, red = f -- upper component is e at every J (OQ-A, closed).")
     md(f"""
 ## 4. ²²⁹ and ²²⁷ThF⁺ level diagrams, side by side with ²³²
 
-**Every ¹⁹F structure and the whole Ω-doubling now live inside one F₁
-level.** The ²²⁹ J = 1 Th hyperfine spread is **~4.6 GHz — 63 % of B₀**
-([TH] §4.1), so the two panels below need separate energy scales (a broken
-axis would show mostly white space at this ratio): the ²²⁹/²²⁷ panel is
-plotted on its own axis, referred to `B₀ J(J+1)` exactly as ²³² was, but at a
-much larger vertical scale. At this scale, each F₁ manifold's internal ¹⁹F
-hyperfine and Ω-doubling substructure (kHz–MHz) is invisible — the level
-diagram below effectively shows F₁ **centroids**, not the full sublevel
-structure, even though every individual eigenvalue is plotted.
+The thorium hyperfine structure sets a much larger energy scale. For ²²⁹ at
+J = 1, its spread is ~4.6 GHz, or 63 % of B₀ ([TH] §4.1). We therefore plot
+²²⁹/²²⁷ on a separate axis, still relative to `B₀ J(J+1)`. Each F₁ manifold
+contains ¹⁹F hyperfine and Ω-doubling substructure at the kHz–MHz scale. Every
+eigenvalue is plotted, but this substructure is unresolved: the visible lines
+effectively mark the F₁ centroids.
 
-`A_par_Th` (²²⁹) is **ab-initio**, sign-unresolved (OPEN-16, cell 6 below).
-{STATUS_227} Both spreads below are **computed by the code**, not the [TH]
-table numbers. The ²³² panel's title carries no constant statuses; `A_par`
-and `omega_ef` are both **measured** there, as §3 already said.
+`A_par_Th` (²²⁹) is ab-initio with an unresolved sign (OPEN-16, §5).
+{STATUS_227} For ²³², `A_par` and `omega_ef` are measured (§3).
 
-**The ²²⁷ "J = 1" label is a dominant-component assignment, not a good
-quantum number.** Its eight selected eigenvectors carry as little as 0.63 of
+The ²²⁷ "J = 1" label identifies the dominant component of a mixed state.
+Its eight selected eigenvectors carry as little as 0.63 of
 their weight on J = 1 kets (median 0.81; ²²⁹ carries at least 0.994), because at
 the placeholder `A∥ = +39.8 GHz` the Th hyperfine ΔJ = ±1 element is 0.59 ×
-the rotational spacing ([HAM] §9.6) — and that same strong ΔJ = ±1 mixing is
-why the **eigenvalue** spread printed below (16.6 GHz) sits well below §9.6's
-**first-order** estimate of +29.9 GHz against `4B₀ = 29.1 GHz`: the two
-numbers are different quantities, and for ²²⁷ first-order perturbation theory
-in the Th hyperfine is not valid.
+the rotational spacing ([HAM] §9.6). That strong ΔJ = ±1 mixing also explains
+why the eigenvalue spread below (16.6 GHz) sits well below §9.6's first-order
+estimate of +29.9 GHz against `4B₀ = 29.1 GHz`. At this placeholder value,
+first-order perturbation theory in the Th hyperfine is not valid.
 """),
 
     code("""
@@ -394,20 +368,19 @@ print("Both panels' x-axes are categorical (one column per isotopologue); "
 
     # ------------------------------------------------------------- 6 -----
     md("""
-## 5. The ¹⁹F doublet-ordering flip — a falsifiable prediction
+## 5. Reversing the ¹⁹F doublet ordering
 
 Once `I_Th ≠ 0`, the ¹⁹F doublet splitting inside each `F₁` is no longer the
-v1 `A∥^F (2J+1)/[2J(J+1)]` law — it depends on `F₁` and can even **flip
-sign** ([TH] §4.5). Computed below directly from the `hyperfine_A_par_F` term
-matrix (the diagonal projection, in units of `A∥^F`) on the default branch
-`thf_v2('229')` (`A_par_Th = −1510 MHz`, the **signed, ab-initio** value
+one-spin `A∥^F (2J+1)/[2J(J+1)]` law. It depends on `F₁` and can reverse sign
+([TH] §4.5). We evaluate the diagonal projection of `hyperfine_A_par_F`, in
+units of `A∥^F`, on the default branch
+`thf_v2('229')` (`A_par_Th = −1510 MHz`, the signed, ab-initio value
 recommended by `docs/lit/lookup-apar-th-sign-convention.md`). The alternative
 branch is `thf_v2('229', a_par_th_sign='positive')`, trusting Denis 2015
-instead of Skripnikov & Titov 2015; **the sign of A∥(Th) is unresolved
-(OPEN-16)**, and only one branch is drawn here since the ¹⁹F splitting PATTERN
-below is a sign-independent geometric fact of the recoupling (only the F₁
-*ordering* — which A∥_Th's sign controls — decides which physical F₁ manifold
-sits where in energy).
+instead of Skripnikov & Titov 2015. The sign of A∥(Th) is unresolved (OPEN-16).
+We draw one branch because the ¹⁹F splitting pattern follows from recoupling
+and is independent of that sign. Changing A∥_Th's sign changes the F₁ ordering,
+and hence where each pattern appears in energy.
 """),
 
     code("""
@@ -437,15 +410,16 @@ print("Alternative branch: thf_v2('229', a_par_th_sign='positive') trusts Denis 
 
 `eQq2_Th` mixes `Ω = +1 ↔ −1` at fixed `(J, F₁, F, m_F)`, in the same matrix
 slot as `omega_doubling` ([HAM] §9.4.4, [TH] §4.4). Tabulated below at the
-**native eQq2_Th = 300 MHz placeholder** (`status='placeholder'`, OPEN-17:
+native eQq2_Th = 300 MHz placeholder (`status='placeholder'`, OPEN-17:
 the signed normalization and magnitude are uncalibrated) against two reference scales: the
 Ω-doubling off-diagonal element `ω_ef J(J+1)/4 = 2.65 MHz` at J = 1, and the
 fully-polarised Stark shift `γ_F m_F d_mf E = 50.9 MHz` at F = 3/2, m_F = 3/2,
-E = 60 V/cm (the JILA operating field, [HAM] §2.7) — the **²³²-basis**
+E = 60 V/cm (the JILA operating field, [HAM] §2.7). The latter is the ²³²-basis
 (`I_Th = 0`) F = 3/2, m_F = 3/2 value, used here only as a familiar scale
 against which to size the ²²⁹ quadrupole/Ω-doubling competition, not a ²²⁹
-quantity itself. **At the JILA field the Stark and quadrupole scales are
-comparable, so the three compete rather than one simply winning** ([TH] §4.4).
+quantity itself. With this placeholder, the Stark and quadrupole scales are
+comparable at the JILA field, so neither can be neglected in the comparison
+with Ω-doubling ([TH] §4.4).
 """),
 
     code("""
@@ -499,12 +473,12 @@ print(f"eQq2_Th is {min(abs(q2/om) for *_, om, q2 in rows):.1f}-{max(abs(q2/om) 
 ## 7. J convergence
 
 `j_convergence('229')` and `j_convergence('227')` at `J_max = 2, 4, 6`
-(field-free; `m_F` resolved per-isotopologue by the helper — 0 for both,
+(field-free; the helper selects `m_F = 0` for both,
 since `F`/`m_F` are integer for both). The Th `ΔJ = ±1` hyperfine is a
-**~2 GHz off-diagonal element** ([TH] §4.2) whose second-order shift is **not**
-absorbable into `B₀`, because — unlike the analogous ¹⁹F term — it depends on
-`F₁`. `J_max` is a `StateSpec` knob (OPEN-22): the notebook's own figures use
-`J_max = 4` throughout; the table below is the evidence for that choice.
+~2 GHz off-diagonal element ([TH] §4.2) whose second-order shift is not
+absorbable into `B₀`, because it depends on `F₁` (unlike the analogous ¹⁹F
+term). `J_max` is a `StateSpec` setting (OPEN-22). The figures use `J_max = 4`;
+use the table to assess that cutoff for these parameters and field-free states.
 """),
 
     code("""
@@ -529,18 +503,17 @@ for iso, mF in (('229', 0.0), ('227', 0.0)):
     md(f"""
 ## 8. Zeeman maps and g-factors
 
-Exact Hellmann–Feynman g-factors (`observe.g_factors`), one non-zero
-signed-`m_F` block per isotopologue: `m_F = +1/2` for ²³² (matches the v1
+We evaluate Hellmann–Feynman g-factors with `observe.g_factors`, using one
+non-zero signed-`m_F` block per isotopologue: `m_F = +1/2` for ²³² (matches the
 tutorial's block), `m_F = +1` for ²²⁹/²²⁷ (smallest non-zero integer m_F).
-**Predicted g at J > 1 carries an unquantified ~1 % error from the absorbed
-rotational g-factor `g_r`** ([HAM] §2.10, OPEN-7) — not fitted for any
+Predicted g at J > 1 carries an unquantified ~1 % error from the absorbed
+rotational g-factor `g_r` ([HAM] §2.10, OPEN-7). It is not fitted for any
 isotopologue, so the same caveat applies to every g below. All J = 1 states
-of the chosen `m_F` block are plotted below (three panels, one per
-isotopologue), not just the lowest.
+of the chosen `m_F` block are plotted below, with one panel per isotopologue.
 
-{STATUS_229}
-
-{STATUS_227}
+These curves use the parameter choices in §4–§6: ab-initio magnetic hyperfine
+for ²²⁹, uncalibrated ²²⁹ quadrupoles, and the ²²⁷ Schmidt stress test.
+Thorium spin rotation is held at zero for missing input (OPEN-19).
 """),
 
     code("""
@@ -583,20 +556,20 @@ plt.show()
 ## 9. Stark maps
 
 The three isotopologues' `m_F` blocks from §8 (`m_F = +1/2` for ²³², `+1` for
-²²⁹/²²⁷), swept in `E_z`. The ²³² panel draws the **`F = 1/2` linear-limit
-closed form** `|Ω m_F γ_F(F=1/2) d_mf E|` as a dashed reference curve — the
+²²⁹/²²⁷), swept in `E_z`. The ²³² panel draws the `F = 1/2` linear-limit
+closed form `|Ω m_F γ_F(F=1/2) d_mf E|` as a dashed reference curve. The
 ²²⁹/²²⁷ panels have no such closed form because the Th hyperfine mixes many
 more `(F₁, F)` states at comparable energy, so only the direct
-diagonalisation is shown for them. Even on the ²³² panel, the **exact**
+diagonalisation is shown for them. Even on the ²³² panel, the exact
 curves visibly exceed this linear-limit reference by 60 V/cm: the closed
 form assumes `F = 1/2` and `F = 3/2` stay decoupled, but the ¹⁹F hyperfine
 splitting between them (`15 MHz` at J = 1) is comparable to, not much larger
 than, the Stark shift at the top of the sweep (`~40 MHz`), so the two `F`
 manifolds mix and the exact eigenvalues depart from the linear-limit formula.
 
-{STATUS_229}
-
-{STATUS_227}
+These curves use the parameter choices in §4–§6: ab-initio magnetic hyperfine
+for ²²⁹, uncalibrated ²²⁹ quadrupoles, and the ²²⁷ Schmidt stress test.
+Thorium spin rotation is held at zero for missing input (OPEN-19).
 """),
 
     code("""
@@ -629,23 +602,23 @@ plt.show()
 Two adjacent `m_F` blocks per isotopologue, each diagonalised separately at
 zero field, then `heff.spectra.line_strengths` (v1 geometry for ²³²,
 `functools.partial(heff.elements_c2.axial_geometry, k=1, q=0.0)` for
-²²⁹/²²⁷) between them, with only a **single σ⁻ polarisation**
-(`polarizations=(-1,)`) driven — enough to see which `(J, F₁, F)` transitions
+²²⁹/²²⁷) between them, with only a single σ⁻ polarisation
+(`polarizations=(-1,)`) driven. This shows which `(J, F₁, F)` transitions
 are geometrically allowed and their relative strengths, though the absolute
 strengths would differ under σ⁺ or an unpolarised sum. Lines are filtered by
-`J` into **within J = 1** (`ΔJ = 0`, same-Ω dipole transitions that only
-exist because both `Ω = ±1` mix inside one `m_F` block) and **J = 1 ↔ 2**;
+`J` into within J = 1 (`ΔJ = 0`, same-Ω dipole transitions that only
+exist because both `Ω = ±1` mix inside one `m_F` block) and J = 1 ↔ 2;
 the strongest ~6 lines per panel are printed with their full
 `(J, F₁, F, parity)` labels from `label_lines`.
 
-The `J` used to sort lines into the two rows is `label_lines`' **dominant
-component**, so on the ²²⁷ panels "J = 1" means a dominant-J=1 assignment
+The `J` used to sort lines into the two rows is `label_lines`' dominant
+component, so on the ²²⁷ panels "J = 1" means a dominant-J=1 assignment
 carrying as little as 0.63 J = 1 weight, median 0.81 (§4), not a J eigenstate; ΔJ there is a
 label difference, not a selection rule.
 
-{STATUS_229}
-
-{STATUS_227}
+These curves use the parameter choices in §4–§6: ab-initio magnetic hyperfine
+for ²²⁹, uncalibrated ²²⁹ quadrupoles, and the ²²⁷ Schmidt stress test.
+Thorium spin rotation is held at zero for missing input (OPEN-19).
 """),
 
     code("""
@@ -711,51 +684,47 @@ plt.show()
 Adiabatic elimination of a far-detuned intermediate manifold gives, between
 X-state levels, `T_eff = Σ_i (d·ε₂*) |i⟩⟨i| (d·ε₁) / Δ_i` ([HAM] §9.5, [2γ]
 §3.1). With a common detuning, B&C Eq. (5.142) read backwards makes the
-intermediate sum the reduced element of a single **rank-K polarisability**,
-`α^K = T^K(d,d)/Δ` — one scalar per `(K, ΔΩ)` channel times parameter-free
+intermediate sum the reduced element of a single rank-K polarisability,
+`α^K = T^K(d,d)/Δ`: one scalar per `(K, ΔΩ)` channel times parameter-free
 geometry ([HAM] §9.5.1(1)). `heff` computes the geometry; `alphas` is the
 caller's scalar per channel.
 
-**Which channels.** Two rank-1 dipole operators couple to `K = 0, 1, 2`
+Two rank-1 dipole operators couple to `K = 0, 1, 2`
 (B&C (5.141)). Within X ³Δ₁, `|Ω| = 1` on both sides, so `ΔΩ ∈ {0, ±2}`, and
-`ΔΩ = ±2` needs `K = 2` **and an `Ω = 0` intermediate state** — each E1 leg
+`ΔΩ = ±2` needs `K = 2` and an `Ω = 0` intermediate state. Each E1 leg
 carries `|q_i| ≤ 1`, and only an `Ω_i = 0` intermediate lets the two legs sum
-to `ΔΩ = ±2` ([2γ] §3.3). **`K = 1` is not registered**: in *exact closure*
+to `ΔΩ = ±2` ([2γ] §3.3). `K = 1` is not registered: in *exact closure*
 (a complete opposite-parity intermediate manifold) it is the antisymmetric
 part of the dyad, proportional to `P_X [d_a, d_b] P_X`, which is identically
-zero because the Cartesian components of the dipole commute — confirmed
+zero because the Cartesian components of the dipole commute. This is confirmed
 numerically to `2.2 × 10⁻¹⁶` on a complete spherical-harmonic closure test
 ([HAM] §9.5.3, OPEN-21 resolved: `K ∈ {0, 2}` only, registered; `K = 1`
 reappears only at `O(δ/Δ)` in the resolved sum or `O(1)` for a *restricted*
-intermediate manifold — neither is in this operator).
+intermediate manifold; neither is in this operator).
 
-**Parity.** The operator is **parity-even**: `P d P† = −d` twice. At zero
+The operator is parity-even: `P d P† = −d` twice. At zero
 field, where `P` commutes with `H`, this means the two-photon operator
-connects `e → e` and `f → f` and **never `e ↔ f`** ([2γ] §3.3). At non-zero
+connects `e → e` and `f → f` and never `e ↔ f` ([2γ] §3.3). At non-zero
 `E_rot` parity is not a good quantum number (the Stark term does not commute
-with `P`), and the e/f restriction lifts — the regime JILA actually runs in.
+with `P`), and the e/f restriction lifts. JILA operates in this regime.
 
-**Δm_F reach.** `Δm_F ∈ {0, ±1, ±2}`, **never ±3** — the Wigner-Eckart
+The allowed projections are `Δm_F ∈ {0, ±1, ±2}`, never ±3. The Wigner-Eckart
 projection bounds `|Δm_F| ≤ K ≤ 2` ([HAM] §9.5.4). This is why the two-photon
-operator is **not** the eEDM π/2 pulse (`Δm_F = ±3` within J = 1, `|m_F| =
+operator is not the eEDM π/2 pulse (`Δm_F = ±3` within J = 1, `|m_F| =
 3/2 → ∓3/2`): that transfer is done by an `E_rot` amplitude ramp, not by
 2 × E1 ([2γ] §1 row 4).
 
-**The validity condition — quoted verbatim** ([HAM] §9.5.5):
+Closure requires `Δ ≫ B_i ≈ 7 GHz` for ThF⁺, where `B_i` is the intermediate
+electronic state's rotational constant (`B_e ≈ 0.23 cm⁻¹`). The JILA
+experiments use detunings of 0.16–1.5 GHz, outside this limit ([HAM] §9.5.5).
+To model those experiments quantitatively, we would need a resolved sum with
+the intermediate ladder and its 0⁺/0⁻ labels specified.
 
-> The closure form of the two-photon operator requires a detuning large
-> compared with the intermediate rotational structure, `Δ ≫ B_i ≈ 7 GHz` for
-> ThF⁺ (`B_i` = the **intermediate** electronic state's rotational constant,
-> `B_e ≈ 0.23 cm⁻¹`), whereas the JILA experiments run at 0.16–1.5 GHz — so
-> this is the right *operator shape* and the wrong *limit for the current
-> experiment*, and the α's could later be generated by a resolved sum once
-> the intermediate ladder and its 0⁺/0⁻ labels are settled.
-
-The `alpha_K*_dOm*` scalars below are **placeholders** (`status='placeholder'`,
+The `alpha_K*_dOm*` scalars below are placeholders (`status='placeholder'`,
 value 1.0 in their unit): no ThF⁺ two-photon polarisability exists in any
-source summarized in [2γ] (gap 1). So the spectra in §12–13 show **geometry**
-— the relative strengths the rank-K selection rules and the polarisation dyad
-allow — not physical rates.
+source summarized in [2γ] (gap 1). The spectra in §12–13 therefore illustrate
+the relative strengths allowed by the rank-K geometry and polarisation dyad.
+They do not predict physical rates.
 """),
 
     # ------------------------------------------------------------ 13 -----
@@ -764,34 +733,34 @@ allow — not physical rates.
 
 Same two `m_F` blocks as §10, now driven by `two_photon_line_strengths` at
 `alphas = 1` for every registered channel (`alpha_K0_dOm0`, `alpha_K2_dOm0`,
-`alpha_K2_dOm2` — all `placeholder`). Three polarisation pairs, **Raman
-reading** (`dyad_weights` conjugates `ε₂`, [HAM] §9.5.1(3)): `(σ⁺, σ⁺) →
+`alpha_K2_dOm2`, all `placeholder`). We use three polarisation pairs in the Raman
+reading (`dyad_weights` conjugates `ε₂`, [HAM] §9.5.1(3)): `(σ⁺, σ⁺) →
 Δm_F = 0`, `(σ⁺, σ⁻) → Δm_F = +2`, `(σ⁻, σ⁺) → Δm_F = −2` (and `(σ⁻, σ⁻) → 0`
 likewise, not drawn separately since it repeats the `(σ⁺, σ⁺)` panel's
 `Δm_F = 0` physics).
 
-**Frequency and `Δm_F` sign convention, stated explicitly.** `freqs[i, j]`
+The frequency and `Δm_F` signs need care. `freqs[i, j]`
 below is `E_ket[j] − E_bra[i]` (`heff.spectra._strengths_from_matrices`'s own
 convention, reused unchanged by `two_photon_line_strengths`); in the Raman
 reading, where `ε₂` is the *emitted* photon, this difference is the physical
 difference frequency `ω₁ − ω₂`. `Δm_F` is defined as `m_bra − m_ket`
-(`axial_geometry`'s `P = bra_mF − ket_mF`), so in the **J = 1 → 2** panels
+(`axial_geometry`'s `P = bra_mF − ket_mF`), so in the J = 1 → 2 panels
 below the bra-side block is the J = 1 states and the ket-side block reaches
-into J = 2 — a positive `freq` there means the J = 2 (ket) state sits above
-the J = 1 (bra) state, i.e. the panel reads left-to-right as the ket state
-climbing away from the bra state, not the other way around.
+into J = 2. A positive `freq` there means the J = 2 (ket) state sits above
+the J = 1 (bra) state. The panel therefore reads left-to-right as the ket state
+climbing away from the bra state.
 
-**Ng's opposite-helicity case, highlighted** — Ng thesis p. 102, verbatim:
+Ng discusses opposite helicities in his thesis (p. 102):
 "An alternative to the π-polarized microwaves is to use a two-photon Raman
-process, using photons of **opposite helicities**. We would need to do some
+process, using photons of opposite helicities. We would need to do some
 spectroscopy to make this happen." His stated target
-`|J=1,F=3/2,m_F=+3/2⟩ → |m_F=+1/2⟩` is `Δm_F = −1` and is **genuinely out of
-reach** with σ± alone. `m_F = +3/2 → −1/2` is `Δm_F = −2` and **is**
-reachable — [HAM] §9.5.4's last paragraph, exactly: "with a same-helicity
+`|J=1,F=3/2,m_F=+3/2⟩ → |m_F=+1/2⟩` is `Δm_F = −1` and is out of reach
+with σ± alone. `m_F = +3/2 → −1/2` is `Δm_F = −2` and is reachable.
+[HAM] §9.5.4 gives the required pair: "with a same-helicity
 σ⁻σ⁻ pair in the ladder reading, or with ε₁ = σ⁻, ε₂ = σ⁺ in the Raman
-reading of §9.5.1(3)" — `dyad_weights` implements the **Raman** reading, so
+reading of §9.5.1(3)". `dyad_weights` implements the Raman reading, so
 the `(σ⁻, σ⁺)` pair below is the one that reaches it (`[2γ] §3.3`, marked
-there as **derived**, not something JILA has stated it intends).
+there as derived, not something JILA has stated it intends).
 """),
 
     code("""
@@ -896,9 +865,9 @@ Same `(σ⁺, σ⁻)`, `Δm_F = +2`, within-J = 1 panel, for ²³², ²²⁹ and
 ²²⁷ panels are built on the same field-free Hamiltonian as every other
 ²²⁹/²²⁷ figure in this notebook, so the same status caveats apply here too:
 
-{STATUS_229}
-
-{STATUS_227}
+These curves use the parameter choices in §4–§6: ab-initio magnetic hyperfine
+for ²²⁹, uncalibrated ²²⁹ quadrupoles, and the ²²⁷ Schmidt stress test.
+Thorium spin rotation is held at zero for missing input (OPEN-19).
 """),
 
     code("""
@@ -925,39 +894,39 @@ plt.show()
 
     # ------------------------------------------------------------ 15 -----
     md(f"""
-## 14. What this model contains and does not
+## 14. Model scope
 
-**In** (the v2 term list, on top of v1's nine terms): `hyperfine_A_par_Th`,
+The two-spin model adds or recouples the following terms: `hyperfine_A_par_Th`,
 `hyperfine_A_par_Th_dJ1`, `spin_rotation_cI_Th`, `zeeman_nuclear_Th`,
 `hyperfine_A_par_F`, `hyperfine_A_par_F_dJ1`, `spin_rotation_cI_F`,
 `quadrupole_eQq0_Th`, `quadrupole_eQq2_Th`; the rank-K two-photon operator
 (`REGISTRY_2G`, never summed into a Hamiltonian).
 
-**Out** — sizes from [HAM] §5, unchanged by v2: `Ω = ±2, ±3` (³Δ₂, ³Δ₃);
+The model omits the following interactions (scales in [HAM] §5): `Ω = ±2, ±3` (³Δ₂, ³Δ₃);
 `e_Δ` (hyperfine-dependent Ω-doubling, OPEN-8); parity-dependent Zeeman
 (OPEN-10); the rotational `g_r` (OPEN-7); the rotating-frame term
 (`ħω_rot F_x`, breaks m_F blocking).
 
-**Statuses that matter, one line each**:
+The physical limits are:
 
-- `A∥(Th)` for ²²⁹Th: **ab-initio**, sign unresolved between two
-  calculations that agree in magnitude — **OPEN-16**.
-- `eQq₂_Th` and `eQq₀_Th` for ²²⁹Th: **uncalibrated placeholders** for
+- `A∥(Th)` for ²²⁹Th: ab-initio, sign unresolved between two
+  calculations that agree in magnitude (OPEN-16).
+- `eQq₂_Th` and `eQq₀_Th` (parameters `eQq2_Th` and `eQq0_Th`) for ²²⁹Th: uncalibrated placeholders for
   sensitivity cases. Their signs, conversion, and magnitudes are not
-  validated, and the displayed values are not uncertainty bounds —
-  **OPEN-17/OPEN-18**.
-- `c_I(Th)`: held at 0 because an input is missing — **OPEN-19**.
-- ²²⁷Th uses the native **Schmidt stress-test placeholder**. {STATUS_227}
-- The two-photon `K = 1` channel: **resolved**, not registered — exact
-  closure makes it identically zero — **OPEN-21** (this notebook, §11).
+  validated, and the displayed values are not uncertainty bounds
+  (OPEN-17/OPEN-18).
+- `c_I(Th)`: held at 0 because an input is missing (OPEN-19).
+- {STATUS_227}
+- The two-photon `K = 1` channel is absent because exact closure makes it
+  identically zero (OPEN-21; §11).
 - `J_max`: a `StateSpec` knob, this notebook uses 4 throughout with a
-  convergence table (§7) — **OPEN-22**.
+  convergence table (§7; OPEN-22).
 - The two-photon closure form: valid at `Δ ≫ 7 GHz`, JILA runs at
-  0.16–1.5 GHz — **OPEN-23**.
+  0.16–1.5 GHz (OPEN-23).
 
-`tests/` exercise code behavior and selected identities; they do not turn the
-model inputs into physical measurements or predictions. `docs/open-
-questions.md` carries OPEN-16 through OPEN-23 in full, each with its citation.
+The [scientific limitations](../docs/open-questions.md) discuss OPEN-16 through
+OPEN-23 with their sources. Tests check the implementation, while these input
+and approximation limits determine what the results can establish.
 """),
 ]
 
