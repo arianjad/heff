@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from functools import cached_property
 from os import PathLike
 from pathlib import Path
-import re
 
 from .assemble import build_term_matrices, hamiltonian as _hamiltonian
 from .backend_registry import get_backend
@@ -26,13 +25,17 @@ def _case_insensitive_key(mapping, requested, *, kind, source):
         source, f"unknown {kind} {requested!r}; available: {tuple(mapping)}"))
 
 
-def _basis_error_path(manifold_id, basis, message):
-    candidates = tuple(basis) + ("J_min", "J_max", "M", "frame")
-    for key in candidates:
-        if re.search(rf"(?<![A-Za-z0-9_]){re.escape(str(key))}(?![A-Za-z0-9_])",
-                     message):
-            return f"manifolds.{manifold_id}.basis.{key}"
-    return f"manifolds.{manifold_id}.basis"
+def _bind_backend_path(path, manifold_id, isotope_id):
+    scope, *parts = path
+    if scope == "manifold":
+        bound = f"manifolds.{manifold_id}"
+    elif scope == "isotopologue":
+        bound = f"isotopologues.{isotope_id}"
+    else:
+        return f"manifolds.{manifold_id}.backend"
+    for part in parts:
+        bound += f"[{part}]" if isinstance(part, int) else f".{part}"
+    return bound
 
 
 @dataclass(frozen=True)
@@ -80,8 +83,14 @@ class MoleculeModel:
                 basis, self.manifold.electronic, self.isotopologue.spins)
         except (KeyError, TypeError, ValueError) as exc:
             detail = str(exc)
-            path = _basis_error_path(self.manifold.id, basis, detail)
-            raise ValueError(_with_source(self.source, f"{path}: {detail}")) from exc
+            raw_paths = getattr(exc, "_heff_input_paths", ())
+            paths = tuple(_bind_backend_path(
+                path, self.manifold.id, self.isotopologue.id)
+                for path in raw_paths)
+            location = ", ".join(paths) if paths else (
+                f"manifolds.{self.manifold.id}.backend")
+            raise ValueError(
+                _with_source(self.source, f"{location}: {detail}")) from exc
 
         try:
             params = resolve_param_set(self.manifold, self.backend)

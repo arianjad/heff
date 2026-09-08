@@ -17,12 +17,34 @@ CANONICAL_UNITS = {
 _BASIS_KEYS = frozenset({"J_min", "J_max", "M", "frame"})
 
 
+class _InputValidationError(ValueError):
+    """A backend input error with paths that the model layer can bind."""
+
+    def __init__(self, message, *paths):
+        super().__init__(message)
+        self._heff_input_paths = tuple(paths)
+
+
+def _required(record, key, path):
+    if key not in record:
+        raise _InputValidationError(
+            f"missing case-c input key {key!r}", path + (key,))
+    return record[key]
+
+
 def _one_electronic_record(electronic):
     if isinstance(electronic, Mapping):
         return electronic
-    records = tuple(electronic)
+    try:
+        records = tuple(electronic)
+    except TypeError as exc:
+        raise _InputValidationError(
+            "case-c backend requires exactly one electronic record",
+            ("manifold", "electronic")) from exc
     if len(records) != 1:
-        raise ValueError("case-c backend requires exactly one electronic record")
+        raise _InputValidationError(
+            "case-c backend requires exactly one electronic record",
+            ("manifold", "electronic"))
     return records[0]
 
 
@@ -30,39 +52,66 @@ def make_spec(basis, electronic, spins):
     """Translate v1 TOML-shaped records into the existing case-(c) StateSpec."""
     unknown_basis_keys = set(basis) - _BASIS_KEYS
     if unknown_basis_keys:
-        raise ValueError(f"unknown case-c basis key {sorted(unknown_basis_keys)[0]!r}")
+        key = sorted(unknown_basis_keys)[0]
+        raise _InputValidationError(
+            f"unknown case-c basis key {key!r}",
+            ("manifold", "basis", key))
     missing_basis_keys = _BASIS_KEYS - set(basis)
     if missing_basis_keys:
-        raise ValueError(f"missing case-c basis key {sorted(missing_basis_keys)[0]!r}")
+        key = sorted(missing_basis_keys)[0]
+        raise _InputValidationError(
+            f"missing case-c basis key {key!r}",
+            ("manifold", "basis", key))
     if basis["J_min"] > basis["J_max"]:
-        raise ValueError("J_min must be less than or equal to J_max")
+        raise _InputValidationError(
+            "J_min must be less than or equal to J_max",
+            ("manifold", "basis", "J_min"),
+            ("manifold", "basis", "J_max"))
 
     electronic_record = _one_electronic_record(electronic)
     if not isinstance(electronic_record, Mapping):
-        raise ValueError("case-c backend requires exactly one electronic record")
-    elec_state = ElecState(label=electronic_record["label"],
-                           Omega=electronic_record["Omega"],
-                           S=electronic_record["S"],
-                           Lam=electronic_record["Lambda"],
+        raise _InputValidationError(
+            "case-c backend requires exactly one electronic record",
+            ("manifold", "electronic"))
+    electronic_path = ("manifold", "electronic")
+    elec_state = ElecState(label=_required(electronic_record, "label", electronic_path),
+                           Omega=_required(electronic_record, "Omega", electronic_path),
+                           S=_required(electronic_record, "S", electronic_path),
+                           Lam=_required(electronic_record, "Lambda", electronic_path),
                            T0=electronic_record.get("T0", 0.0))
 
-    spin_chain = tuple(Spin(label=record["label"], I=record["I"],
-                            couple_to=record["couple_to"]) for record in spins)
-    for index, spin in enumerate(spin_chain):
+    spin_chain = []
+    for index, record in enumerate(spins):
+        spin_path = ("isotopologue", "spins", index)
+        if not isinstance(record, Mapping):
+            raise _InputValidationError(
+                "case-c spins must be records", spin_path)
+        spin = Spin(label=_required(record, "label", spin_path),
+                    I=_required(record, "I", spin_path),
+                    couple_to=_required(record, "couple_to", spin_path))
         expected_parent = "J" if index == 0 else f"F{index}"
         if spin.couple_to != expected_parent:
-            raise ValueError(
+            raise _InputValidationError(
                 f"spins must form a chain coupled inner-first: spins[{index}] "
                 f"({spin.label!r}) must have couple_to == {expected_parent!r}, "
-                f"got {spin.couple_to!r}")
+                f"got {spin.couple_to!r}",
+                spin_path + ("couple_to",))
+        spin_chain.append(spin)
+    spin_chain = tuple(spin_chain)
 
     # The native v1 representation carries exactly one nuclear spin through I.
     # Multiple spins use the existing explicit, inner-first StateSpec chain.
     state_spins = () if len(spin_chain) == 1 else spin_chain
     I = spin_chain[-1].I if spin_chain else 0.0
-    return StateSpec(case="c", electronic=(elec_state,), I=I,
-                     J_range=(basis["J_min"], basis["J_max"]), M=basis["M"],
-                     frame=basis["frame"], spins=state_spins)
+    try:
+        return StateSpec(case="c", electronic=(elec_state,), I=I,
+                         J_range=(basis["J_min"], basis["J_max"]), M=basis["M"],
+                         frame=basis["frame"], spins=state_spins)
+    except ValueError as exc:
+        # Range and spin-chain invariants were checked above; the remaining
+        # StateSpec validation reachable here is the M mode.
+        raise _InputValidationError(
+            str(exc), ("manifold", "basis", "M")) from exc
 
 
 CASE_C_BACKEND = Backend(

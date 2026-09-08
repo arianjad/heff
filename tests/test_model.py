@@ -190,13 +190,42 @@ def test_runtime_unknown_basis_key_names_its_full_path_and_source_file(tmp_path)
     assert "manifolds.X3Delta1.basis.J_stop" in message
 
 
-def test_invalid_runtime_basis_range_names_the_failing_key(tmp_path):
-    """Catches backend range failures being reported without a useful key."""
+def test_invalid_runtime_basis_range_names_both_endpoints(tmp_path):
+    """Catches a relational range failure being blamed on one endpoint."""
     model = load_model(_write_thf_model(tmp_path))
 
-    with pytest.raises(
-            ValueError, match=r"manifolds\.X3Delta1\.basis\.J_min"):
-        model.problem(J_min=5)
+    with pytest.raises(ValueError) as caught:
+        model.problem(J_max=0)
+
+    message = str(caught.value)
+    assert "manifolds.X3Delta1.basis.J_min" in message
+    assert "manifolds.X3Delta1.basis.J_max" in message
+
+
+def test_invalid_spin_coupling_names_the_isotopologue_spin_path(tmp_path):
+    """Catches a spin-chain error being misattributed to manifold basis."""
+    path = _write_thf_model(tmp_path)
+    _replace(path, 'couple_to = "J"', 'couple_to = "K"')
+
+    with pytest.raises(ValueError) as caught:
+        load_model(path).problem()
+
+    message = str(caught.value)
+    assert "isotopologues.232Th19F+.spins[0].couple_to" in message
+    assert "manifolds.X3Delta1.basis" not in message
+
+
+def test_missing_electronic_key_names_the_manifold_electronic_path(tmp_path):
+    """Catches an electronic-record error being misattributed to basis."""
+    path = _write_thf_model(tmp_path)
+    _replace(path, "Omega = 1.0\n", "")
+
+    with pytest.raises(ValueError) as caught:
+        load_model(path).problem()
+
+    message = str(caught.value)
+    assert "manifolds.X3Delta1.electronic.Omega" in message
+    assert "manifolds.X3Delta1.basis" not in message
 
 
 def test_unknown_selected_term_names_its_full_path(tmp_path):
