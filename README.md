@@ -95,8 +95,8 @@ Internal unit is MHz throughout; fields are `E_z` in V/cm and `B_z` in G.
 ## Validation
 
 Gated by the test suite — `conda run -n heff python -m pytest tests/ -q` passes in
-full: **293 passed, 2 skipped** (measured 2026-09-07), with the two tier-D
-literature comparisons skipped unless `HEFF_RUN_LITERATURE=1` (the opt-in tier
+full; see the [foundation acceptance record](docs/superpowers/handoffs/2026-09-07-toml-foundation-acceptance.md) for the recorded run. The two tier-D
+literature comparisons are skipped unless `HEFF_RUN_LITERATURE=1` (the opt-in tier
 described below).
 
 **v2 gates, V16–V28.** Two carry the most weight: **V16** (`tests/
