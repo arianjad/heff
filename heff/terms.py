@@ -110,6 +110,8 @@ def terms_for_case(case, *, names=None, registry=REGISTRY):
     if names is None:
         return tuple(registry[n] for n in sorted(registry) if case in registry[n].cases)
     requested = tuple(names)
+    if not requested:
+        raise ValueError("empty selected term names; omit names for the complete case catalogue")
     unknown = [name for name in requested if name not in registry]
     if unknown:
         raise ValueError(f"unknown selected term(s) {unknown}; known: {sorted(registry)}")

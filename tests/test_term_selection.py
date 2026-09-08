@@ -40,6 +40,11 @@ def test_duplicate_selected_term_fails():
         terms_for_case("c", names=("rotation", "rotation"))
 
 
+def test_empty_explicit_term_selection_fails_at_the_selector():
+    with pytest.raises(ValueError, match="empty selected term names"):
+        terms_for_case("c", names=())
+
+
 def test_build_term_matrices_selects_requested_terms_in_user_order():
     spec = thf_spec()
     kets = enumerate_kets(spec)
