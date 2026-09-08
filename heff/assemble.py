@@ -48,13 +48,13 @@ class TermMatrices:
     manifest: dict
 
 
-def build_term_matrices(kets, ctx, *, case="c", registry=REGISTRY):
+def build_term_matrices(kets, ctx, *, case="c", registry=REGISTRY, term_names=None):
     """Evaluate every applicable term once over one block.
 
     The declared selection rules are used as a sparsity mask so only allowed
     (i, j) are evaluated -- the dominant build cost (spec S3.2).
     """
-    terms = terms_for_case(case, registry=registry)
+    terms = terms_for_case(case, names=term_names, registry=registry)
     if not terms:
         # Name the actual fix per case: the v2 two-spin terms live in their own
         # registry and are NOT reachable by importing a module (importing

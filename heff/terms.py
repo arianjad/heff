@@ -105,9 +105,20 @@ def term(*, name, param, cases, rules, hermitian, real, cite, registry=REGISTRY)
     return deco
 
 
-def terms_for_case(case, *, registry=REGISTRY):
-    """Every registered term applicable to a coupling case, sorted by name."""
-    return tuple(registry[n] for n in sorted(registry) if case in registry[n].cases)
+def terms_for_case(case, *, names=None, registry=REGISTRY):
+    """Compatible registered terms, all sorted or an explicit ordered subset."""
+    if names is None:
+        return tuple(registry[n] for n in sorted(registry) if case in registry[n].cases)
+    requested = tuple(names)
+    unknown = [name for name in requested if name not in registry]
+    if unknown:
+        raise ValueError(f"unknown selected term(s) {unknown}; known: {sorted(registry)}")
+    incompatible = [name for name in requested if case not in registry[name].cases]
+    if incompatible:
+        raise ValueError(f"term(s) {incompatible} do not support case {case!r}")
+    if len(set(requested)) != len(requested):
+        raise ValueError(f"duplicate selected term names: {requested}")
+    return tuple(registry[name] for name in requested)
 
 
 def check_selection_rules(t, kets, ctx, *, tol=1e-12):
