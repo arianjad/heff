@@ -6,21 +6,11 @@ seven re-coupled terms. Nothing else in v2 sees these at once: the symmetry
 gates (parity, hermiticity, tracelessness) all survive a transposed 6j, and the
 Th-side gates never exercise the outer-spin recoupler at all.
 
-FAIL is reachable and demonstrated in
-test_the_master_gate_catches_a_transposed_6j: monkeypatch heff.wigner.w6j with a
-column-swapped wrapper and the comparison breaks on stark_z, zeeman_Gpar and
-hyperfine_A_par_F while rotation and centrifugal (which use no 6j) still pass --
-so the gate also localises the error.
 
-(The monkeypatch is applied at the USE SITE, heff.elements_c2.w6j, because
-elements_c2 does `from .wigner import w6j`: patching heff.wigner.w6j would leave
-the already-bound module global untouched and the demonstration would be inert
--- controller ruling R2.)
 """
 import numpy as np
 import pytest
 
-from heff import elements_c2  # importing registers the v2 terms
 from heff.assemble import build_term_matrices
 from heff.elements_c import dipole_geometry
 from heff.elements_c2 import REGISTRY_C2, axial_geometry
@@ -240,40 +230,3 @@ def test_V19_the_19F_doublet_ordering_flips_between_F1_manifolds():
     assert got[1.5] < 0.0 < ref[1.0], "the F1 = 3/2 doublet ordering must invert"
 
 
-def test_the_master_gate_catches_a_transposed_6j(monkeypatch, v1_setup, v2_setup):
-    """FAIL reachability for V16, and its localisation.
-
-    Swapping the upper-left pair of every 6j elements_c2 evaluates -- the
-    corruption [HAM] S9.1 measures at 0.65 in a quantity of order 1 -- must
-    break stark_z, zeeman_Gpar and hyperfine_A_par_F against their v1
-    counterparts, and must leave rotation and centrifugal (which call no 6j)
-    exact.
-
-    _dense is used rather than build_term_matrices only so the corruption is
-    read as a NUMBER: the masked (assembler) path fails identically -- the
-    corrupted elements all sit inside the declared selection rules, so the mask
-    never hides them -- but it raises the hermiticity check partway through
-    instead of reporting a deviation per term.
-    """
-    k1, c1 = v1_setup
-    k2, c2 = v2_setup
-    real = elements_c2.w6j
-
-    def swapped(a, b, c, d, e, f):
-        try:
-            return real(b, a, c, d, e, f)
-        except ValueError:
-            # the transposed arguments can break the 6j's own triangle rule;
-            # sympy raises there, so the corruption is read as a zero symbol
-            return 0.0
-
-    monkeypatch.setattr(elements_c2, "w6j", swapped)
-    devs = {}
-    for v2_name, v1_name in V2_TO_V1.items():
-        M2 = _dense(REGISTRY_C2[v2_name], k2, c2)
-        M1 = _dense(REGISTRY[v1_name], k1, c1)
-        devs[v2_name] = float(np.max(np.abs(M2 - M1)))
-    for name in ("stark_z", "zeeman_Gpar", "hyperfine_A_par_F"):
-        assert devs[name] > 1e-6, f"{name} survived the transposed 6j ({devs[name]:.3e})"
-    for name in ("rotation", "centrifugal"):
-        assert devs[name] < 1e-12, f"{name} uses no 6j but moved ({devs[name]:.3e})"

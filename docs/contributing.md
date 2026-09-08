@@ -22,6 +22,13 @@ matrix does not establish accurate molecular parameters.
 
 ## Test commands
 
+Keep tests that exercise supported behavior, a reproduced bug, or an independent
+physical identity. Check the existing coverage before adding another test.
+Standalone demonstrations that deliberately corrupt a correct formula are
+development diagnostics; they do not need permanent copies beside the direct
+regression check. Retain negative cases that test actual validation behavior,
+and do not replace signed matrix comparisons with symmetry checks alone.
+
 ```shell
 python -m pytest -q
 ```

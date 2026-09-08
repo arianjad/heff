@@ -101,32 +101,6 @@ def test_two_photon_operator_commutes_with_parity_at_zero_field(basis2, mats):
     assert biggest > 0.1                      # non-vacuous: the operator is real
 
 
-def test_V24_fails_if_the_q_plus_2_component_changes_sign(basis2):
-    """FAIL demo for V24, through the real code path.
-
-    Every element is the true two_photon_geometry output; only the SIGN of the
-    q = +2 half of the dOmega = +-2 channel is flipped. That is the corruption
-    V24 uniquely catches: magnitudes stay right, hermiticity survives, and the
-    only symptom is that the operator now connects e to f -- a fake two-photon
-    parity flip ([2g] S3.3: "the notebook should say this rather than advertise
-    a two-photon parity flip").
-    """
-    kets, ctx = basis2
-    Par = parity_operator(kets, ctx.S, ell=0.0, s=0.0)
-    n = len(kets)
-    T = np.zeros((n, n))
-    for i in range(n):
-        for j in range(n):
-            q = float(kets["Om"][i]) - float(kets["Om"][j])
-            if abs(q) != 2.0:
-                continue
-            T[i, j] = np.sign(-q) * two_photon_geometry(kets[i], kets[j], ctx,
-                                                        K=2, P=0)
-    assert np.max(np.abs(T)) > 0.1                       # non-vacuous
-    assert np.max(np.abs(T @ Par - Par @ T)) > 0.1, (
-        "flipping the q = +2 sign should have broken [T, P] = 0")
-
-
 # ------------------------------------------------------------------ V25
 
 def test_channel_reach(basis2, mats):
@@ -227,37 +201,6 @@ def test_rank_K_sum_rule_and_reciprocity():
                                                   P=-P).T
             assert np.max(np.abs(lhs)) > 0.0, f"K={K} dOm={dOm} P={P}: vacuous"
             assert np.allclose(lhs, rhs), f"K={K} dOm={dOm} P={P}: reciprocity broken"
-
-
-def test_V26_fails_if_the_wigner_eckart_phase_is_dropped():
-    """FAIL demo for V26's reciprocity half, exactly as v1's
-    test_B7b_fails_if_the_wigner_eckart_phase_is_dropped does it: multiply the
-    real element by its own (-1)^(F'-m'_F) (the BRA's F and m_F -- primes are
-    the bra throughout S9), which cancels that phase because it is +-1.
-
-    Built by calling heff.elements_c2.axial_geometry directly rather than by
-    monkeypatching, so the demo does not depend on twophoton.py's import style.
-    """
-    kets, ctx = setup_229(J_max=2)
-    blocks = block_by_mF(kets)
-    a, b = kets[blocks.index[0.0]], kets[blocks.index[1.0]]
-
-    def corrupted(ka, kb, P):
-        out = np.zeros((len(ka), len(kb)))
-        for i in range(len(ka)):
-            for j in range(len(kb)):
-                q = float(ka["Om"][i]) - float(kb["Om"][j])
-                if abs(q) > 2.0:
-                    continue
-                out[i, j] = (axial_geometry(ka[i], kb[j], ctx, k=2, q=q, p=P)
-                             * (-1.0) ** (ka["F"][i] - ka["mF"][i]))
-        return out
-
-    lhs = corrupted(a, b, -1)
-    rhs = (-1.0) ** (-1) * corrupted(b, a, +1).T
-    assert np.max(np.abs(lhs)) > 0.0                      # non-vacuous
-    assert not np.allclose(lhs, rhs), (
-        "dropping the (-1)^(F'-m') phase should have broken reciprocity")
 
 
 # ------------------------------------------------------------------ V28
@@ -423,30 +366,21 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
     assert abs(dyad_weights(np.array([1.0, 0, 0]), np.array([1.0, 0, 0]))[(1, 0)]) == 0.0
 
 
-def test_dyad_weights_fails_if_the_two_slots_are_swapped():
-    """FAIL demo for the dyad: swapping the two tensor slots (equivalently,
-    transposing the Clebsch-Gordan) leaves K = 0 and K = 2 untouched and flips
-    the sign of every K = 1 weight, since <1 p_b 1 p_a|K P> = (-1)^K
-    <1 p_a 1 p_b|K P>. The completeness identity of [HAM] S9.5.1(3) --
-    c_a[p_a] c_b[p_b] = sum_K <1 p_a 1 p_b|K P> w^K_P, i.e. row (a) of its
-    printed check -- is what detects it.
-    """
+def test_dyad_weights_reconstruct_the_ordered_polarization_product():
+    """Signed completeness, [HAM] S9.5.1(3), detects tensor-slot reversal."""
     from heff.twophoton import _cg, _leg
 
     e1, e2 = SIGMA_P, np.array([1.0, 0.0, 0.0])
     good = dyad_weights(e1, e2)
     ca, cb = _leg(np.conj(e2)), _leg(e1)
-    bad = {(K, P): (-1.0) ** K * good[(K, P)] for (K, P) in good}   # slots swapped
 
     def rebuilt(w, pa, pb):
         return sum(_cg(1, pa, 1, pb, K, pa + pb) * w[(K, pa + pb)]
                    for K in (0, 1, 2) if abs(pa + pb) <= K)
 
-    devs = [(abs(rebuilt(good, pa, pb) - ca[pa] * cb[pb]),
-             abs(rebuilt(bad, pa, pb) - ca[pa] * cb[pb]))
+    devs = [abs(rebuilt(good, pa, pb) - ca[pa] * cb[pb])
             for pa in (-1, 0, 1) for pb in (-1, 0, 1)]
-    assert max(d[0] for d in devs) < 1e-12, "the honest dyad must reconstruct"
-    assert max(d[1] for d in devs) > 0.1, "a swapped dyad should not"
+    assert max(devs) < 1e-12, "the dyad must reconstruct the ordered leg product"
 
 
 # --------------------------------------------------- registry containment

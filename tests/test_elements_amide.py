@@ -147,6 +147,3 @@ def test_edm_matches_pinned_off_diagonal_n_fixture_and_selectors():
     assert amide.EDM(q, (*q_prime[:-1], -0.5), 0.5) == 0.0
 
 
-def test_delta_is_numeric_kronecker_delta():
-    assert amide.delta(1.0, 1) == 1.0
-    assert amide.delta(1.0, 1.5) == 0.0

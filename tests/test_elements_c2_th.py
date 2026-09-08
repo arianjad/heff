@@ -6,7 +6,7 @@ master reduction, tests/test_elements_c2_reduction.py) runs at I_Th = 0, where
 every term in this file is identically zero and the I_Th 6j of axial_geometry
 collapses to 1; V19 exercises I_Th = 5/2 but only through the 19F recoupler. So
 V18/V20/V21/V22 below are what stands between the Th block and a plausible-
-looking wrong answer, and each carries its own reachable FAIL demonstration.
+looking wrong answer through direct analytic and independent-matrix comparisons.
 
 Sources, in the order the gates use them:
   [HAM] = docs/thf-plus-x3delta1-effective-hamiltonian.md S9.2, S9.2.1, S9.4
@@ -15,7 +15,6 @@ Sources, in the order the gates use them:
 import numpy as np
 import pytest
 
-from heff import elements_c2
 from heff.assemble import build_term_matrices, coefficients
 from heff.conventions import Conventions, parity_operator
 from heff.elements_c import _ph
@@ -168,27 +167,6 @@ def test_227_A_par_Th_diagonal_carries_the_placeholder_sign_at_J1():
     assert signed[0.5] < 0.0, signed
 
 
-def test_V18_fails_when_F_replaces_F1_in_the_closed_form():
-    """FAIL reachability for V18: the same closed form read with the TOTAL F
-    (I_Th coupled to F) instead of F1 must miss [TH] S4.1.
-
-    This is the exact error V18 exists to catch, so it is demonstrated rather
-    than asserted -- and it demonstrates it on J = 1, where the wrong manifold
-    is still three plausible numbers.
-    """
-    kets, ctx, _ = setup_229(J_max=1)
-    sel = (kets["J"] == 1.0) & (kets["Om"] == 1.0)
-    wrong = []
-    for F1 in (1.5, 2.5, 3.5):
-        i = np.flatnonzero(sel & (kets["F1"] == F1) & (kets["F"] == F1 + 0.5))[0]
-        F, J, I = float(kets["F"][i]), 1.0, 2.5
-        wrong.append((F * (F + 1.0) - I * (I + 1.0) - J * (J + 1.0))
-                     / (2.0 * J * (J + 1.0)))
-    for got, want in zip(wrong, TH_HYPERFINE_MANIFOLD[1]):
-        assert abs(got - want) > 1e-2, (
-            f"the F-for-F1 substitution reproduced the digest value {want}")
-
-
 def test_th_terms_are_independent_of_F_and_m_F():
     """B&C (5.176) as a testable statement ([HAM] S9.2): a Th scalar's element
     depends on F1 and not on F, m_F or I_F. Without this, V18's choice of the
@@ -253,23 +231,9 @@ def test_quadrupole_reproduces_the_casimir_function_with_a_ratio_of_minus_one():
     assert checked == 15, "fifteen non-degenerate rows, one 0/0 row"
 
 
-def test_the_casimir_ratio_flips_when_the_q0_sign_is_dropped(monkeypatch):
-    """FAIL reachability for V20: drop the explicit -1 that encodes
-    quadrupole_convention='bc_q0_is_negative_efg' and every ratio becomes +1,
-    i.e. the sign of every quadrupole splitting flips."""
-    monkeypatch.setattr(elements_c2, "_Q0_IS_NEGATIVE_EFG", +1.0)
-    flipped = 0
-    for J, I, F, body, cas in casimir_ratios():
-        if abs(cas) < 1e-12:
-            continue
-        assert body / cas == pytest.approx(+1.0, abs=1e-12), f"({J},{I}) F={F}"
-        flipped += 1
-    assert flipped == 15
-
-
 # ------------------- V20b: (9.52) transcribed independently, off-diagonal J
 
-def bc_9p52(bra, ket, ctx, q=0.0, *, fail=None):
+def bc_9p52(bra, ket, ctx, q=0.0):
     """B&C Eq. (9.52)/(9.53) transcribed HERE, from the printed equation.
 
     Written from the equation as it stands on PDF p.636-637 / book p.604-605
@@ -293,8 +257,6 @@ def bc_9p52(bra, ket, ctx, q=0.0, *, fail=None):
     intermediate F1 = J + I_Th (B&C Eq. (5.176), [HAM] S9.2), diagonal, with the
     outer 19F spin a spectator (delta_{F F'} delta_{m m'}).
 
-    `fail='phase_J'` reads the phase's leading J' as J -- the corrupted variant
-    used by the FAIL demonstration below.
     """
     I = ctx.spins[0].I
     if I < 1.0:                          # no rank-2 moment; the printed 0/0
@@ -304,22 +266,21 @@ def bc_9p52(bra, ket, ctx, q=0.0, *, fail=None):
     J_bra, Om_bra = float(bra["J"]), float(bra["Om"])
     J_ket, Om_ket = float(ket["J"]), float(ket["Om"])
     F1 = float(ket["F1"])
-    lead = J_bra if fail == "phase_J" else J_ket
     return (0.25
-            * _ph(lead + I + F1 + J_bra - Om_bra)
+            * _ph(J_ket + I + F1 + J_bra - Om_bra)
             * np.sqrt((2 * J_bra + 1.0) * (2 * J_ket + 1.0))
             * w6j(J_ket, I, F1, I, J_bra, 2)
             * w3j(J_bra, 2, J_ket, -Om_bra, q, Om_ket)
             / w3j(I, 2, I, -I, 0, I))
 
 
-def _eQq0_matrices(J_max=3, **kw):
+def _eQq0_matrices(J_max=3):
     """(kets, |eQq0_Th| geometry from the registry, the same from bc_9p52)."""
     spec = thf_spec("229", J_max=J_max)
     kets = enumerate_kets(spec)
     ctx = ctx_from(spec, thf_v2("229"))
     got = dense(REGISTRY_C2["quadrupole_eQq0_Th"].fn, kets, ctx)
-    want = dense(lambda b, k, c: bc_9p52(b, k, c, **kw), kets, ctx)
+    want = dense(bc_9p52, kets, ctx)
     return kets, got, want
 
 
@@ -364,25 +325,6 @@ def test_V20b_quadrupole_dJ_elements_match_an_independent_transcription_of_bc_9p
     assert reach[1] > reach[0], f"Delta J reach {reach}"
 
 
-def test_V20b_fails_when_the_transcription_misreads_the_J_prime_phase():
-    """FAIL reachability for V20b, and the proof that it sees what V20 cannot:
-    read (9.52)'s phase (-1)^(J'+I+F+J-Om) with J in place of J' and the
-    Delta J = +-1 elements flip sign, while the Delta J = 0 block -- the ONLY
-    block V20 measures -- stays bit-for-bit identical.
-
-    Delta J = +-2 is also unmoved by this particular corruption, because J is
-    an integer here and (-1)^(J'-J) = +1 across two rotational quanta; that is a
-    property of the corruption, not of the gate, which compares the +-2 class
-    element by element like every other.
-    """
-    kets, got, bad = _eQq0_matrices(fail="phase_J")
-    dJ = _dJ_classes(kets)
-    same = float(np.max(np.abs((got - bad)[dJ == 0])))
-    broken = float(np.max(np.abs((got - bad)[dJ == 1])))
-    assert same == 0.0, f"the J'-phase misreading moved a Delta J = 0 element by {same:.3e}"
-    assert broken > 0.1, f"Delta J = 1 deviation {broken:.3e} is too small to be a gate"
-
-
 # ------------------------------------------- V21: no quadrupole below I = 1
 
 def test_quadrupole_is_identically_zero_for_I_Th_at_most_one_half():
@@ -409,30 +351,6 @@ def test_quadrupole_is_identically_zero_for_I_Th_at_most_one_half():
         for name in ("quadrupole_eQq0_Th", "quadrupole_eQq2_Th"):
             M = dense(REGISTRY_C2[name].fn, kets, ctx)
             assert np.all(M == 0.0), f"I_Th = {I_Th}: {name} has a non-zero element"
-
-
-def test_the_unguarded_quadrupole_gives_nan_at_I_Th_one_half(monkeypatch):
-    """FAIL reachability for V21, and the reason the guard is a guard.
-
-    B&C (9.52) with no `if I < 1` evaluates (I 2 I; -I 0 I)^(-1) at I = 1/2,
-    where that 3j is 0. It does not quietly return the q = 0 limit and it does
-    not return zero: in float64 it returns NaN, which then propagates silently
-    through every eigenvalue of the block. That is the failure the guard exists
-    to prevent, and it is why the guard sits AHEAD of the inverse 3j rather than
-    after a `six == 0` early return (which would make it inert).
-
-    Run on the PRODUCTION path: the guard's threshold is the named constant
-    elements_c2._MIN_I_FOR_QUADRUPOLE, lowered here to 0.0, so what returns NaN
-    is heff's own element function and not a hand copy of the formula kept in
-    the test file (which could drift away from the code it falsifies).
-    """
-    I = 0.5
-    assert w3j(I, 2, I, -I, 0, I) == 0.0
-    k = row(1.0, 1.0, 1.5, 1.0, 1.0)
-    monkeypatch.setattr(elements_c2, "_MIN_I_FOR_QUADRUPOLE", 0.0)
-    with np.errstate(invalid="ignore"):
-        bad = REGISTRY_C2["quadrupole_eQq0_Th"].fn(k, k, ctx_at(I))
-    assert not np.isfinite(bad), f"the unguarded product path returned {bad}"
 
 
 # ------------------------------------------------------------- V22: eQq2
@@ -474,15 +392,6 @@ def test_eQq2_J1_coefficients_match_the_digest():
     got = eqq2_J1_coefficients(kets, ctx)
     for F1, want in zip((1.5, 2.5, 3.5), EQQ2_J1):
         assert got[F1] == pytest.approx(want, rel=1e-3), f"F1={F1}"
-
-
-def test_the_omega_doubling_law_does_not_reproduce_the_eQq2_coefficients():
-    """FAIL reachability for V22: the omega_doubling law -J(J+1)/4 in the same
-    matrix position is F1-independent, so it cannot produce three different
-    numbers, let alone these three."""
-    wrong = -1.0 * 2.0 / 4.0  # -J(J+1)/4 at J = 1, for every F1
-    for want in EQQ2_J1:
-        assert abs(wrong - want) > 1e-2
 
 
 def test_eQq2_is_dOmega_two_diagonal_in_J_F1_F_mF_and_parity_even():
@@ -599,27 +508,6 @@ def coupled_and_product(J, I_Th, I_F):
     return coupled, product, U
 
 
-def th_zeeman_bra_F1_phase(bra, ket, ctx):
-    """The FAIL variant: B&C (5.175)'s phase read with the KET's F1 instead of
-    the bra's. Hermiticity is blind to it (both readings give a symmetric
-    matrix), which is exactly why R13 asks for a rebuild rather than a symmetry
-    check -- the same trap [HAM] S9.3 hit on the (5.173) phase."""
-    if not elements_c2._same(bra, ket, "J", "Om", "mF"):
-        return 0.0
-    I_Th, I_F = elements_c2._spins(ctx)
-    J = float(ket["J"])
-    G1, F1, m1 = float(ket["F1"]), float(ket["F"]), float(ket["mF"])
-    G2, F2, m2 = float(bra["F1"]), float(bra["F"]), float(bra["mF"])
-    line1 = _ph(F2 - m2) * w3j(F2, 1, F1, -m2, 0, m1)
-    line2 = (_ph(F1 + G2 + 1.0 + I_F) * np.sqrt((2 * F2 + 1.0) * (2 * F1 + 1.0))
-             * w6j(G1, F1, I_F, F2, G2, 1))
-    line3 = (_ph(G1 + J + I_Th + 1.0)                       # <-- KET F1, wrong
-             * np.sqrt((2 * G1 + 1.0) * (2 * G2 + 1.0))
-             * w6j(I_Th, G2, J, G1, I_Th, 1)
-             * np.sqrt(I_Th * (I_Th + 1.0) * (2 * I_Th + 1.0)))
-    return -ctx.mu_N * line1 * line2 * line3
-
-
 def test_R13_th_nuclear_zeeman_matches_a_decoupled_basis_rebuild():
     """The Th nuclear Zeeman is the ONE lab-frame Th operator, so B&C (5.176)
     and [HAM] S9.2's substitution rule do not cover it ([HAM] S9.2.1). Its
@@ -654,14 +542,6 @@ def test_R13_th_nuclear_zeeman_matches_a_decoupled_basis_rebuild():
         dev = float(np.max(np.abs(got - want)))
         assert dev < 1e-12, f"{name}: max |formula - rebuild| = {dev:.3e}"
 
-    D = np.diag([p[1] for p in product])
-    want = -ctx.mu_N * (U @ D @ U.T)
-    bad = dense(th_zeeman_bra_F1_phase, kets, ctx)
-    assert np.max(np.abs(bad - bad.T)) < 1e-12, "the FAIL variant is still symmetric"
-    bad_dev = float(np.max(np.abs(bad - want))) / ctx.mu_N
-    assert bad_dev > 1.0, (
-        f"the bra/ket-F1 phase swap must break the rebuild, deviation "
-        f"{bad_dev:.3f} in units of mu_N")
 
 
 # ------------------------------------------------- registry-wide obligations

@@ -134,29 +134,6 @@ def test_J2_is_truncated_and_does_not_hit_1_0():
     assert vals[0] < 0.99
 
 
-def test_B7_fails_if_a_polarisation_is_dropped():
-    """FAIL demo for B7 (v1's precedent test_B7_fails_if_a_polarisation_is_
-    dropped, ported): every element is the real `axial_geometry` output, but
-    the m-sum over polarisation is deliberately incomplete (p = -1 dropped),
-    which breaks the m_F-independence the closed form otherwise guarantees."""
-    spec = thf_spec("229", J_max=2)
-    kets = enumerate_kets(spec)
-    ctx = ctx_from(spec, thf_v2("229"))
-    F1, F = 1.5, 1.0
-    vals = []
-    for mF in np.arange(-F, F + 0.5, 1.0):
-        sel = ((kets["J"] == 1) & (kets["F1"] == F1) & (kets["F"] == F)
-              & (kets["mF"] == mF) & (kets["Om"] == 1.0))
-        i = int(np.flatnonzero(sel)[0])
-        tot = 0.0
-        for p in (0, 1):                       # p = -1 dropped on purpose
-            row = dipole_matrix(kets[i:i + 1], kets, ctx, p, geometry=GEO)
-            tot += float(np.sum(np.abs(row) ** 2))
-        vals.append(tot)
-    assert not np.allclose(vals, vals[0], rtol=1e-10), (
-        f"dropping p=-1 should have broken m_F-independence, got {vals}")
-
-
 def test_E1_selection_rules_in_the_two_spin_basis():
     """Delta F1 = 0, +-1, Delta F = 0, +-1, Delta m_F = p, read off the
     COMPUTED matrix over the whole 229ThF+ J <= 2 basis (not declared): every

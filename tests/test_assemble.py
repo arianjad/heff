@@ -54,18 +54,6 @@ def test_A1_assembly_is_exactly_the_weighted_sum():
     assert np.allclose(hamiltonian(tm, pset, {}), ref, atol=1e-13)
 
 
-def test_A1_fails_if_the_stack_is_permuted():
-    """FAIL demo for A1: permute the matrices, keep the coefficients."""
-    rng = np.random.default_rng(7)
-    tm = _random_tm(rng)
-    vals = rng.standard_normal(len(tm.names))
-    pset = _pset_for(tm, vals)
-    from dataclasses import replace
-    scrambled = replace(tm, mats=tm.mats[::-1])
-    ref = sum(v * M for v, M in zip(vals, tm.mats))
-    assert not np.allclose(hamiltonian(scrambled, pset, {}), ref)
-
-
 def test_A2_batched_resum_equals_the_per_point_loop():
     """Gate A2: the tensordot fast path == the reference loop, random matrices.
 
@@ -108,33 +96,6 @@ def test_B1_every_assembled_block_is_hermitian_and_real(block):
         H = hamiltonian(tm, pset, {"E_z": 12.0, "B_z": 3.0})
         assert np.allclose(H, H.conj().T, atol=1e-12, rtol=0), f"block {label}"
         assert not np.iscomplexobj(H) or np.max(np.abs(H.imag)) == 0.0
-
-
-def test_B1_check_is_not_loose_against_diagonals_at_the_1e5_MHz_scale():
-    """Companion FAIL demo for B1 (fix round 1, finding 2): with numpy's
-    DEFAULT rtol=1e-5, a block whose diagonals run to ~1e5 MHz (J up to 4)
-    gets an effective tolerance of ~1 MHz, which swallows a real antisymmetric
-    perturbation of only 1e-6 MHz on the largest off-diagonal pair. B1's own
-    check must use rtol=0 so it actually FAILS on that perturbation.
-    """
-    spec = thf_spec()
-    kets = enumerate_kets(spec)
-    ctx = ctx_from(spec, thf_v1())
-    idx = block_by_mF(kets).index[3.5]
-    tm = build_term_matrices(kets[idx], ctx)
-    H = hamiltonian(tm, thf_v1(), {"E_z": 12.0, "B_z": 3.0})
-    assert np.allclose(H, H.conj().T, atol=1e-12, rtol=0)
-
-    off = np.abs(np.triu(H, k=1))
-    i, j = np.unravel_index(np.argmax(off), off.shape)
-    assert off[i, j] > 0.0, "need a genuinely nonzero off-diagonal pair to perturb"
-    H_pert = H.copy()
-    H_pert[i, j] += 1e-6  # MHz, antisymmetric: only one side of the pair moves
-
-    # The bug: default rtol=1e-5 is loose enough to hide this at ~1e5 MHz diagonals.
-    assert np.allclose(H_pert, H_pert.conj().T, atol=1e-12)
-    # The fix: rtol=0 makes B1's own check correctly reject the perturbed matrix.
-    assert not np.allclose(H_pert, H_pert.conj().T, atol=1e-12, rtol=0)
 
 
 def test_a_term_declared_hermitian_that_is_not_raises(block):

@@ -12,7 +12,6 @@ signs (fix round 1, finding 1).
 import numpy as np
 import pytest
 
-from heff import elements_c
 from heff.params import thf_v1
 from heff.spec import block_by_mF, enumerate_kets, thf_spec
 from heff.spectra import dipole_matrix, label_lines, line_strengths
@@ -53,8 +52,7 @@ def test_B7_total_strength_out_of_a_state_is_independent_of_mF(setup):
     sum, so it is NOT a phase gate and was previously mis-documented as one.
     What it does catch is a wrong m-sum or a dropped polarisation channel,
     which changes which terms enter the sum rather than just their sign or
-    phase -- see test_B7_fails_if_a_polarisation_is_dropped for the reachable
-    FAIL. The phase itself is checked by test_B7b_* below. Analogue of
+    phase. The phase itself is checked by spherical-tensor reciprocity below. Analogue of
     Molecule-Structure test_sio_stark_tdm.py:130. F-independence is NOT
     asserted; only m_F-independence, which is the part that follows from
     orthogonality alone.
@@ -76,35 +74,6 @@ def test_B7_total_strength_out_of_a_state_is_independent_of_mF(setup):
         assert vals[0] == pytest.approx(1.0, rel=1e-10), (
             f"J={J} F={F}: sum rule = {vals[0]}, expected the closed form 1.0")
     assert all(v[0] > 0 for v in totals.values())
-
-
-def test_B7_fails_if_a_polarisation_is_dropped(setup):
-    """FAIL demo for gate B7, through the real code path (controller ruling 1):
-    the brief's original version built a random matrix and called no heff
-    code, which is not a real constraint on this implementation at all.
-
-    Here every dipole_matrix element is exactly the real dipole_geometry
-    output -- nothing is corrupted or faked -- but the m-sum over polarisation
-    is deliberately incomplete (p = -1 dropped). That is "a wrong m-sum" in
-    B7's own docstring: each surviving element is still a perfectly plausible
-    number, and only the total, which orthogonality promises is m_F-independent
-    when ALL of p in {-1,0,1} are included, comes out m_F-dependent.
-    """
-    spec, kets, blocks, ctx = setup
-    totals = {}
-    for J, F, Om in ((1, 1.5, 1.0), (2, 2.5, 1.0), (3, 2.5, -1.0)):
-        vals = []
-        for mF in np.arange(-F, F + 0.5, 1.0):
-            i = int(np.flatnonzero((kets["J"] == J) & (kets["F"] == F)
-                                   & (kets["Om"] == Om) & (kets["mF"] == mF))[0])
-            tot = 0.0
-            for p in (0, 1):                       # p = -1 dropped on purpose
-                row = dipole_matrix(kets[i:i + 1], kets, ctx, p)
-                tot += float(np.sum(np.abs(row) ** 2))
-            vals.append(tot)
-        totals[(J, F, Om)] = vals
-    assert not all(np.allclose(v, v[0], rtol=1e-10) for v in totals.values()), (
-        f"dropping p=-1 should have broken m_F-independence, got {totals}")
 
 
 def test_B7b_transition_dipole_obeys_spherical_tensor_reciprocity(setup):
@@ -132,38 +101,6 @@ def test_B7b_transition_dipole_obeys_spherical_tensor_reciprocity(setup):
     D0 = dipole_matrix(a, a, ctx, 0)
     assert np.max(np.abs(D0)) > 0.0
     assert np.allclose(D0, D0.T)
-
-
-def test_B7b_fails_if_the_wigner_eckart_phase_is_dropped(setup):
-    """FAIL demo for gate B7b: strip the (-1)^(F'-m') phase (F', m' = the
-    BRA's F, m_F -- 'Primed = bra' per elements_c.dipole_geometry's docstring)
-    from every element and show the reciprocity identity then breaks.
-
-    Multiplying the correct value by that same (-1)^(F'-m') phase cancels it
-    exactly, since the phase is +-1 and squares to 1 -- so this is a genuine,
-    minimal corruption of the real code path, not a fabricated matrix. Built
-    explicitly (calling heff.elements_c.dipole_geometry directly) rather than
-    monkeypatching heff.spectra's imported name, so the test does not depend
-    on spectra.py's particular import style.
-    """
-    spec, kets, blocks, ctx = setup
-    a, b = kets[blocks.index[0.5]], kets[blocks.index[1.5]]
-
-    def corrupted(bra, ket, p):
-        val = elements_c.dipole_geometry(bra, ket, ctx.I, p)
-        return val * (-1.0) ** (bra["F"] - bra["mF"])  # strips the phase
-
-    def corrupted_matrix(kets_a, kets_b, p):
-        out = np.zeros((len(kets_a), len(kets_b)))
-        for i in range(len(kets_a)):
-            for j in range(len(kets_b)):
-                out[i, j] = corrupted(kets_a[i], kets_b[j], p)
-        return out
-
-    lhs = corrupted_matrix(a, b, -1)
-    rhs = (-1.0) ** (-1) * corrupted_matrix(b, a, +1).T
-    assert np.max(np.abs(lhs)) > 0.0          # non-vacuous
-    assert not np.allclose(lhs, rhs), "dropping the phase should have broken reciprocity"
 
 
 def test_B8_amplitudes_are_summed_then_squared():
