@@ -1,8 +1,9 @@
-# Design brainstorm — a new effective-Hamiltonian package (diatomics first, polyatomics next)
+# Reference architecture — molecular effective-Hamiltonian package
 
-Design agent, 2026-09-04. For Arian's review before any implementation planning.
-
-Inputs read in full: `briefs/00-shared-context.md`, `briefs/06-brief-design-brainstorm.md`, `briefs/07-brief-thf-hamiltonian.md`, `synthesis-draft.md`, `digest-molecule-structure.md`, `digest-c2v-molecules.md`, `digest-thesis-effective-hamiltonian.md` §3–§10, `digest-prior-art.md`, and `digest-literature-thf-plus.md` — **which completed while this document was being written and changes the recommended v1 basis; see §2.0**. Repo line numbers below were re-grepped read-only this session unless marked "(digest)".
+This document records the initial `heff` architecture adopted in September 2026.
+Its scientific basis is the [thesis convention digest](../../digest-thesis-effective-hamiltonian.md)
+and [ThF⁺ literature digest](../../digest-literature-thf-plus.md). The maintained
+[architecture guide](../../architecture.md) describes the implemented surface.
 
 ---
 
@@ -20,17 +21,17 @@ Inputs read in full: `briefs/00-shared-context.md`, `briefs/06-brief-design-brai
 
 ## 2. Three candidate architectures
 
-### 2.0 What the literature digest changed, before anything else
+### 2.0 Literature basis for the initial case-(c) slice
 
 The literature digest landed mid-draft and moves the v1 target basis. The JILA/Ng treatment of ThF⁺ X ³Δ₁ is **Hund's case (c)**: the basis is the product |J, Ω = ±1, F, m_F⟩ (Ng thesis App. C.3.1, p. 323 — lit digest §3.1), with rotation `B J(J+1)` and **no −Ω² term** (lit §5.12), hyperfine collapsed to the single projection-theorem constant A∥ (Eq. C.2), and Ω-doubling as the closed-form phenomenological operator `(−1)^J (ω_ef/2) · [J(J+1)/2] (|+1⟩⟨−1| + h.c.)` (Eq. C.3, lit §3.1 item 2).
 
-Three consequences the synthesis draft could not have known:
+The literature review established three consequences:
 
 1. **The "missing ³Δ₁ Ω-doubling operator" is not a v1 blocker.** Synthesis §1 and Molecule-Structure digest §HEADLINE both rank it as the one genuinely missing piece of physics. In case (c) it exists in closed form with a stated J-scaling and a stated parity alternation. It only reappears as an open item if Arian wants the microscopic case (a) form `½(o_Δ + 3p_Δ + 6q_Δ)(S₊²J₊² + S₋²J₋²)` (Leanhardt 2011 Eq. 16, lit §3.2). That demotes risk #1 in the synthesis to a *later-milestone* physics question (§4 Q2, §5 R2).
 2. **The v1 basis is one neither repo has.** Molecule-Structure supports exactly `aBJ`, `bBJ`, `bBS` (`molecule_library_class.collect_all_cases:61–82`, digest §HEADLINE(c)). Case (c) is a *new* subengine — but a cheap one: no Σ, no Λ, no 9j, ~96 kets for J = 1–4. This is good news for milestone ordering (§3.10): M1 does not depend on the lifted case (a) library at all.
 3. **A single-electronic-state effective Hamiltonian provably cannot reproduce the headline observable.** Ng's own 32-level model gives δg/g = −0.00223 against a measured −0.00255(6), a 15 % gap he attributes to unmodelled X ³Δ₁ – ³Δ₂ coupling (Ng thesis p. 85); Petrov & Skripnikov's model, which carries ¹Σ⁺, 1³Δ₂, ³Π₀± in the basis, lands on the measurement (lit §7.8). **Whether the state spec admits several electronic states with off-diagonal couplings is therefore an architectural question, not a physics detail** — it is the one thing on this list that is a rewrite if it is not designed in. All three candidates below are judged partly on that.
 
-### 2.1 Attack on synthesis-draft §2
+### 2.1 Gaps in the earlier four-layer sketch
 
 The four-layer sketch (state spec → operator library → assembly → engine) is right in outline and wrong or silent in seven places, each of which is a place a real bug lives in one of the two repos.
 
@@ -57,7 +58,7 @@ They differ in **what the unit of composition is**, which determines what "add a
 *Pros:* literally Arian's Rule 1 (distinct subengines, shared tools); matches the physical reality that case (c) and the asymmetric top share almost no matrix elements; each subengine can be verified against its own literature independently.
 *Cons:* there is no shared *term* layer, so rotation, Stark, Zeeman and hyperfine get written four times, and — the real cost — the phase conventions get written four times with them. That is the status quo across the two repos, and it is why the same physical Λ-doubling term is correct in QuantumStates.jl and identically zero in Molecule-Structure (§3.2).
 
-### 2.3 Recommendation
+### 2.3 Selected architecture
 
 **Take A as the spine; draw C's subengine boundary at exactly the triple (ket dtype, enumerator, element set); adopt B's declarative metadata and reject B's reduction engine.**
 
@@ -67,7 +68,7 @@ The one piece of B worth taking now is cheap and pays immediately: **every regis
 
 ---
 
-## 3. Recommended design
+## 3. Reference design
 
 ### 3.1 Basis and state spec
 
@@ -292,7 +293,7 @@ Each ends in a runnable check. The ThF⁺ slice is M4, not the end.
 
 ---
 
-## 4. Open questions for Arian
+## 4. Recorded scientific and design uncertainties
 
 **Physics.**
 
@@ -310,55 +311,20 @@ Each ends in a runnable check. The ThF⁺ slice is M4, not the end.
 
 **Q7. Hyperfine scope.** The ThF⁺ literature gives only A∥; no dipolar, contact or e_Δ constants exist for ThF⁺ anywhere (lit §8.2), and no rotational g-factor (lit §8.3, estimated at ~6 % of the total in ThO). Options: (a) A∥ only, matching every published model; (b) add the full Frosch–Foley set with estimated values marked `status='estimate'`; (c) add them as registered terms with zero default so they can be switched on later. *Recommendation implied by the term registry:* (c) is nearly free — but it is your call whether estimated values ship with them.
 
-**Preference.**
+**Numerical and API choices recorded at the design stage.**
 
 **Q8. Ordering policy default.** Energy order (exact, point-local, C2V production default) vs the thesis's adiabatic correlation to the zero-field state (p.267 — which neither repo implements as stated). *Cost:* the thesis rule is the one your published labels assume; energy order is the one that cannot silently mislabel.
 
 **Q9. Precision floor.** Molecule-Structure rounds eigenvalues and eigenvectors (`Energy_Levels.py:1375 diagonalize(..., round=10)`, with the state object's own default at 6 → a 1 µHz floor in MHz units). For a sub-Hz PT-odd splitting, keep no rounding at all?
-
-**Q10. Repo name, location, licence, public or private?** Also: a QuantumStates.jl cross-implementation of the same ThF⁺ Hamiltonian as an independent check of the case (a) elements — worth a day at M6, or not? (Its licence is at a non-standard `src/LICENSE` and was not read; prior-art §Open questions.)
-
-**Q11. Fitting.** In scope later, or never? The design leaves the analytic Jacobian available at zero cost; knowing whether you want it changes nothing now and would change the parameter model if it arrived after the fact.
-
----
 
 ## 5. Risks and unknowns, ranked
 
 1. **Convention transplant.** The lifted operator library's phase conventions are documented in code comments, carry nine unaudited `#check` flags, and contain one proven sign bug that made an operator identically zero for years. Every number the new package produces inherits them. *Mitigation:* one `conventions` module; gate A5 on arrival; gate B4 (case (a) built and transformed vs case (b) built directly) as the strongest available cross-check. *Residual:* B4 cannot see a wrong phase that is common to both element sets.
 2. **The ³Δ₁ Ω-doubling operator for Λ = 2 in case (a).** Demoted from the synthesis's #1 because the case (c) form exists in closed form (§2.0), but unresolved for M6 and for any other Δ state. Molecule-Structure's ΔΛ = ±2 operators are identically zero on a Δ state (verified by exhaustive sweep with a Λ = 1 control); QuantumStates.jl's is also ΔΛ = ±2; the thesis points at Brown, Cheung & Merer 1987 but never writes it. *Mitigation:* registry entry, phenomenological alternative always available.
 3. **Wigner backend.** Verified this session: `wigners` has wheels everywhere but no 6j/9j; `py3nj` has 6j/9j but no wheels at all, so it needs a Fortran toolchain on Windows and macOS both. The sympy-plus-cache default removes this from the critical path — but only because the matrix-first architecture pays the Wigner cost once per basis. If that assumption breaks (a polyatomic basis where even one build is minutes), the fast-backend problem returns with no good option, and the fallback is writing 6j/9j on top of a fast 3j.
-4. **Multi-electronic-state requirement.** A single-state effective Hamiltonian misses the measured δg/g by 15 % (Ng thesis p.85 vs lit §7.8). If Arian wants that observable at v1 accuracy, the `electronic` list is not optional and the off-diagonal electronic matrix elements are ab initio inputs he does not control (G∥ alone spans 0.034–0.048 across four sources, lit §7.7).
+4. **Multi-electronic-state requirement.** A single-state effective Hamiltonian misses the measured δg/g by 15 % (Ng thesis p.85 vs lit §7.8). Reproducing that observable requires the `electronic` list and ab initio off-diagonal electronic matrix elements (G∥ alone spans 0.034–0.048 across four sources, lit §7.7).
 5. **Adiabatic tracking cost at larger bases.** O(d²) overlap per step plus up to O(d³) assignment, times the grid. At v1 dimensions invisible; at polyatomic full-M dimensions it dominates. C2V needed 967 lines of certified repair machinery to make it trustworthy on a 2D grid and still runs production on energy order. *Mitigation:* energy order default; tracking opt-in; do not port `repair.py` until something needs it.
 6. **Over-engineering the parameter record.** Seven fields plus a conventions block is real friction if every scratch value must be wrapped. The failure mode is people bypassing it with raw floats, which is worse than not having it. *Mitigation:* `Param.of(x)`; bare floats accepted with a one-time warning. Watch this one — it is the place this design is most likely to be wrong in the direction of too much.
-7. **Windows/macOS parity.** GPU exists only on the Windows RTX 5090; C2V documents Windows-specific detached-job failures, `conda run` temp-file locks, WinError 1450/1455 worker ceilings, and BLAS threading making kernels ~3× slower by default. v1 sidesteps all of it by being CPU-only and small, which is itself an argument for the CPU-first decision.
-8. **Memory ceiling of the term catalogue** at polyatomic dimensions — O(n_terms · dim²). Sparse per-term storage buys roughly an order of magnitude; beyond that the architecture needs block-sparse or on-the-fly assembly for the largest terms, which would be a real change.
-9. **The literature's own open items propagate into the package's defaults**: the sign of g_F is unmeasured (theory forces g_F < 0), no centrifugal correction to ω_ef exists, no rotational g-factor for ThF⁺ exists, and Petrov's printed body-fixed dipole appears to be a typo by a factor 10 (lit §7.2). These are `status` fields and switches, not bugs — but they mean no v1 number is better than its inputs.
-10. **Scope creep from the polyatomic roadmap.** Designing the ket dtype and the constraint machinery for ℓ/K/v now costs a little; designing the *operators* now costs a lot. The line drawn here is: ket dtype and enumerator machinery are general from M1; polyatomic operators wait for M7.
-
----
-
-## 6. Proposed names
-
-All three checked against PyPI this session (HTTP status on `pypi.org/pypi/<name>/json`; 404 = available).
-
-| Name | PyPI | Import reads as | Against it |
-|---|---|---|---|
-| **`heff`** | 404 (free) | `import heff` — literally H_eff | Very short and generic; easy to shadow with a local variable named `heff` |
-| **`hunds`** | 404 (free) | `import hunds` — Hund's cases, which is exactly what the subengine boundary is | Slightly cute; says nothing about polyatomics or asymmetric tops, which the roadmap includes |
-| **`effham`** | 404 (free) | `import effham` — effective Hamiltonian, unambiguous | Least elegant of the three; reads as an abbreviation rather than a name |
-
-Also checked and free, if none of the above appeal: `molheff`, `rotham`, `termmat`, `spinrot`, `rovib`, `levelmap`, `diatomiq`, `starkmap`. Checked and **taken**: `molstruct`, `openshell`, `hamlib`.
-
-One to avoid: `molspin` is free on PyPI (404) and is already a branch name in Molecule-Structure, but **MolSpin is an existing molecular spin-dynamics package** (molspin.eu, HTTP 200 this session) — a name collision in the same field even though the PyPI slot is open.
-
----
-
-## Method log
-
-Read in full: all seven brief and digest files listed in the header, plus the six standing feedback memory files and `rules/code-style.md`, `rules/physics-verification.md`. The literature digest was a skeleton at start (887 bytes) and complete at finish (57 KB); §2.0 records what changed as a result.
-
-Verified read-only at source this session (not taken from the digests): `matrix_elements.py:644` `LambdaDoubling_q_even_aBJ` body; `hamiltonian_builders.py:99` the `H0 + E·V_E + B·V_B` lambda; `quantum_numbers.py:320` signature; `Energy_Levels.py:1375` `diagonalize`; C2V `qgt.py:180 multi_curvature`, `repair.py:653 hamiltonians_from_params` (with its `[1], [1]` truncation), `repair.py:827 _stream_diag_core`, `scan_1d.py:11 track_state_ordering`, `scan_1d.py:73 batch_diagonalize_scan`, `matching/_utils.py:453 _PIN_TIE`, and `obs_ops = [stark, zeeman, EDM_mat]` at `scan_2d.py:293` and `scan_windowed.py:120`. Line numbers where a digest and a fresh grep disagreed were re-grepped and the grep result used.
-
-Verified online: PyPI availability for 25 candidate names; `wigners` wheel matrix and its ctypes API surface (3j / CG / Wigner-D only — no 6j, no 9j); `py3nj`'s PyPI file list (sdist only, no wheels); molspin.eu reachable.
-
-No repo files were written, staged or modified; no processes were run beyond short `grep`/`sed`/`curl` calls.
+7. **Memory ceiling of the term catalogue** at polyatomic dimensions — O(n_terms · dim²). Sparse per-term storage buys roughly an order of magnitude; beyond that the architecture needs block-sparse or on-the-fly assembly for the largest terms, which would be a real change.
+8. **The literature's own open items propagate into the package's defaults**: the sign of g_F is unmeasured (theory forces g_F < 0), no centrifugal correction to ω_ef exists, no rotational g-factor for ThF⁺ exists, and Petrov's printed body-fixed dipole appears to be a typo by a factor 10 (lit §7.2). These are `status` fields and switches, not bugs — but they mean no result is better than its inputs.
+9. **Polyatomic scope.** The ket dtype and constraint machinery can represent ℓ/K/v before all corresponding operators exist. Each backend therefore states its implemented term set explicitly.

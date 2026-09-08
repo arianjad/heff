@@ -10,6 +10,10 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = ["numpy>=1.26", "scipy>=1.11", "sympy>=1.12"]
 
+[project.urls]
+Repository = "https://github.com/arianjad/heff"
+Tutorial = "https://github.com/arianjad/heff/blob/main/notebooks/ThF_plus_X3Delta1_Tutorial.ipynb"
+
 [project.optional-dependencies]
 test = ["pytest>=7"]
 plot = ["matplotlib>=3.7"]

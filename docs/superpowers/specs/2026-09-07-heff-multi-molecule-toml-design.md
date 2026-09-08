@@ -1,9 +1,9 @@
-# Design — TOML-configured, multi-molecule effective Hamiltonians
+# Reference architecture — TOML-configured molecular effective Hamiltonians
 
-Status: approved architecture direction on 2026-09-07. The foundation plan
-implements the existing-ThF+ configuration slice only; later backends and basis
-transformations remain follow-on work. See the maintained
-[foundation acceptance report](../handoffs/2026-09-07-toml-foundation-acceptance.md).
+This document records the TOML model and backend contracts adopted on
+2026-09-07. The maintained [model guide](../../models.md) and
+[architecture guide](../../architecture.md) describe the implemented surface;
+this reference explains the design boundary and its physical rationale.
 
 ## 1. Goal
 
@@ -569,7 +569,7 @@ wheel into an isolated environment, loads all bundled TOML resources outside
 the checkout, runs a documented RaF or ThF⁺ example, and verifies package
 metadata. Publishing to TestPyPI or PyPI remains a separate external action.
 
-## 11. Delivery sequence
+## 11. Reference implementation order
 
 1. **Model foundation.** Add the lean TOML loader, registries, model object,
    resource packaging, and focused validation tests. Move the existing ThF⁺
@@ -583,9 +583,8 @@ metadata. Publishing to TestPyPI or PyPI remains a separate external action.
 4. **SrNH₂.** Add the C₂ᵥ asymmetric-top backend, equivalent-proton exchange
    rule, and the term subset used by the current production model. Reassess
    dense term-matrix memory before accepting its target truncation.
-5. **Shareable release.** Complete README examples, metadata, license decision,
-   wheel/sdist checks, and clean-environment installation. Stop before any push,
-   package-index upload, or publication without explicit authorization.
+5. **Distribution.** Complete README examples, metadata, license choice,
+   wheel/sdist checks, and clean-environment installation.
 
 ## 12. Scope boundaries
 
@@ -596,14 +595,14 @@ This program does not initially add:
 - fitting, dynamics, optical Bloch equations, or GPU support;
 - every state in the two source repositories;
 - treating optional source or status metadata as a scientific gate;
-- public publishing or a license choice without a separate user decision.
+- package-index publishing or a license choice.
 
 The implementation migrates one verified vertical slice at a time. It preserves
 the source repositories unchanged. Optional metadata can record unresolved
 physics, but scientific claims remain limited by their actual validation rather
 than by TOML completeness.
 
-## 13. Accepted decisions
+## 13. Design decisions
 
 - Use authoritative TOML files, not Python molecule modules.
 - Store both basis specifications and effective-Hamiltonian parameters in TOML.
@@ -618,13 +617,13 @@ than by TOML completeness.
 - Begin non-ThF⁺ validation with bosonic RaF `X ²Σ⁺(v=0)`.
 - Preserve the current low-level `heff` API while adding a high-level model API.
 
-## 14. Spec self-review
+## 14. Design consistency checks
 
 - Placeholder scan: no unresolved `TBD` or `TODO` fields remain.
 - Consistency: the schema, public API, data flow, errors, tests, and delivery
   sequence use the same lean, data-only TOML boundary.
-- Scope: the first plan can implement the model foundation and RaF vertical
-  slice without implementing YbOH or SrNH₂ simultaneously.
+- Scope: the model foundation and RaF vertical slice do not require YbOH or
+  SrNH₂ simultaneously.
 - Ambiguity: parameter layering, backend ownership, basis-transform semantics,
   common-basis transition evaluation, term selection, and external publishing
   boundaries are explicit.

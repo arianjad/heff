@@ -1,19 +1,21 @@
 # Getting started
 
-This guide takes you from a local copy of `heff` to an energy spectrum and a
-field sweep. You need basic Python, matrix diagonalization, and angular-momentum
-notation. You do not need another molecular-structure repository or a local
-copy of a thesis to run the examples.
+This guide takes you from a fresh checkout of `heff` to an energy spectrum and
+a field sweep. You need basic Python, matrix diagonalization, and
+angular-momentum notation.
 
-## 1. Install in a Python environment
+## 1. Clone and install
 
-Use Python 3.12 or newer. Open a terminal in the repository root, the directory
-containing `pyproject.toml`. Check `python --version`; on systems where the
-command is `python3`, use that name to create the environment.
+Use Python 3.12 or newer. Clone the repository, enter its root directory, and
+create a virtual environment:
 
 ```shell
+git clone https://github.com/arianjad/heff.git
+cd heff
 python -m venv .venv
 ```
+
+If your system provides Python as `python3`, use that command instead.
 
 Activate it in PowerShell:
 

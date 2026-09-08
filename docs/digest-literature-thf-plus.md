@@ -1,6 +1,6 @@
 # Digest: effective Hamiltonian of ThF⁺ X ³Δ₁ (and its HfF⁺ ³Δ₁ lineage)
 
-Literature-extraction agent, 2026-09-04. All PDFs and text extracts under `notes/lit/`.
+Assembled 2026-09-04 from the sources and page ranges listed in §2.
 Conventions used in this file: **[conv.]** = unit conversion I performed (arithmetic shown); **[inferred]** = my inference, not stated by the source; everything else is a direct report with a cite. HfF⁺ values are always labelled as such and are never carried into the ThF⁺ table.
 
 ---
@@ -21,16 +21,19 @@ Confidence: high on the term list, the basis, and the measured constants (multip
 
 ## 2. Search scope and coverage
 
-**Route 1 — Zotero, read-only.** The `zotero` MCP server failed to connect this session (HTTP 401 AUTH_HEADER_REJECTED, confirmed in the session's own MCP failure notice); it was not used. Instead:
-- `zotero-cli` (at `/c/Users/Arian/.local/bin/zotero-cli`, `ZOTERO_LOCAL=true`) — verified working (`zotero-cli config`, `zotero-cli search`). Its search is fuzzy/semantic and returned poor precision on exact titles, so it was used only as a cross-check.
-- Filesystem search of `C:/Users/Arian/Zotero/storage` (5543 attachment directories, counted). Queries run (all `find … -maxdepth 2 -type f -iname …`, 2026-09-04):
+**Library search.** Title and attachment-name queries run on 2026-09-04:
   `*ThF*`, `*HfF*`, `*Gresh*`, `*Cairncross*`, `*Leanhardt*`, `*Cornell*`, `*Skripnikov*`, `*Petrov*`, `*Roussy*`, `*Loh*`, `*Zhou*`, `*Denis*`, `*Fleig*`, `*eEDM*`, `*electron electric dipole*`, `*thorium*`, `*Ng -*`, `*velocity modulation*`, `*trapped molecular*`, `*Omega-doubl*`, `*Grau*`, `*Meyer*`, `*Vutha*`, `*g factor*`, `*g-factor*`, `*spin-rotational*`, `*Titov*`, `*Mosyagin*`, `*thesis*`.
-  The `*thesis*` query is the one that paid off (Zotero stores those attachments under their original filenames, so author-name queries miss them). Nothing was written to the Zotero library or database; `zotero.sqlite` was never opened.
-- `zotero-cli search` queries run: `"ThF"`, `"Spectroscopy on the electron-electric-dipole-moment-sensitive states of ThF"`, `"Broadband velocity modulation spectroscopy of ThF"`, `"Second-Scale Coherence Measured at the Quantum Projection Noise Limit"`, `"Electric field dependent g factors"`, `"spin-rotational Hamiltonian of HfF"`.
+The broader `*thesis*` query found author-title attachments missed by author-name
+queries. Exact-title searches covered ThF spectroscopy, velocity-modulation
+spectroscopy, coherence, electric-field-dependent g factors, and the HfF⁺
+spin-rotational Hamiltonian.
 
-**Route 2 — online.** arXiv API (`export.arxiv.org/api/query`) searches: `all:"electron-electric-dipole-moment-sensitive states of ThF"` (0 hits), `ti:"ThF+" AND abs:"hyperfine"` (3 hits), `all:"ThF+" AND all:"Omega-doubling"` (0), `ti:"g factors of ThF"` (1), `au:Skripnikov AND abs:"ThF+"` (2), `au:Petrov AND abs:"ThF+"` (1), `au:Petrov AND ti:"Zeeman interaction"` (3). PDFs fetched with `urllib.request` (Python 3.12, conda env `claude-code`), text with PyMuPDF 1.27.2.2, equation pages rendered at 180 dpi and read as images.
+**Online search.** arXiv queries covered the exact ThF⁺ spectroscopy title,
+ThF⁺ hyperfine and Ω-doubling, ThF g factors, Skripnikov/Petrov ThF⁺ work,
+and Petrov's Zeeman papers. Hit counts and exclusions below preserve the search
+boundary.
 
-**Obtained as full text (all saved to `notes/lit/`):**
+**Sources obtained as full text:**
 
 | Source | Route | Note |
 |---|---|---|
@@ -56,7 +59,7 @@ Confidence: high on the term list, the basis, and the measured constants (multip
 
 ## 3. Hamiltonian form by source
 
-### 3.1 Ng PhD thesis, Appendix C (`ng-thesis-JILA.pdf`, PDF pp. 318–325) — **the ThF⁺ statement**
+### 3.1 Ng PhD thesis, Appendix C, PDF pp. 318–325 — **the ThF⁺ statement**
 
 Frames (App. C.1, p. 318): two frames. (i) The quantization-axis frame **rotates with E_rot**; F, m_F, J are defined there. (ii) The molecule frame, quantization axis along the internuclear axis **"pointing towards thorium"**; Ω is defined there. (Note: Ch. 2.4, p. 35, defines Ω = J_a·n̂ with n̂ "pointing towards the cation" — that is the *neutral ThF* chapter, so the two statements are consistent only for ThF⁺ where Th is the cation end.)
 
@@ -240,7 +243,7 @@ Isotopologue throughout: **²³²Th¹⁹F⁺** (²³²Th: I = 0; ¹⁹F: I = 1/2
 
 **Extensions after 2011, in order:** (i) hyperfine mixing between J levels folded into δg and into the avoided crossing (Leanhardt Sec. IV G already; then numerically); (ii) the E-field-dependent g-factor, first analytic (Eq. 67) then ab initio (Petrov 2017 for HfF⁺, 2025 for ThF⁺); (iii) non-adiabatic mixing with other electronic states, which changes the G∥ needed to reproduce a given g (arXiv:2503.02840 p. 3: G∥ = 0.047 vs Ng's adiabatic 0.048); (iv) systematics parametrizations S₁, S₂, S₃ tying f^B/f^{BD} to g^u, g^ℓ, Δg₀, Δg₁ (arXiv:2503.02840 Eqs. 17–20, p. 4); (v) the ThF⁺-specific consolidation in the Ng thesis.
 
-**Single best reference to code from: Ng thesis, Appendix C, pp. 318–325** (`notes/lit/ng-thesis-JILA.pdf`; text extract `ng-thesis-JILA_p316-325.txt`). It is the only place where the complete term list, the basis, the frames, the 3j/6j matrix elements, the 12/32-state truncation, the parameter values, and the two-level reduction are stated together for ThF⁺. Pair it with Appendix B Table B.2 (p. 317) for the numerical parameter set, Ng 2022 Table I (p. 5) for the measured constants with uncertainties, and Leanhardt Sec. IV D–G for anything involving the rotating field that the appendix compresses into one line.
+**Single best reference to code from: Ng thesis, Appendix C, pp. 318–325.** It is the only place where the complete term list, the basis, the frames, the 3j/6j matrix elements, the 12/32-state truncation, the parameter values, and the two-level reduction are stated together for ThF⁺. Pair it with Appendix B Table B.2 (p. 317) for the numerical parameter set, Ng 2022 Table I (p. 5) for the measured constants with uncertainties, and Leanhardt Sec. IV D–G for anything involving the rotating field that the appendix compresses into one line.
 
 ---
 
@@ -292,7 +295,7 @@ Isotopologue throughout: **²³²Th¹⁹F⁺** (²³²Th: I = 0; ¹⁹F: I = 1/2
 | Skripnikov & Titov, PRA 91, 042504 (2015) (arXiv:1503.01001) | Tier 1 theory; E_eff, W_{T,P}, G∥, d for ThF⁺ | ThF⁺ ³Δ₁ | 2c-CCSD(T), 38 correlated electrons | Table II: E_eff = 37.3 GV/cm, W_{T,P} = 50 kHz, W_M = 0.88 × 10³³, A∥(Th) = −4163 µ_Th/µ_N MHz, G∥ = 0.034, d = 2.74 D (Th nucleus); Table I: R_e, ω_e | Dipole origin is the Th nucleus, not c.m.; A∥ is the **Th** constant, not ¹⁹F; 7% stated uncertainty |
 | Denis et al., NJP 17, 043005 (2015) | Tier 1 theory; independent E_eff | ThF⁺, low-lying states | MRCC / GASCI, DIRAC | E_eff = 35.2 GV/cm, W_{P,T} = 48.4 kHz, A∥(²²⁹Th, I = 5/2) = 1833 MHz, d = 4.03 D (c.m.); ³Δ₁ below ¹Σ⁺ by >300 cm⁻¹ | d is 16% above the later measurement; no ¹⁹F hyperfine |
 | Cairncross et al., PRL 119, 153001 (2017) + Suppl. | Cited by Ng 2022 as the Hamiltonian source | HfF⁺ | measurement | Eq. S1 eight-channel parity decomposition; systematics treatment | **Does not contain the effective Hamiltonian** (§3.5) |
-| Cairncross PhD thesis (JILA) | Possible fuller HfF⁺ Hamiltonian | HfF⁺ | — | Ch. 2 "Theoretical calculations in HfF⁺" extracted to `cairncross-thesis-JILA_p36-50.txt`; App. "Molecular Data" p. 258 | Not read in detail — HfF⁺, superseded for our purposes by the Ng thesis |
+| Cairncross PhD thesis (JILA) | Possible fuller HfF⁺ Hamiltonian | HfF⁺ | — | Ch. 2 "Theoretical calculations in HfF⁺," pp. 36–50; App. "Molecular Data," p. 258 | Not read in detail — HfF⁺, superseded for this scope by the Ng thesis |
 | Roussy et al., Science 381, 46 (2023) (arXiv:2212.11841) | Tier 1 list; the current eEDM bound | HfF⁺ | measurement | |d_e| < 4.1 × 10⁻³⁰ e·cm | Skimmed; HfF⁺; supplement not separately obtained |
 | Zhou et al., PRL 124, 053201 (2020) | Tier 1 list; coherence | HfF⁺ | measurement | second-scale coherence, QPN limit | Skimmed; HfF⁺ |
 
@@ -305,28 +308,4 @@ Isotopologue throughout: **²³²Th¹⁹F⁺** (²³²Th: I = 0; ¹⁹F: I = 1/2
 - Kozlov et al. 1987 / 1992 (Zotero `6VF9I64N`, `VNCBEH4A`): PbF/HgF P,T-odd spin-rotational Hamiltonians; foundational but superseded by Skripnikov's operator definitions for our species.
 - Zhou et al. 2019 JMS (neutral ThF): the neutral constants are in Ng thesis Table 2.1 (ω_e = 601.00(2) cm⁻¹, B_e = 0.2339(2) cm⁻¹, r_e = 2.026(3) Å for X ²Δ_{3/2}) — not needed for the ion, since every ion constant was measured directly.
 - "Rotational splittings in diatomic molecules of interest to searches for new physics" (2025, ResearchGate): not pursued; the Ω-doubling scaling question it would answer is settled directly by Gresh's k (∝ J(J+1)) and Ng's operator (§5.5).
-- Grau, Loh, Stutz theses: copied to `notes/lit/` but not read; all HfF⁺-era and superseded by the Ng thesis for ThF⁺.
-
----
-
-## 10. Method log
-
-**Files saved under `notes/lit/`** (PDFs, with `.txt` PyMuPDF extracts alongside for the ones marked *):
-
-From Zotero storage (copied read-only; the library and `zotero.sqlite` were never written or opened):
-`ng-thesis-JILA.pdf` (+ `_p35-40.txt`, `_p76-96.txt`, `_p316-325.txt`), `gresh-thesis-JILA.pdf`, `cairncross-thesis-JILA.pdf` (+ `_p36-50.txt`), `loh-thesis-JILA.pdf`, `grau-thesis-JILA.pdf`, `stutz-thesis-JILA.pdf`, `leanhardt2011-JMS-rotating-field-3Delta1.pdf`, `denis2015-NJP-ThFplus-theory.pdf`*, `baturo2021-Efield-gfactor.pdf`*, `cairncross2017-PRL-HfFplus-eEDM.pdf`*, `meyerbohn2008-ThO-ThFplus.pdf`, `roussy2023-Science-improved-bound.pdf`, `zhou2020-PRL-second-scale-coherence.pdf`*, `skripnikov2016-combined-4c.pdf`, `petrov2018-CP-violation-HfFplus.pdf`*, `barker2011-HfFplus-spectroscopy.pdf`*.
-
-Downloaded (arXiv, 2026-09-04, `urllib.request`, UA "Mozilla/5.0 (research)"):
-`ng2022-arXiv2202.01346-PRA105-022823-ThFplus-spectroscopy.pdf`*, `gresh2016-JMS-ThFplus-velocity-modulation.pdf`*, `2025-arXiv2503.02840-Efield-dependent-gfactors-ThFplus.pdf`*, `2023-arXiv2302.02856-revisited-PT-odd-HfFplus.pdf`*, `leanhardt2011-arXiv1008.2997.pdf`*, `skripnikov2015-arXiv1503.01001-ThFplus-theory.pdf`*, `roussy2023-arXiv2212.11841-improved-eEDM-bound.pdf`*, `petrov2017-arXiv1704.06631-Zeeman-3Delta1-HfFplus.pdf`*.
-
-**Pages rendered to PNG at 180 dpi and read as images** (6 of the ≤20 budget; used wherever signs, subscripts, or table headers were load-bearing):
-- `ng2022-…_p3.png` — Fig. 2 energy landscape (parity colouring, 3ω_ef vs ω_ef, ¾|A∥| vs 5/12|A∥|).
-- `gresh2016-…_p10.png` — Table 1 header and the X ³Δ₁ rows (B″, D″, k″, k_D″ and the "∝ J(J+1)" statement).
-- `gresh2016-…_p11.png` — Tables 2 and 3 (derived constants for all ThF⁺ states).
-- `2025-arXiv2503.02840-…_p3.png` — the "D = −0.133 a.u." sentence (confirming the printed digit; §7.2).
-- `2025-arXiv2503.02840-…_p4.png` — Fig. 2 g-factor axis sign and Eqs. 16–20.
-
-**Tools that worked:** `find` on Zotero storage; `zotero-cli` in local mode; PyMuPDF 1.27.2.2 (conda env `claude-code`, Python 3.12) for text extraction, page-range extraction, TOC extraction, and rendering; the arXiv API for locating the ThF⁺ papers; `urllib.request` for PDF download.
-**Tools that failed:** the `zotero` MCP server (401 at connect, per the session's MCP failure notice) and `pdf-mcp` (same) — neither was used. The JILA-hosted URL `https://jila.colorado.edu/sites/default/files/2022-03/PhysRevA.105.022823.pdf` returns a 34 kB HTML page, not a PDF; arXiv:2202.01346 was used instead. A one-line `python -c` with an embedded multi-line script fails under the Git-Bash → conda wrapper (line-continuation error) — scripts were written to the scratchpad and invoked by path. One `conda run` invocation failed transiently on a temp-file lock and succeeded on retry.
-
-**Approximate effort:** ~40 minutes wall clock; ~25 tool calls; the digest skeleton was written after the first ~8 minutes (immediately after the Zotero sweep) and filled in as sources landed.
+- Grau, Loh, and Stutz theses: not read; all are HfF⁺-era sources superseded by the Ng thesis for this ThF⁺ scope.

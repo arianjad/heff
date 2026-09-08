@@ -1,26 +1,7 @@
-"""Rank-K effective two-photon (2 x E1) operator gates within X 3Delta1.
+"""Rank-K two-photon gates for X 3Delta1 ([HAM] S9.5; B&C 5.141–5.142).
 
-Sources, in the order the gates use them:
-  [HAM] = docs/thf-plus-x3delta1-effective-hamiltonian.md S9.5 (S9.5.1 the rank
-          decomposition and the closure form, S9.5.2 which (K, dOmega) channels
-          exist, S9.5.3 the OPEN-21 scope for K = 1, S9.5.4 the selection rules
-          as data, S9.5.5 validity)
-  [2g]  = docs/digest-literature-two-photon.md S0 item 6, S3.0, S3.3
-  B&C   = Brown & Carrington Eqs. (5.141), (5.142), PDF p.198 / book p.166
-
-Two things these gates pin that nothing else in the suite can:
-
-  * The operator is a TRANSITION operator living in its own registry
-    (REGISTRY_2G), so it can never be summed into an assembled Hamiltonian
-    ([SPEC-v2] S3.2). test_no_two_photon_term_appears_in_a_hamiltonian_registry
-    is the check.
-  * The registered rank set is K in {0, 2}. [HAM] S9.5.3 rules that K = 1 is
-    identically zero in exact closure (it is the antisymmetric part of the
-    dyad, and the Cartesian components of d commute), so there is no
-    alpha_K1_* parameter and no K = 1 operator. `dyad_weights` still RETURNS
-    the K = 1 weights -- they are a property of the polarisation pair, not of
-    the molecule, and the sin^2(theta) law Cossel measured lives in them (see
-    test_dyad_weights_reproduce_the_known_polarisation_limits).
+They enforce a separate transition registry and K={0,2}; K=1 dyad weights are
+returned but have no exact-closure operator.
 """
 import numpy as np
 import pytest
@@ -34,9 +15,7 @@ from heff.twophoton import (REGISTRY_2G, dyad_weights,
                             two_photon_line_strengths, two_photon_matrix)
 
 SQ2 = np.sqrt(2.0)
-# Jones vectors in the [HAM] S2 Condon-Shortley phase: sigma+ is
-# e_{+1} = -(x + iy)/sqrt(2), the vector S9.5.1(3) anchors the whole
-# convention on ("this gives c[+1] = +1 and nothing else").
+# Condon-Shortley sigma+ convention ([HAM] S9.5.1(3)).
 SIGMA_P = np.array([-1.0, -1.0j, 0.0]) / SQ2
 SIGMA_M = np.array([1.0, -1.0j, 0.0]) / SQ2
 PI_Z = np.array([0.0, 0.0, 1.0])

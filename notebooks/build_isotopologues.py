@@ -753,8 +753,8 @@ operator is **not** the eEDM π/2 pulse (`Δm_F = ±3` within J = 1, `|m_F| =
 
 The `alpha_K*_dOm*` scalars below are **placeholders** (`status='placeholder'`,
 value 1.0 in their unit): no ThF⁺ two-photon polarisability exists in any
-source read ([2γ] gap 1). So the spectra in §12–13 show **geometry** — the
-relative strengths the rank-K selection rules and the polarisation dyad
+source summarized in [2γ] (gap 1). So the spectra in §12–13 show **geometry**
+— the relative strengths the rank-K selection rules and the polarisation dyad
 allow — not physical rates.
 """),
 
@@ -958,7 +958,6 @@ plt.show()
 `tests/` exercise code behavior and selected identities; they do not turn the
 model inputs into physical measurements or predictions. `docs/open-
 questions.md` carries OPEN-16 through OPEN-23 in full, each with its citation.
-Design: [SPEC-v2](../docs/superpowers/specs/2026-09-05-heff-v2-isotopologues-two-photon.md).
 """),
 ]
 

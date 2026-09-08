@@ -1,71 +1,9 @@
-"""The rank-K effective two-photon (2 x E1) operator within one electronic state.
+"""Rank-K effective two-photon transition geometry; see [HAM] S9.5 and B&C 5.141–5.142.
 
-The operator formulas are documented in
-docs/thf-plus-x3delta1-effective-hamiltonian.md S9.5. Decorators carry Brown &
-Carrington equation and page citations. Resolve disagreements with the cited
-equations before changing a sign.
-
-WHAT THE OPERATOR IS. Adiabatic elimination of a far-detuned intermediate
-manifold ([HAM] S9.5, [2gamma] S3.1, Cossel PhD thesis (Colorado, 2014) Eqs.
-(6.29), (6.34), pp. 213, 219) gives, between X-state levels,
-
-    T_eff = sum_i (d.eps2*) |i><i| (d.eps1) / Delta_i .
-
-Two rank-1 operators couple to K = 0, 1, 2 and nothing else (B&C Eq. (5.141),
-PDF p.198 / book p.166). When the detuning is common, B&C Eq. (5.142) read
-BACKWARDS says the intermediate sum IS the reduced element of a single rank-K
-operator, so the whole process is ONE SCALAR PER (K, dOmega) CHANNEL times
-parameter-free geometry ([HAM] S9.5.1(1)). That is what this module computes:
-the geometry. The scalars are the placeholder alpha_K*_dOm* Params, and the
-caller supplies them.
-
-WHICH CHANNELS ARE REGISTERED: K in {0, 2} ONLY.
-  * (K = 0, dOmega = 0), (K = 2, dOmega = 0), (K = 2, dOmega = +-2). Within
-    X 3Delta1 both |Omega| are 1, so q = Om' - Om is 0 or +-2, and the
-    molecule-frame 3j (J' K J; -Om' q Om) vanishes unless |q| <= K -- hence
-    |dOmega| = 2 at K = 2 only ([HAM] S9.5.2).
-  * K = 1 is NOT registered and there is no alpha_K1_* parameter. [HAM] S9.5.3
-    (OPEN-21) rules that K = 1 is the antisymmetric part of the dyad, so in
-    exact closure it is P_X [d_a, d_b] P_X / 2 = 0 identically -- the Cartesian
-    components of d commute. It reappears at O(delta/Delta) in the resolved
-    form, and at O(1) for a restricted intermediate manifold (a single
-    intermediate electronic state -- the actual ThF+/HfF+ situation); either
-    would need its own placeholder alpha with that order recorded, and neither
-    is in v2's registered set.
-  `dyad_weights` still returns the K = 1 weights: they are a property of the
-  polarisation pair, not of the molecule (and the sin^2 theta law Cossel
-  measured lives in them, [2gamma] S3.0). No operator in this module consumes
-  them.
-
-``REGISTRY_2G`` is separate from ``heff.terms.REGISTRY`` and
-``heff.elements_c2.REGISTRY_C2``. It holds transition operators, which are not
-summed into an assembled Hamiltonian.
-
-WHICH 6j THE RANK-K REDUCTION USES, AND WHERE IT LIVES. [HAM] S9.5.1(2) is
-S9.1's two-spectator chain with k -> K: the reduction is the two spectator 6j's
-{F1 F I_F; F' F1' K} and {J F1 I_Th; F1' J' K}, and BOTH are evaluated inside
-heff.elements_c2.axial_geometry -- this module writes no recoupling algebra of
-its own beyond the polarisation dyad. The 6j evaluation therefore lives in
-``heff.elements_c2.w6j``; this module does not evaluate a 6j directly. The B&C
-(5.142) 6j {1 1 K; j' j j''} that a
-RESOLVED intermediate sum would carry is exactly what closure removes; it
-appears nowhere in this file, which is the whole content of the closure form.
-w3j is used here directly, for the Clebsch-Gordan coefficients of the dyad.
-
-UNITS. The geometry is dimensionless. conventions.two_photon_norm =
-'bc_5p142_reduced': alpha^K_{dOmega} multiplies the geometry of B&C (5.142)
-at <eta'||alpha^K||eta> == 1 per (K, dOmega) channel -- the closure relation
-of [HAM] S9.5.1(1), sum_{j''} {1 1 K; j' j j''} <j||d||j''><j''||d||j'> =
-(-1)^(K+j+j') (2K+1)^-1/2 <j||T^K(d,d)||j'>, alpha^K = T^K(d,d)/Delta, living
-on the resolved side -- so an amplitude comes out in units of alpha and a
-strength in units of alpha^2. The alpha Params carry (MHz/(V/cm))^2/MHz and
-the two field amplitudes are the caller's, exactly as
-heff.spectra.line_strengths leaves d_mf to the caller.
-
-VALIDITY, in the sentence [HAM] S9.5.5 writes for the notebook: the closure form
-requires a detuning large compared with the intermediate ROTATIONAL structure,
-Delta >> B_i ~ 7 GHz for ThF+, whereas the JILA experiments run at 0.16-1.5 GHz
--- the right operator shape, the wrong limit for the current experiment.
+``REGISTRY_2G`` holds transition operators, never Hamiltonian terms. Registered
+channels are (K, |ΔOmega|)=(0,0),(2,0),(2,2); K=1 has no exact-closure operator.
+Geometry is dimensionless with ``two_photon_norm='bc_5p142_reduced'``. Closure
+requires Δ much larger than intermediate rotational structure ([HAM] S9.5.5).
 """
 import numpy as np
 
@@ -80,79 +18,27 @@ _SQ2 = np.sqrt(2.0)
 
 
 def _spherical(v):
-    """{p: v_p} for any complex Cartesian vector, [HAM] S9.5.1(3):
-
-        v_{+1} = -(v_x + i v_y)/sqrt(2),  v_0 = v_z,  v_{-1} = +(v_x - i v_y)/sqrt(2)
-
-    the Condon-Shortley phase fixed by [HAM] S2.
-    """
+    """Return Condon-Shortley spherical components ([HAM] S9.5.1(3))."""
     vx, vy, vz = (complex(c) for c in np.asarray(v).reshape(3))
     return {1: -(vx + 1j * vy) / _SQ2, 0: vz, -1: (vx - 1j * vy) / _SQ2}
 
 
 def _leg(eps):
-    """c[p] = (-1)^p eps_{-p}, the coefficients of one E1 leg. [HAM] S9.5.1(3).
-
-    d.eps = sum_p (-1)^p eps_{-p} T^1_p(d), from A.B = sum_p (-1)^p A_p B_{-p}
-    (a bilinear identity, valid for complex components).
-
-    Pass the CONJUGATED Jones vector for the bra-side leg: `_leg(conj(eps2))`
-    means conjugate the Cartesian vector first, then take spherical components.
-    The anchor is the sigma+ Jones vector e_{+1} = -(x + iy)/sqrt(2), for which
-    this returns c[+1] = +1 and nothing else -- absorbing a sigma+ photon raises
-    m_F by one.
-    """
+    """Return c[p]=(-1)^p eps[-p]; conjugate the Raman bra-side vector first."""
     s = _spherical(eps)
     return {p: (-1.0) ** p * s[-p] for p in (-1, 0, 1)}
 
 
 def _cg(j1, m1, j2, m2, J, M):
-    """<j1 m1 j2 m2|J M> = (-1)^(j1-j2+M) sqrt(2J+1) (j1 j2 J; m1 m2 -M).
-
-    B&C Eq. (5.141), PDF p.198 / book p.166, is exactly this coupling at
-    k1 = k2 = 1; [HAM] S9.5.1(3) inverts it to get the dyad weights.
-    """
+    """Return the Clebsch-Gordan coefficient from B&C 5.141."""
     return (-1.0) ** (j1 - j2 + M) * np.sqrt(2 * J + 1) * w3j(j1, j2, J, m1, m2, -M)
 
 
 def dyad_weights(eps1, eps2):
-    """The coupled polarisation dyad {(K, P): complex} for K = 0, 1, 2.
+    """Return the Raman dyad weights for Cartesian Jones vectors ([HAM] S9.5.1).
 
-    [HAM] S9.5.1(3), implemented DIRECTLY in the form printed there:
-
-        w^K_P = sum_{p_a + p_b = P} <1 p_a 1 p_b|K P> c_a[p_a] c_b[p_b]
-
-    with `eps_a = eps2*` in slot 1 (the bra-side leg) and `eps_b = eps1` in
-    slot 2 (the ket-side leg), because T_eff = (d.eps2*)|i><i|(d.eps1)/Delta and
-    B&C (5.142) puts the bra-side leg first. The contraction is then free of
-    further phases: T_eff = sum_K sum_P w^K_P alpha^K_P, with Delta m_F = P.
-
-    NEITHER THE CONJUGATION NOR THE SLOT ORDER IS COSMETIC. The equivalent
-    dyad-notation form is w^K_P = (-1)^(K+P) (eps2* x eps1)^K_{-P}; the
-    plausible-looking (-1)^P (eps1 x eps2)^K_{-P} is a different function of
-    the two Jones vectors ([HAM] S9.5.1(3) measures the difference at 1.3e+01
-    on random eps) and it swaps which physical polarisation pair reaches
-    Delta m_F = +-2. That form is given in S9.5 only for recognition and is not
-    what this function computes.
-
-    THE READING IS RAMAN (photon 2 emitted, hence conjugated). Under it,
-    eps1 = eps2 = sigma+ gives legs (p_a, p_b) = (-1, +1) and so Delta m_F = 0,
-    while eps1 = sigma+ with eps2 = sigma- gives (+1, +1) and Delta m_F = +2 --
-    conjugating eps2 flips the sign of its helicity label, so the beam-pair ->
-    Delta m_F map is INVERTED relative to the ladder reading in which both
-    photons are absorbed. The reachable SET under sigma+- only is
-    {0, +-2} either way ([HAM] S9.5.4). A caller labelling a polarisation pair
-    must say which reading it means; this one is Raman.
-
-    K = 0 is the scalar eps2*.eps1; K = 1 is the antisymmetric part
-    (prop. eps2* x eps1), non-zero only for non-parallel or elliptical
-    polarisations; K = 2 is the symmetric traceless part. The K = 1 weights are
-    returned because they are a property of the polarisation pair, but NO
-    registered operator consumes them -- there is no K = 1 channel
-    ([HAM] S9.5.3, OPEN-21).
-
-    eps1, eps2 are Cartesian Jones 3-vectors, complex allowed, in the frame
-    whose z is the quantisation axis.
+    The bra-side vector is conjugated and first. K=1 weights are returned but
+    have no registered exact-closure operator ([HAM] S9.5.3).
     """
     c_a = _leg(np.conj(np.asarray(eps2, dtype=complex)))
     c_b = _leg(np.asarray(eps1, dtype=complex))
@@ -162,22 +48,9 @@ def dyad_weights(eps1, eps2):
 
 
 def two_photon_geometry(bra, ket, ctx, *, K, P):
-    """<bra| alpha^K_P |ket> in the two-spin basis, in units of <eta'||alpha^K||eta>.
+    """Return two-spin alpha^K geometry via ``axial_geometry`` ([HAM] S9.5.1).
 
-    [HAM] S9.5.1(2), the spectator reduction: alpha^K acts on the electronic-
-    rotational part only, so S9.1's two-spectator chain applies UNCHANGED with
-    k -> K and p -> P. That chain is heff.elements_c2.axial_geometry, and this
-    function is that call at k = K, q = Om_bra - Om_ket, p = P -- no new
-    recoupling algebra, which is the point of the closure form.
-
-    Returns 0.0 when |q| > K: the molecule-frame 3j (J' K J; -Om' q Om) vanishes
-    identically there, so the channel does not exist ([HAM] S9.5.2). This is
-    the ONE place the |q| <= K closure is applied; `axial_geometry` itself
-    RAISES on |q| > k, since for it such a call is a caller bug.
-
-    Validity ([HAM] S9.5.1(2)): the spectator reduction is exact only when the
-    intermediate hyperfine structure is unresolved -- if Delta_i depends on the
-    intermediate F', the F' sum cannot be factored out and the reduction fails.
+    It is zero for |q|>K and requires unresolved intermediate hyperfine.
     """
     q = float(bra["Om"]) - float(ket["Om"])
     if abs(q) > float(K):
@@ -186,17 +59,7 @@ def two_photon_geometry(bra, ket, ctx, *, K, P):
 
 
 def two_photon_matrix(kets_a, kets_b, ctx, *, K, dOmega, P):
-    """<a| alpha^K_P |b> over one channel, shape (len(a), len(b)).
-
-    Mirrors heff.spectra.dipole_matrix: dimensionless geometry, indexed purely
-    by POSITION in the arrays the caller passes.
-
-    `dOmega` selects the channel and is 0 or 2, where 2 means |dOmega| = 2 --
-    BOTH q = +2 and q = -2. They are one channel, not two: they share one
-    scalar (alpha_K2_dOm2, exactly as elements_c2's eQq2_Th covers both signs),
-    and parity maps each into the other, so separating them would make
-    [T, parity] = 0 false by construction (gate V24).
-    """
+    """Return one dimensionless channel matrix; ``dOmega=2`` includes both signs."""
     if dOmega not in (0, 2):
         raise ValueError(
             f"dOmega must be 0 or 2 (2 meaning |dOmega| = 2, both signs), got "
@@ -211,7 +74,6 @@ def two_photon_matrix(kets_a, kets_b, ctx, *, K, dOmega, P):
     return out
 
 
-# --------------------------------------------------------- the registry
 
 _CITE = (
     "[HAM] S9.5, the rank-K effective two-photon operator. B&C Eqs. (5.141) "
@@ -239,14 +101,7 @@ _K2 = (-2, -1, 0, 1, 2)
 
 
 def _channel(K, dOmega):
-    """The registered element for one (K, |dOmega|) channel.
-
-    A registered term is called as fn(bra, ket, ctx) (heff.terms), so the lab
-    component is the one the kets themselves force, P = Delta m_F -- the sum
-    over P at fixed weight. A physical amplitude weights each P by the dyad,
-    which is
-    two_photon_line_strengths' job.
-    """
+    """Return the registered element with P fixed by Δm_F."""
     def fn(bra, ket, ctx):
         if abs(float(bra["Om"]) - float(ket["Om"])) != dOmega:
             return 0.0
@@ -267,9 +122,7 @@ two_photon_K0_dOm0 = term(
 
 two_photon_K2_dOm0 = term(
     name="two_photon_K2_dOm0", param=("alpha_K2_dOm0",), cases=("c2",),
-    # hermitian=False: fn evaluates at P = Delta m_F, and by reciprocity
-    # (M_P(a,b) = (-1)^P M_{-P}(b,a)), so this object is antisymmetric at odd
-    # Delta m_F.
+    # P=Δm_F gives odd-Δm_F antisymmetry by spherical-tensor reciprocity.
     registry=REGISTRY_2G, hermitian=False, real=True,
     rules=Rules(dJ=_K2, dOm=(0.0,), dF1=_K2, dF=_K2, dmF=_K2),
     cite="The rank-2 channel at dOmega = 0. Selection rules as data, "
@@ -282,7 +135,6 @@ two_photon_K2_dOm0 = term(
 
 two_photon_K2_dOm2 = term(
     name="two_photon_K2_dOm2", param=("alpha_K2_dOm2",), cases=("c2",),
-    # hermitian=False: the same reciprocity relation as K2_dOm0 applies.
     registry=REGISTRY_2G, hermitian=False, real=True,
     rules=Rules(dJ=_K2, dOm=(-2.0, 2.0), dF1=_K2, dF=_K2, dmF=_K2),
     cite="The |dOmega| = 2 channel, which exists at K = 2 ONLY: |q| = 2 needs "

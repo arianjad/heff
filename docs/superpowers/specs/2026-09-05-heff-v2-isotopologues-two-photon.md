@@ -1,42 +1,33 @@
-# heff v2 — Th isotopologues (two nuclear spins) and the effective two-photon operator
+# Reference design — Th isotopologues and the effective two-photon operator
 
-Design agent, 2026-09-05, session 3. For Arian's review before implementation planning.
-Companion to the v1 design `docs/superpowers/specs/2026-09-05-heff-design.md`, whose
-architecture is **binding and unchanged**: term-matrix catalogue `H = Σ_k c_k M_k`,
+This document records the two-nuclear-spin and effective two-photon contracts
+adopted for `heff` on 2026-09-05. It extends the
+[v1 reference](2026-09-05-heff-design.md): term-matrix catalogue
+`H = Σ_k c_k M_k`,
 declared selection rules as data, a conventions block stamped on every result, blocking
 as a first-class object, typed `Param` with unit/status/source, no hash, snapshot or
 pinned-spectrum gates, every gate naming the failure mode it uniquely catches with both
 PASS and FAIL reachable, Hamiltonian-agnostic kernel gates.
 
-**Read in full for this document:** `README.md`; the v1 spec; the v1 plan
-`docs/superpowers/plans/2026-09-05-heff-v1-thf-tutorial.md`; all twelve modules under
-`heff/` and all fifteen test modules; `docs/thf-plus-x3delta1-effective-hamiltonian.md`
-(**[HAM]**) §1–2, §6, §7; `docs/superpowers/reports/2026-09-05-heff-v1/open-items-inventory.md`
-§5 (Arian's rulings); `docs/digest-literature-th-hyperfine.md` (**[TH]**) in full;
-`docs/digest-literature-two-photon.md` (**[2γ]**) in full;
-`docs/lit/lookup-227th-nuclear-moment.md`.
-
-**Measured at source this session** (not taken from a document): the v1 suite is
-**164 passed, 2 skipped in 3.57 s** and `import heff` costs **0.126 s** pulling no
-sympy/scipy/matplotlib (`conda run -n heff python -m pytest tests/ -q`;
-`python -c "import time,sys; …"`, both 2026-09-05). The v1 README's "135 passed" is stale.
-No test asserts `Conventions.stamp()` as a whole dict (`grep -rn "stamp()" tests/` →
-zero hits), which is what makes §4's added convention fields a safe change.
+The scientific sources are the [Hamiltonian reference](../../thf-plus-x3delta1-effective-hamiltonian.md)
+(**[HAM]**), [Th hyperfine digest](../../digest-literature-th-hyperfine.md)
+(**[TH]**), [two-photon digest](../../digest-literature-two-photon.md)
+(**[2γ]**), and [²²⁷Th nuclear-moment lookup](../../lit/lookup-227th-nuclear-moment.md).
 
 ---
 
 ## 1. Problem restatement, goals, non-goals
 
-**Problem.** v1 computes ²³²Th¹⁹F⁺ X ³Δ₁ with one nuclear spin. Arian's rulings of
-2026-09-05 ([inventory] §5) add two things v1 cannot express:
+**Problem.** The original model computes ²³²Th¹⁹F⁺ X ³Δ₁ with one nuclear spin.
+The isotope and two-photon extension requires two structures it cannot express:
 
 1. **²²⁹ThF⁺ (I_Th = 5/2) and ²²⁷ThF⁺ (I_Th = ½, tentative)** — a second nuclear spin,
    a Th magnetic hyperfine constant ≈ 1.5 GHz (21 % of B₀), and, for I_Th = 5/2, an
    electric quadrupole with a ΔΩ = ±2 component estimated at 13–30× the Ω-doubling
    operator ([TH] §4.4). The v1 ket dtype has no place to put F₁ and the v1 element set
    has no rank-2 nuclear operator and no ΔΩ = ±2 operator other than `omega_doubling`.
-2. **An effective two-photon (2 × E1) operator within X** — Arian's "E2" meant this, not
-   electric quadrupole ([inventory] §5). v1's `spectra.py` is one-photon only and
+2. **An effective two-photon (2 × E1) operator within X**, distinct from an
+   electric-quadrupole transition. The original `spectra.py` is one-photon only and
    `elements_c.dipole_geometry` hard-codes the molecule-frame component `q = 0`.
 
 **Goal — the v2 slice.** ²³²/²²⁹/²²⁷Th¹⁹F⁺ X ³Δ₁, v = 0, in the coupled case-(c) basis
@@ -437,70 +428,60 @@ would be circular.
 
 ---
 
-## 7. Open physics decisions for Arian — not decided here
+## 7. Recorded physical uncertainties and parameter choices
 
-Numbering continues [HAM] §7. Each is a place where the code would otherwise be asserting
-something no source supports.
+Numbering continues [HAM] §7. Each identifier marks a place where the available
+sources do not support a unique physical value or model choice.
 
 **OPEN-16 — the sign of A∥(Th).** Skripnikov & Titov print −4163 (μ/μ_N) MHz, Denis print
 +1833 MHz from the same defining equation, agreeing to 2.2 % in magnitude ([TH] §2.2, gap G4).
 The sign is what **orders the F₁ manifold**, so every ²²⁹ThF⁺ level diagram depends on it.
-`docs/lit/lookup-apar-th-sign-convention.md` landed mid-session (commit `0b3e5fa`) and shows
+[The sign-convention audit](../../lit/lookup-apar-th-sign-convention.md) shows
 the two groups' axis conventions are opposite but that A∥ is invariant under a consistent
 reversal, and that they agree on the analogous HfF⁺ constant — so **the disagreement is a real
 disagreement between two calculations, not a convention mismatch**, and the audit recommends
-A∥ < 0. §5 therefore defaults `thf_v2(..., a_par_th_sign='negative')` on that recommendation.
-*Questions:* (a) do you accept the audit's recommendation as the shipped default, given that
-an ab initio disagreement is not settled by an audit of conventions? (b) should the notebook
-draw both branches side by side anyway, since the F₁ ordering is the most visible feature of
-every ²²⁹ThF⁺ figure?
+A∥ < 0. §5 therefore records the negative branch as the default while retaining
+the positive branch for explicit comparison. The convention audit does not resolve
+the disagreement between the two electronic-structure calculations.
 
 **OPEN-17 — the eQq₂ normalisation bridge.** B&C's (9.52) at q = ±2 versus Petrov 2018
 Eq. (23), with its √6 and Y₂₂. [TH] §3.2 flags this **UNVERIFIED** and says every
-eQq₂-derived number inherits the caveat. The derivation task resolves it and writes the
-factor into [HAM] with a citation. *Question:* if the two normalisations differ by a factor
-the derivation cannot pin from the printed equations alone, is asking Petrov the right move,
-or do we ship B&C's normalisation and label the HfF⁺-anchored estimate as
-order-of-magnitude?
+eQq₂-derived number inherits the caveat. Until an explicit bridge is derived from
+the printed definitions or confirmed by the authors, the HfF⁺-anchored value is an
+order-of-magnitude estimate.
 
 **OPEN-18 — eQq₀ and eQq₂ defaults.** There is **no published ThF⁺ or ThO quadrupole
 coupling constant and no EFG at Th, for any isotope or state** ([TH] gap G2, with the
 queries recorded). §5.2 defaults them to the HfF⁺-anchored estimates because a zero default
 would hide a term that [TH] §4.4 argues **dominates the Ω-doublet structure of ²²⁹ThF⁺**.
-*Question:* estimate-by-default, or zero-by-default with the estimate as an opt-in knob?
-(v1 precedent points to estimate-by-default with `status='estimate'`: that is how `c_I` ships.)
+The estimates therefore carry `status='estimate'` and must remain distinguishable
+from measured molecular constants.
 
 **OPEN-19 — c_I(Th).** Unconstrained over three decades, ~1 kHz to ~1 MHz; [TH] §4.6
 declines to pick, and at the top of the range it would exceed the entire ¹⁹F hyperfine.
-Defaulted to 0 per your ruling. *Question:* does the notebook show a bracket sweep so the
-reader sees what is at stake, or is a `note` enough?
+The reference default is zero; any bracket sweep is a labeled sensitivity study.
 
 **OPEN-20 — ²²⁷Th: the spin and the moment.** I = (1/2⁺) is a *tentative* ENSDF assignment
 with a 5/2⁺ level 9.3 keV above it, and **no magnetic moment exists in any of the three
-compilations checked** (`lookup-227th-nuclear-moment.md`). §5.3's A∥ = 7.62 GHz rests on
-assuming μ(²²⁷Th) = μ(²²⁹Th), which is arbitrary. *Questions:* (a) is that the assumption
-you want, or a different one (Schmidt value; scaled from a neighbouring odd-A actinide)?
-(b) should the notebook also draw the I = 5/2 alternative, since it is one keyword argument
-and it changes the whole level structure?
+compilations checked** ([lookup](../../lit/lookup-227th-nuclear-moment.md)). §5.3's
+A∥ = 7.62 GHz rests on the arbitrary assumption μ(²²⁷Th) = μ(²²⁹Th). Alternative
+spin or moment choices define separate sensitivity models, not updated nuclear data.
 
 **OPEN-21 — does the K = 1 two-photon channel exist?** §3.2's argument says the
 antisymmetric part vanishes in exact closure and survives only through detuning asymmetry.
-That is an inference, and the derivation task tests it. *Question:* if it survives only at
-order (ω₁ − ω₂)/Δ, do you want a K = 1 channel shipped with a `placeholder` α at all, or
-should the package expose K ∈ {0, 2} only and document why?
+That is an inference. A K = 1 channel requires a derivation beyond exact closure;
+the closure model exposes only K ∈ {0, 2}.
 
 **OPEN-22 — J_max for ²²⁹ThF⁺.** The Th ΔJ = ±1 hyperfine is a ~2 GHz off-diagonal element
 whose second-order shift is 60–135 MHz and, unlike the ²³²Th case, **is not absorbable into
 B₀ because it depends on F₁** ([TH] §4.2). [TH] infers that J = 1–5 or 1–6 may be needed for
-kHz-level J = 4 energies. The package makes J_max a `StateSpec` knob and the notebook
-reports the convergence; the *default* is a physics parameter and therefore yours.
-*Question:* J_max = 4 for the notebook figures with a convergence table, or J_max = 6
-throughout at 1152 states?
+kHz-level J = 4 energies. The package makes J_max a `StateSpec` knob; reported
+results must state the cutoff and include a convergence comparison appropriate to
+the claimed precision.
 
 **OPEN-23 — the two-photon validity condition, in the notebook's own voice.** The rank-K
-form is the Δ ≫ 2B ≈ 7 GHz limit; JILA runs at 0.16–1.5 GHz ([2γ] §3.4). The notebook will
-say so. *Question:* is that enough, or do you want the resolved-sum path built as a product
-(not just a fixture) against one of the two contested ladders, with the choice labelled?
+form is the Δ ≫ 2B ≈ 7 GHz limit; JILA runs at 0.16–1.5 GHz ([2γ] §3.4).
+Any resolved-sum calculation must identify which contested intermediate ladder it uses.
 
 ---
 
@@ -513,13 +494,13 @@ say so. *Question:* is that enough, or do you want the resolved-sum path built a
 | `heff.terms.REGISTRY` and its eleven terms | **unchanged**; v2 terms live in `REGISTRY_C2` |
 | `elements_c.py` | **unchanged**; v2 re-uses `dipole_geometry` and the two hyperfine closed forms through adapters |
 | `thf_v1()` | **unchanged**; `thf_v2('232')` must agree with it on every v1 symbol |
-| `Conventions` | four fields added; `stamp()` gains four keys (no test asserts the whole dict — measured) |
+| `Conventions` | four fields added; `stamp()` gains four keys |
 | `Rules` | one optional field `dF1=None`; `allows()` skips it when `None` or when the dtype has no `F1` |
 | `Ctx` | one field `spins=()` with a default |
 | `conventions.parity_operator` | keys on every dtype field instead of four literals; identical output on `KET_C` |
 | `spectra.dipole_matrix` | gains `geometry=` keyword defaulting to today's behaviour |
 | `assemble`, `engine`, `track`, `observe`, `wigner`, `formalism` | **untouched** |
-| the 164-test v1 suite | **must still pass, all 164**, and the plan's pre-flight task records the baseline so a regression is visible rather than argued about |
+| the original scientific checks | remain applicable to the one-spin limit |
 
 ---
 
@@ -552,31 +533,3 @@ say so. *Question:* is that enough, or do you want the resolved-sum path built a
 7. **`status='placeholder'` could be mistaken for a value.** It is added precisely so the
    report layer can distinguish it, and nothing gates on status (v1 rule, unchanged) — but a
    plot that renders a placeholder α without a label would mislead. The notebook labels it.
-
----
-
-## Method log
-
-Read in full this session: `README.md`; the v1 spec (365 lines); the v1 plan's structure,
-Global Constraints, Task 1, Task 2 head, Task 11 and its self-review/handoff sections;
-`heff/spec.py`, `terms.py`, `elements_c.py`, `assemble.py`, `spectra.py`, `observe.py`,
-`conventions.py`, `params.py`, `engine.py`, `__init__.py`, plus the function inventories of
-`track.py`, `wigner.py`, `formalism.py`; every test module's test-name and docstring
-inventory plus `tests/_helpers.py` and `tests/test_conventions.py`; [HAM] §1–2, §6, §7 and
-its method log; `open-items-inventory.md` §5; [TH] in full; [2γ] in full;
-`docs/lit/lookup-227th-nuclear-moment.md` in full.
-
-Verified by running, not by reading: the v1 suite (164 passed, 2 skipped, 3.57 s),
-`import heff` cost (0.126 s, no heavy modules), the absence of any `stamp()` assertion in
-`tests/`, and the repo's git state (HEAD `126ab5c` at the start of this session; while it ran,
-another agent committed `docs/lit/lookup-apar-th-sign-convention.md` at `0b3e5fa` and an
-ab initio scoping note at `1dcf30e`, both read before §4 and §7 were finalised).
-
-Derived here and marked as such in place: the v2 dimension closed form and its 576/192
-values; the `|q| ≤ K` argument that confines ΔΩ = ±2 to K = 2; the K = 1 closure argument
-(inference, explicitly left for the derivation task); the ²²⁷Th A∥ placeholder arithmetic
-(10 408 × 0.732 = 7.62 GHz) and the assumption it rests on.
-
-No repo file was modified, staged or committed by this document. Nothing in §5 is a
-measured molecular constant; every ²²⁹/²²⁷Th row is ab initio, an estimate, or a placeholder,
-and says which.

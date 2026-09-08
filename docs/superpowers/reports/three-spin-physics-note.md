@@ -242,7 +242,7 @@ unsymmetrized sequential basis and recouplers.
 The requested `226RaNH2`, `87SrNH2`, or `43CaNH2`-type target changes the
 model class.  It is a planar C2v asymmetric top in a Hund-case-(b) basis, not
 the axial case-(c) model above.  The live prior art is
-`C:/Users/Arian/Code/C2V-Molecules/atm_core/physics.py`, whose state generator
+`C2V-Molecules/atm_core/physics.py`, whose state generator
 uses
 
 \[

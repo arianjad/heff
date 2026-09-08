@@ -17,14 +17,16 @@ parameter reuses the matrices; changing the basis or operator model rebuilds the
 
 ## Start here
 
-1. **Install** using Python 3.12 or newer. From the repository root, in your
-   chosen Python environment:
+1. **Install** using Python 3.12 or newer:
 
    ```shell
+   git clone https://github.com/arianjad/heff.git
+   cd heff
    python -m pip install -e ".[notebooks,test]"
    ```
 
-   [Environment setup for Windows, macOS, and Linux](docs/getting-started.md#1-install-in-a-python-environment).
+   For an isolated virtual environment and platform-specific activation steps,
+   see [getting started](docs/getting-started.md#1-clone-and-install).
 
 2. **Calculate** the 232ThF+ spectrum:
 
@@ -45,7 +47,7 @@ parameter reuses the matrices; changing the basis or operator model rebuilds the
    `problem.kets`. The small cutoff is an example, not a convergence guarantee.
 
 3. **Explore** [your first field sweep](docs/getting-started.md#3-plot-a-stark-sweep),
-   then open [the 232ThF+ tutorial](notebooks/ThF_plus_X3Delta1_Tutorial.ipynb).
+   then open [the 232ThF+ tutorial on GitHub](https://github.com/arianjad/heff/blob/main/notebooks/ThF_plus_X3Delta1_Tutorial.ipynb).
    Run `python -m jupyterlab` from this environment to work through it.
 
 4. **Check assumptions** in [models and units](docs/models.md) before comparing
@@ -116,6 +118,5 @@ are in [contributing](docs/contributing.md). Tests do not certify unknown inputs
 
 Use the [documentation index](docs/README.md) for the learning path and the
 [architecture guide](docs/architecture.md) to navigate the implementation.
-Development plans and handoffs are supporting records, not setup instructions.
 To create a clean local copy to share with students, run
 `python scripts/package_students.py`; see [what it includes](docs/contributing.md#build-a-local-wheel-or-student-archive).

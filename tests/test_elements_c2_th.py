@@ -1,15 +1,7 @@
-"""Th magnetic-hyperfine, spin-rotation, nuclear-Zeeman, and quadrupole gates.
+"""Th hyperfine, Zeeman, and quadrupole gates at I_Th != 0.
 
-These gates exercise I_Th != 0 structure. V16 (the master reduction,
-tests/test_elements_c2_reduction.py) runs at I_Th = 0, where
-every term in this file is identically zero and the I_Th 6j of axial_geometry
-collapses to 1; V19 exercises I_Th = 5/2 but only through the 19F recoupler. So
-V18/V20/V21/V22 below are what stands between the Th block and a plausible-
-looking wrong answer through direct analytic and independent-matrix comparisons.
-
-Sources, in the order the gates use them:
-  [HAM] = docs/thf-plus-x3delta1-effective-hamiltonian.md S9.2, S9.2.1, S9.4
-  [TH]  = docs/digest-literature-th-hyperfine.md S1.4, S3.4, S4.1, S4.2, S4.4
+V16 covers the I_Th=0 reduction; independent checks here cover its blind spots.
+See [HAM] S9.2/S9.4 and [TH] S1.4/S3.4/S4.
 """
 import numpy as np
 import pytest
@@ -233,29 +225,10 @@ def test_quadrupole_reproduces_the_casimir_function_with_a_ratio_of_minus_one():
 # ------------------- V20b: (9.52) transcribed independently, off-diagonal J
 
 def bc_9p52(bra, ket, ctx, q=0.0):
-    """B&C Eq. (9.52)/(9.53) transcribed HERE, from the printed equation.
+    """Independent B&C 9.52/9.53 transcription (PDF pp.636–637; book pp.604–605).
 
-    Written from the equation as it stands on PDF p.636-637 / book p.604-605
-    (docs/lit/bc-pages/bc_p636-652_ch6-8-zeeman.txt lines 33-70), NOT from
-    heff.elements_c2._quadrupole_body -- that is the point of the gate below.
-
-    B&C print the primes on the KET:
-
-      <eta,Lam; S,Sig; J,Om,I,F,MF| H_Q |eta',Lam'; S,Sig; J',Om',I,F,MF>
-        = (e q0 Q / 4) (-1)^(J' + I + F + J - Om) {(2J+1)(2J'+1)}^(1/2)
-          x { J'  I  F ;  I  J  2 } ( J  2  J' ; -Om  q  Om' )
-          x ( I  2  I ; -I  0  I )^(-1)
-
-    with the (9.53) prefactor e q0 Q / 4 (B&C's own q0 sign: "q0 is the
-    negative of the electric field gradient"), so the geometry returned here is
-    in units of e q0 Q, as the package's element functions are.
-
-    Substitutions, and nothing else: B&C's unprimed (J, Om) is the BRA and their
-    primed (J', Om') is the KET (opposite to the package's own primes-on-the-bra
-    convention, [HAM] S9's convention note), I -> I_Th, and B&C's total F -> the
-    intermediate F1 = J + I_Th (B&C Eq. (5.176), [HAM] S9.2), diagonal, with the
-    outer 19F spin a spectator (delta_{F F'} delta_{m m'}).
-
+    B&C primes are kets, so this uses its unprimed bra and I→I_Th, F→F1
+    substitutions ([HAM] S9.2); B&C q0 is negative EFG.
     """
     I = ctx.spins[0].I
     if I < 1.0:                          # no rank-2 moment; the printed 0/0
@@ -288,25 +261,10 @@ def _dJ_classes(kets):
 
 
 def test_V20b_quadrupole_dJ_elements_match_an_independent_transcription_of_bc_9p52():
-    """V20b. EVERY element of quadrupole_eQq0_Th on the real 229ThF+ basis
-    (thf_spec('229', J_max=3), 360 kets, all m_F) against an independent
-    transcription of B&C (9.52)/(9.53) written straight from the printed
-    equation -- including the Delta J = +-1 and +-2 classes.
+    """V20b: compare all 360-ket eQq0 elements with independent B&C 9.52/9.53.
 
-    WHY THIS AND NOT V20. V20 checks the same body only at Omega = 0 and
-    J' = J, where it is MINUS the textbook Casimir function. That leaves every
-    J'-dependent factor of (9.52) unchecked, and those factors are not a
-    detail: on the 229 basis at eQq0 = -2600 MHz the Delta J = +-1 elements
-    reach 461 MHz and the Delta J = +-2 elements 361 MHz, against a 390 MHz
-    largest diagonal, and they move the field-free spectrum by ~51 MHz. So this
-    gate uniquely catches a J'-dependent phase or a 3j-column-order error --
-    both of which are IDENTITIES at J' = J and therefore invisible to V20, to
-    hermiticity (the corrupted matrix is still symmetric), to parity, and to A5
-    (the corrupted elements sit inside the declared Delta J = 0, +-1, +-2).
-
-    Independence: the transcription above shares only heff.wigner's w3j/w6j and
-    the _ph helper with the package -- the same standard R13 uses for the Th
-    nuclear Zeeman rebuild.
+    Unlike V20's diagonal Casimir limit, this catches J-dependent phase and 3j
+    order errors; the rebuild shares only wigner and ``_ph``.
     """
     kets, got, want = _eQq0_matrices()
     assert len(kets) == 360
@@ -319,8 +277,7 @@ def test_V20b_quadrupole_dJ_elements_match_an_independent_transcription_of_bc_9p
         cls = np.abs(got[dJ == k])
         reach[k] = float(np.max(cls))
         assert np.sum(cls > 1e-12) > 0, f"Delta J = {k} class is empty"
-    # The off-diagonal-in-J elements are not a correction: the largest of them
-    # is larger than the largest diagonal one. Measured, not assumed.
+    # Off-diagonal-J reach is measured rather than assumed.
     assert reach[1] > reach[0], f"Delta J reach {reach}"
 
 

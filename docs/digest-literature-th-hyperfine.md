@@ -599,9 +599,9 @@ uncertainty, rather than the existence of any estimate, is the unresolved input.
 
 **G2. eQq₀ and eQq₂ for ThF⁺ (or ThO), and the EFG / ⟨1/r³⟩ at Th.**
 No published value, for any Th isotope or state.
-Queries run: local grep of `docs/lit/skripnikov2015-…txt` and
-`docs/lit/denis2015-…txt` for `gradient|quadrupole|eQq` (only reference-title
-hits); arXiv API `abs:"ThF" AND abs:"quadrupole"` (5 hits, all MQM papers, none
+Queries run across Skripnikov & Titov 2015 and Denis et al. 2015 for
+`gradient|quadrupole|eQq` (only reference-title hits); arXiv API
+`abs:"ThF" AND abs:"quadrupole"` (5 hits, all MQM papers, none
 with an electric-quadrupole coupling constant); `all:"electric field gradient"
 AND all:"ThO"` → 0; `all:"quadrupole coupling constant" AND all:"thorium" AND
 all:"molecule"` → 0; DuckDuckGo `"ThF+" "eQq" thorium quadrupole coupling
@@ -611,20 +611,18 @@ one-paper-sized hole and the obvious ask of Skripnikov/Petrov or Fleig.
 
 **G3. c_I for Th in ThF⁺ (and, still, for ¹⁹F).**
 No value for either nucleus in ThF⁺.
-Queries run: `all:"thorium" AND all:"nuclear spin-rotation"` → 0 results; local
-grep of all `docs/lit/*.txt` for `spin-rotation` returns only the ¹⁹F estimate
+Queries run: `all:"thorium" AND all:"nuclear spin-rotation"` → 0 results; a
+full-text search of the reviewed source set for `spin-rotation` returns only the ¹⁹F estimate
 already recorded in [HAM] §2.6. The ¹⁹F value remains the CsF-anchored 20 kHz
 estimate (OPEN-6). The Th value is unconstrained over three decades (§4.6).
 
 **G4. The sign of A∥(Th).**
 Skripnikov & Titov 2015 print −4163, Denis et al. 2015 print +1833, from the
-same defining equation, agreeing to 2.2 % in magnitude (§2.2). Neither states its
-n̂/Ω convention. No source found that resolves it.
-Queries run: full read of the definition passages in both local text extracts
-(Skripnikov Eq. 10 and surrounding paragraph; Denis Eq. 2 and §3.2.2); no
-convention statement in either. Resolution needs the authors, or an independent
-calculation. Until then the ordering of the F₁ manifold in §4.1 is
-sign-ambiguous.
+same defining equation, agreeing to 2.2 % in magnitude (§2.2). The later
+[sign-convention audit](lit/lookup-apar-th-sign-convention.md) found that both
+papers state their axes elsewhere, but a consistent axis reversal leaves A∥
+invariant. The audit recommends the negative branch; it does not resolve the
+underlying disagreement between the electronic-structure calculations.
 
 **G5. Any measured Th hyperfine constant in any ThF⁺ isotopologue.**
 None exists. All JILA spectroscopy (Gresh 2016, Ng 2022, Zhou 2020, Roussy 2023)
@@ -643,10 +641,8 @@ should follow.
 Query run: arXiv API `all:"229ThF"` → 1 result (Flambaum 2018); `au:Petrov AND
 all:"ThF"` → 1 result (the 2025 g-factor paper, ²³²ThF⁺ only).
 
-**Not consulted this session** (declare so the absence is not read as evidence):
-pdf-mcp and the zotero MCP server both failed to connect, so no PDF text search
-was possible; the local Zotero store (`C:/Users/Arian/Zotero/storage`, 5543 item
-directories, confirmed present) was not searched item-by-item; Stone's
-INDC(NDS)-0794 moments compilation was not opened; the JILA theses
-(Ng, Stutz, Gresh, Cairncross, Grau, Loh) were only searched through the text
-extracts already in `docs/lit/`, not in full.
+**Coverage limit of the 2026-09-05 search:** Stone's INDC(NDS)-0794 compilation
+was not part of this digest's original source set, and the JILA theses (Ng,
+Stutz, Gresh, Cairncross, Grau, and Loh) were searched selectively rather than
+read in full. The later [²²⁷Th lookup](lit/lookup-227th-nuclear-moment.md)
+records the targeted compilation search.

@@ -1,36 +1,8 @@
 """E1 transition dipoles and line strengths within one electronic state.
 
-Follows the thesis procedure exactly (thesis digest S5): diagonalise the two
-manifolds separately, build the transition-dipole matrix in the common
-primitive basis, sandwich it between the two eigenvector sets, and take line
-positions from eigenvalue differences.
-
-AMPLITUDES ARE SUMMED AND THEN SQUARED (thesis p.161), so intensity-borrowing
-paths interfere. The package implements that ordering once in
-``_strengths_from_matrices``.
-
-Within X the E1 operator is the same molecule-frame dipole as the Stark term,
-evaluated at p = +-1, 0 -- so this module calls heff.elements_c.dipole_geometry
-rather than re-deriving anything. A transition connects different m_F, hence
-different blocks: pass the two blocks' kets and eigenvectors. ``dipole_matrix`` indexes purely by POSITION in the
-kets_a/kets_b arrays the caller passes, never by any assumed ordering in the
-full basis, so a caller's Blocking.index selection is what places kets.
-
-`dipole_matrix` returns dimensionless geometry (units of d_mf); `line_strengths`
-therefore returns strengths in units of d_mf^2 -- multiply by d_mf^2 (params.py
-thf_v1()['d_mf'].canonical, MHz/(V/cm)) squared, or by
-params.DEBYE_TO_MHZ_PER_V_CM^2 if starting from Debye, to get a strength with
-units of (MHz/(V/cm))^2. Line positions are in MHz because evals_a/evals_b (the
-SweepResult.evals or a bare np.linalg.eigh output) are in MHz throughout heff.
-
-Port in spirit, not verbatim, of C:/Users/Arian/Code/Molecule-Structure
-Jupyter Notebooks/RaX/gen_spectra.py (Molecule-Structure HEAD 9eec91a):
-`_strength_matrix`'s "one primitive, sum |<g|T^1_p(d)|e>|^2" idea and the
-matrix-sandwich-then-square shape carry over; the coherent sum-then-square
-ACROSS p here is the heff-specific generalisation the design spec calls for
-(spec S3.6), which is stronger than gen_spectra.py's per-polarisation
-incoherent |T_p|^2 sum (fine there because within one signed-m_F block only
-one polarisation ever connects a given bra/ket pair anyway).
+Amplitudes sum before squaring, so paths interfere. Geometry is dimensionless
+(units of d_mf); line positions are MHz. Adapted from
+``Molecule-Structure/Jupyter Notebooks/RaX/gen_spectra.py`` at ``9eec91a``.
 """
 import numpy as np
 
@@ -44,29 +16,10 @@ def _v1_geometry(bra, ket, ctx, p):
 
 
 def dipole_matrix(kets_a, kets_b, ctx, p, *, geometry=None):
-    """<a|d_p|b> in the primitive basis, shape (len(a), len(b)).
+    """Return dimensionless <a|d_p|b> geometry; optional ``geometry`` has v2 shape.
 
-    Dimensionless geometry; multiply by d_mf for a dipole in MHz/(V/cm).
-
-    `geometry` is a callable `geometry(bra, ket, ctx, p) -> float`, evaluated
-    with `kets_a[i]` as bra and `kets_b[j]` as ket. `None` (the default) uses
-    `heff.elements_c.dipole_geometry(bra, ket, ctx.I, p)` -- the v1 one-spin
-    formula, byte-identical to before this keyword existed:
-
-        dipole_matrix(kets_a, kets_b, ctx, p)
-
-    A v2 (two-spin) caller passes the E1 geometry through
-    `heff.elements_c2.axial_geometry` bound at rank k=1, molecule-frame
-    component q=0 (E1 within a fixed-Omega block has Delta Omega = 0):
-
-        import functools
-        from heff.elements_c2 import axial_geometry
-        dipole_matrix(kets_a, kets_b, ctx, p,
-                      geometry=functools.partial(axial_geometry, k=1, q=0.0))
-
-    which [HAM] S9.1's analytic collapse reduces to the v1 formula exactly
-    at I_Th = 0 (tests/test_elements_c2_reduction.py
-    test_axial_geometry_reduces_to_dipole_geometry_at_one_spin).
+    Bind ``elements_c2.axial_geometry`` at ``k=1, q=0`` for v2; it reduces to
+    the v1 expression at I_Th=0 ([HAM] S9.1).
     """
     fn = _v1_geometry if geometry is None else geometry
     out = np.zeros((len(kets_a), len(kets_b)))

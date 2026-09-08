@@ -1,21 +1,6 @@
-"""Case (c) matrix elements for the two-nuclear-spin basis |((J I_Th) F1, I_F) F, m_F>.
+"""Two-spin case-(c) elements for |((J I_Th) F1, I_F) F, m_F>.
 
-The recoupling formulas are documented in
-docs/thf-plus-x3delta1-effective-hamiltonian.md section 9. Decorators carry
-Brown & Carrington equation and page citations. Resolve disagreements with
-the cited equations before changing a sign.
-
-Notation contract, [HAM] S9 preamble, stated once because it is the commonest
-way to get a phase backwards:
-  * A PRIME MEANS THE BRA. B&C's own convention is the opposite (their primed
-    labels are the ket in (5.172)-(5.176), (5.186), (9.50)-(9.53)); every form
-    below is the primes-moved-onto-the-bra rewrite that [HAM] S9 prints.
-  * Coupling scheme F1 = J + I_Th, F = F1 + I_F, inner-spin-first. I_F is
-    ctx.I; I_Th is ctx.spins[0].I.
-  * Molecule-frame component q = Om_bra - Om_ket ([HAM] S9 preamble).
-
-Registry: this module registers into REGISTRY_C2, NOT into heff.terms.REGISTRY.
-Importing this module leaves the one-spin registry independent.
+Primes denote bras; F1=J+I_Th, F=F1+I_F, and q=Om_bra-Om_ket. See [HAM] S9.
 """
 from dataclasses import replace
 
@@ -51,36 +36,12 @@ def _spins(ctx):
     return float(ctx.spins[0].I), float(ctx.I)
 
 
-# ------------------------------------------------- the two generic kernels
 
 def axial_geometry(bra, ket, ctx, *, k, q=None, p):
-    """Rank-k molecule-frame tensor with lab component p, in the two-spin basis.
+    """Two-spectator axial tensor from B&C 5.172, 5.174, and 5.186 ([HAM] S9.1).
 
-    [HAM] S9.1 "The two-spectator axial geometry", the master element, copied
-    verbatim (primes = bra):
-
-      <J',Om',F1',F',m'| T^k_p(axial, molecule-frame component q) |J,Om,F1,F,m>
-        = (-1)^(F'-m') ( F'  k  F ; -m'  p  m )                                 <- B&C (5.172), PDF p.205 / book p.173
-        x (-1)^(F + F1' + k + I_F) sqrt((2F'+1)(2F+1)) { F1  F  I_F ; F' F1' k } <- B&C (5.174), I_F spectator, same pages
-        x (-1)^(F1 + J' + k + I_Th) sqrt((2F1'+1)(2F1+1)) { J F1 I_Th ; F1' J' k } <- B&C (5.174) again, I_Th spectator
-        x (-1)^(J'-Om') sqrt((2J'+1)(2J+1)) ( J'  k  J ; -Om'  q  Om )          <- B&C (5.186), PDF p.207 / book p.175
-
-    with q = Om' - Om and Delta m_F = p forced by the first 3j. The 6j column
-    orders are LITERAL: upper row (ket's inner, ket's total, spectator), lower
-    row (bra's total, bra's inner, operator rank). [HAM] S9.1 measures the
-    I_F-6j transposition at 0.65 in a quantity of order 1.
-
-    B&C (5.175) is deliberately not used: both reductions have the operator on
-    the FIRST constituent of their pair, which is the whole reason the coupling
-    scheme is inner-first ([HAM] S9.1, "Why (5.174) twice and (5.175) never").
-
-    At I_Th = 0 line 3 collapses to exactly 1 (a 6j with a zero in the upper
-    right, {a a 0; c c f} = (-1)^(a+c+f)/sqrt((2a+1)(2c+1))) and the remaining
-    three lines at k=1, q=0 are elements_c.dipole_geometry term for term -- an
-    analytic identity, not an approximation ([HAM] S9.1 "Analytic collapse").
-
-    `q` defaults to Om_bra - Om_ket. |q| > k raises: a rank-k operator has no
-    such component, so a caller asking for one has a bug, not a zero.
+    ``q`` defaults to Om_bra-Om_ket and must satisfy |q|≤k; at I_Th=0, k=1,
+    q=0 it exactly reduces to ``elements_c.dipole_geometry``.
     """
     Om1, Om2 = float(ket["Om"]), float(bra["Om"])
     if q is None:
@@ -90,11 +51,7 @@ def axial_geometry(bra, ket, ctx, *, k, q=None, p):
             f"|q| = {abs(float(q))} exceeds the operator rank k = {k}; a rank-k "
             "molecule-frame tensor has no such component")
     I_Th, I_F = _spins(ctx)
-    # NAMING, so the lines below read against B&C: the locals F1/F2 are the KET
-    # and BRA values of the TOTAL F (the ket_c2 field "F"), following B&C's
-    # own use of F for the total; G1/G2 are the intermediate F1 = J + I_Th (the
-    # field "F1"). The trailing digit is 1 = ket, 2 = bra throughout this
-    # module; primes are on the bra ([HAM] S9 convention note).
+    # F1/F2 are ket/bra total F; G1/G2 are ket/bra intermediate F1.
     J1, G1, F1, m1 = (float(ket["J"]), float(ket["F1"]), float(ket["F"]),
                       float(ket["mF"]))
     J2, G2, F2, m2 = (float(bra["J"]), float(bra["F1"]), float(bra["F"]),
@@ -118,50 +75,14 @@ def axial_geometry(bra, ket, ctx, *, k, q=None, p):
 
 
 def outer_spin_scalar(bra, ket, ctx, *, dJ):
-    """The recoupled T1(rotational axial) . T1(I_F) kernel. [HAM] S9.3.
+    """Recouple T1(rotational axial)·T1(I_F) with B&C 5.173/5.174 ([HAM] S9.3).
 
-    T1(I_F) acts on the OUTER spin while the rotational factor lives inside F1,
-    so B&C (5.176) does not apply and F1 goes off-diagonal: Delta F1 = 0, +-1.
-
-    (a) Scalar product across the coupled pair -- B&C Eq. (5.173), PDF p.205 /
-    book p.173, with j1 = F1, j2 = I_F, j12 = F, k = 1 and primes on the bra:
-
-      s1 = (-1)^(F1 + F + I_F) { I_F  F1  F ;  F1'  I_F  1 }
-           x <J',F1'||T1(A1)||J,F1> x sqrt(I_F(I_F+1)(2I_F+1))
-
-    delta_{F F'} delta_{m m'}. THE PHASE CARRIES THE KET'S F1, not the bra's.
-    That distinction is invisible to Hermiticity (both readings give a symmetric
-    matrix, max|M - M^T| = 0) and was settled in [HAM] S9.3 by an independent
-    rebuild in the fully decoupled |J,m_J>|I_Th,m1>|I_F,m2> basis with explicit
-    Clebsch-Gordan coefficients -- a route using neither (5.173) nor (5.174).
-    The bra-F1 variant is wrong on every Delta F1 = +-1 element.
-    <I_F||T1(I_F)||I_F> = [I_F(I_F+1)(2I_F+1)]^(1/2) is B&C Eq. (5.179), PDF
-    p.206 / book p.174 (note: [HAM] S2 miscites this as PDF p.205).
-
-    (b) I_Th spectator -- B&C Eq. (5.174), PDF p.205 / book p.173, with
-    j1 = J, j2 = I_Th, j12 = F1, k1 = 1:
-
-      <J',F1'||T1(A1)||J,F1> = (-1)^(F1 + J' + 1 + I_Th) sqrt((2F1'+1)(2F1+1))
-                               { J  F1  I_Th ;  F1'  J'  1 } x <J',Om'||T1(A1)||J,Om>
-
-    with the innermost reduced element chosen by `dJ`:
-      dJ=False -> A1 = J:   <J'||T1(J)||J> = delta_{JJ'} [J(J+1)(2J+1)]^(1/2)
-                            -- B&C (5.179), PDF p.206 / book p.174.
-      dJ=True  -> A1 = n^:  <J',Om'||T1(n^)||J,Om> = (-1)^(J'-Om') sqrt((2J'+1)(2J+1))
-                            (J' 1 J; -Om' 0 Om) -- B&C (5.186), PDF p.207 /
-                            book p.175, i.e. axial_geometry's line 4 at k=1,
-                            q=0, with J' != J allowed.
-
-    The two choices are IDENTICAL on the Delta J = 0 block once the A_par/Om
-    normalisation is applied ([HAM] S9.3 term 3: the projection theorem gives
-    <J,Om||T1(n^)||J,Om> = Om <J||T1(J)||J>/[J(J+1)] exactly), which is why the
-    Delta J = +-1 term must exclude Delta J = 0 rather than add to it.
+    The outer-spin operator permits ΔF1=0,±1; ``dJ`` selects J or n_hat.
     """
     if not _same(bra, ket, "F", "mF"):
         return 0.0
     I_Th, I_F = _spins(ctx)
-    # Same naming as axial_geometry: G1/G2 are the intermediate F1 = J + I_Th
-    # (ket/bra), F is the total F (diagonal here); 1 = ket, 2 = bra.
+    # G1/G2 are ket/bra intermediate F1; total F is diagonal.
     J1, G1, Om1 = float(ket["J"]), float(ket["F1"]), float(ket["Om"])
     J2, G2, Om2 = float(bra["J"]), float(bra["F1"]), float(bra["Om"])
     F = float(ket["F"])
@@ -186,17 +107,9 @@ def outer_spin_scalar(bra, ket, ctx, *, dJ):
             * np.sqrt(I_F * (I_F + 1.0) * (2 * I_F + 1.0)))
 
 
-# ------------------------------- the terms that need no recoupling at all
 
 def _delegate(fn):
-    """Field adapter: run a v1 element on a KET_C2 row, adding delta_{F1 F1'}.
-
-    [HAM] S9.2: these five operators touch only J and Omega and are diagonal in
-    F1, F and m_F, so their matrix elements are the v1 formulas unchanged. The
-    v1 functions already read their arguments by field name, and KET_C2 is
-    KET_C plus one field, so the only thing the adapter adds is the F1
-    diagonality required by the two-spin basis.
-    """
+    """Apply a v1 J/Omega operator with the required F1 diagonality ([HAM] S9.2)."""
     def wrapped(bra, ket, ctx):
         if bra["F1"] != ket["F1"]:
             return 0.0
@@ -258,7 +171,6 @@ pt_odd_scalar_pseudoscalar = _term_c2(
 )(_delegate(_v1_pt_odd_sps))
 
 
-# --------------------------------------------- the recoupled 19F operators
 
 _F_SCALAR = Rules(dJ=(0,), dOm=(0.0,), dF1=(-1, 0, 1), dF=(0,), dmF=(0,))
 
@@ -348,7 +260,6 @@ def zeeman_nuclear_F(bra, ket, ctx):
     return -ctx.mu_N * a * b
 
 
-# -------------------------------------------------------- the field terms
 
 _FIELD = Rules(dJ=(-1, 0, 1), dOm=(0.0,), dF1=(-1, 0, 1), dF=(-1, 0, 1), dmF=(0,))
 
@@ -387,33 +298,16 @@ def zeeman_Gpar(bra, ket, ctx):
         bra, ket, ctx, k=1, q=0, p=0)
 
 
-# --------------- the Th operators: S9.2's three scalars, then the S9.2.1 Zeeman
 
 def _inner_view(row):
-    """A KET_C2 row seen as the one-spin ket |J, Omega, I_Th, F1>.
-
-    A plain dict, because every v1 element reads its ket by field name and
-    nothing else: handing it F1 where it looks for F, and (through _inner_spin)
-    I_Th where it looks for ctx.I, IS the whole substitution [HAM] S9.2 licenses.
-    """
+    """View KET_C2 as the one-spin |J,Omega,I_Th,F1> ket ([HAM] S9.2)."""
     return {"J": row["J"], "Om": row["Om"], "F": row["F1"], "mF": row["mF"]}
 
 
 def _inner_spin(fn):
-    """Field adapter: run a v1 one-spin element on the INNER pair (J, I_Th, F1).
+    """Apply a v1 inner-pair scalar with (I,F)→(I_Th,F1), diagonal in F,m_F.
 
-    The mirror image of _delegate. _delegate keeps the v1 (J, Omega, F, m_F)
-    reading and only adds delta_{F1 F1'}; this one REPLACES the v1 (I, F) pair by
-    (I_Th, F1) and adds delta_{F F'} delta_{m_F m_F'}.
-
-    That is exactly B&C Eq. (5.176), PDF p.205 / book p.173 ([HAM] S9.2): a
-    scalar built from the rotational/electronic degrees of freedom and I_Th alone
-    acts on the INNER part j1 = F1 of |((J I_Th) F1, I_F) F, m_F>, so its element
-    is diagonal in F and m_F, independent of them and of I_F, and equal to the
-    one-spin element evaluated inside |J, Omega, I_Th, F1>. One indirection, and
-    NO NEW ALGEBRA is written for any term built through it -- [HAM] S9.2's
-    substitution table is the derivation, and it is why S9.3, not S9.2, is where
-    the v2 work was.
+    This is B&C 5.176 / [HAM] S9.2; it adds no new algebra.
     """
     def wrapped(bra, ket, ctx):
         if not _same(bra, ket, "F", "mF"):
@@ -521,22 +415,11 @@ def zeeman_nuclear_Th(bra, ket, ctx):
     return -ctx.mu_N * line1 * line2 * line3
 
 
-# ------------------------------------------------------ the Th quadrupole
-
-# The sign returned by _q0_sign encodes conventions.quadrupole_convention =
-# 'bc_q0_is_negative_efg'. B&C (9.52) prints the prefactor -(1/2) eQ
-# <T2_q(grad E)>; their constant is defined by "q0 is the negative of the
-# electric field gradient", i.e. eq_qQ = -2 eQ <T2_q(grad E)> ([HAM] S9.4.1,
-# read off by comparing (9.52) at q = 0 with (9.53)). Read with the OPPOSITE
-# convention (q0 = +EFG) the element would be -eq_qQ/4; B&C's convention turns
-# that into +eq_qQ/4 ([HAM] S9.4.2, [TH] S3.4).
+# B&C q0 is negative EFG; ``_q0_sign`` holds the convention check ([HAM] S9.4).
 
 
 def _q0_sign(ctx):
-    """Return -1 for B&C's negative-EFG q0 convention ([HAM] S9.4.1).
-
-    Reject unsupported conventions rather than assuming their sign.
-    """
+    """Return -1 for B&C's negative-EFG q0 convention; reject others."""
     conv = ctx.conventions.quadrupole_convention
     if conv != "bc_q0_is_negative_efg":
         raise NotImplementedError(
@@ -660,16 +543,12 @@ def quadrupole_eQq2_Th(bra, ket, ctx):
             "eqq2_norm='bc_9p52_q2' and read eQq2_Th as B&C's eq2Q, or supply "
             "the answer to either question in [HAM] S9.4.4's OPEN-17.")
     q = float(bra["Om"]) - float(ket["Om"])
-    # |q| = 2 ONLY: at Delta Omega = 0 the same body is the eQq0 element, and
-    # returning it here would double-count it under the wrong constant (and put
-    # non-zero elements outside this term's declared Delta Omega = +-2, which is
-    # what gate A5 measures).
+    # q=0 is eQq0; this channel is |q|=2 only.
     if abs(q) != 2.0:
         return 0.0
     return _quadrupole_body(bra, ket, ctx, q)
 
 
-# --------------------------------------------------- J-truncation reporting
 
 def j_convergence(isotopologue, *, J_maxes=(2, 4, 6), mF=None, n_levels=8, knobs=None):
     """Report the largest shift of the lowest `n_levels` energies versus J_max.

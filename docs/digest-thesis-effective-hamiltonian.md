@@ -1,7 +1,8 @@
 # Digest: Jadbabaie 2025 Springer thesis — the effective-Hamiltonian program
 
-Source: `C:\Users\Arian\Zotero\storage\JZIHGU27\Jadbabaie - 2025 - Measuring Fundamental Symmetry Violation in Polyatomic Molecules.pdf` (344 PDF pages).
-Extraction tool: **PyMuPDF (`fitz`) worked on the first attempt** in conda env `claude-code`. No fallback needed. Per-section text extracts under `notes/thesis-text/` (see Method log for the file list).
+Source: Arian Jadbabaie, *Measuring Fundamental Symmetry Violation in Polyatomic
+Molecules*, Springer Theses (2025), 344 PDF pages. This dated source review uses
+private text extracts; the published repository includes citations and analysis.
 
 **Page convention.** `p.NNN` = PDF page index, 1-based, as `fitz` counts. **Printed page = PDF page − 19** (verified on PDF pp. 20 / 54 / 61 / 288 / 301 → printed 1 / 35 / 42 / 271 / 284). Where useful I give `p.NNN (pr. NNN)`. The PDF's own bookmark/TOC page numbers are PDF indices, not printed numbers.
 

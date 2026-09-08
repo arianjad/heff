@@ -11,8 +11,11 @@ dist/
 .wheel-check/
 .wheel-target/
 .wheel-cwd/
-docs/lit/*.pdf
+# Keep downloaded literature and private development records local.
+docs/lit/**/*.pdf
 docs/lit/**/*.png
-docs/lit/*.png
-docs/thesis-text/_full.txt
-docs/thesis-text/_num.txt
+docs/lit/**/*.txt
+docs/thesis-text/
+docs/briefs/
+docs/superpowers/plans/
+docs/superpowers/handoffs/

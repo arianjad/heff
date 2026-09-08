@@ -3,8 +3,9 @@
 Companion to `docs/digest-literature-th-hyperfine.md` ([DIGEST]) and
 `docs/thf-plus-x3delta1-effective-hamiltonian.md` ([HAM]). [DIGEST] §5 lists five
 gaps with no published value anywhere: `eQq₀(Th)`, `eQq₂(Th)`, `c_I(Th)`,
-`c_I(¹⁹F)`, and the *sign* of `A∥(Th)`. Arian's ruling 2026-09-05: use estimated
-parameters for now, and scope the calculation that would replace them.
+`c_I(¹⁹F)`, and the *sign* of `A∥(Th)`. This 2026-09-05 source review scopes
+calculations to replace the exploratory parameter estimates; consult
+[current limitations](open-questions.md) for the implemented model's status.
 
 This document answers: what each constant is as a property operator, which code
 computes it and how, what it would cost, who already has the pipeline, and what

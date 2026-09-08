@@ -712,7 +712,6 @@ For `OPEN-16` through `OPEN-23`, §9 remains the equation-level source and
 | `skripnikov2015-arXiv1503.01001-…txt` | pp. 1–3 and Table II: Eqs. 1–11 (W_d, H_d, W_{T,P}, H_{T,P}, H_MQM, A∥, **G∥ Eq. 11**), the 7 % uncertainty statement, FINAL(ThF⁺) row |
 | `digest-thesis-effective-hamiltonian.md` §4 | Arian's 21-item convention contract (used as the target convention; items 2, 7, 9, 17, 18, 21 load-bearing here) |
 | `digest-literature-thf-plus.md` | used as a map only; every sign, definition and number it lists was re-read at source |
-| `synthesis-draft.md` §1 | Molecule-Structure's confirmed sign bug in the case (a) Λ-doubling q operator (identically zero: `K1 = K0+2q` vs the 3j needing `P1 = P0−2q`) and the absence of any ΔΛ = ±4 operator — noted, but no repo file was opened |
 
 **Brown & Carrington** (1045-page local copy; PDF page = book page + 32). An optional research checkout may also contain plain-text extracts under `docs/lit/bc-pages/`:
 

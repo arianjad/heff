@@ -1,68 +1,8 @@
-"""Gate V27 -- the closure test.
+"""V27: resolved synthetic-intermediate sums equal B&C 5.142 rank-K closure.
 
-Uniquely catches: a wrong phase or normalisation in the rank-K reduction of
-B&C Eq. (5.142), the one step that turns a resolved intermediate sum into a
-rank-K reduced element ([HAM] S9.5.1(1)). Every other two-photon gate survives
-that error: parity (V24), channel reach (V25), the rank-2 sum rule (V26) and
-sum-then-square (V28) never evaluate the closure relation at all -- the 6j
-{1 1 K; j' j j''} and the (-1)^(K+j+j') (2K+1)^(1/2) factor of (5.142) appear
-NOWHERE in heff.twophoton, which is the whole content of the closure form.
-THE INTERMEDIATE MANIFOLD IS SYNTHETIC ON PURPOSE -- the real ThF+ ladder is
-contested (docs/digest-literature-two-photon.md S2.2, gap 3: nothing measured
-between 3150 and 10472 cm^-1, no 0+/0- labels, no excited-state hyperfine), and
-this test checks algebra, not a molecule.
-
-WHAT THE FIXTURE IS. A model whose dipole operator connects the X block
-(Omega = +-1) to intermediate electronic states at Omega_i in {0, +-1} and to
-nothing else, so the intermediate projector acts as the identity on d|g> and
-closure is EXACT by construction. Omega_i = 0 is what opens |dOmega| = 2
-(each E1 leg has |q| <= 1, so dOmega = q1 + q2 = +-2 needs q1 = q2 = +-1);
-Omega_i = +-1 gives dOmega = 0. One common detuning Delta = 137, which is the
-condition [HAM] S9.5.1(2)'s spectator reduction needs (unresolved intermediate
-hyperfine). Molecule-frame reduced dipoles 0.7, 1.3, 0.4, -2.1 -- none of them
-0 or +-1, so a dropped factor cannot hide. The two legs carry INDEPENDENT
-reduced dipoles (D_UP for the bra-side leg, D_DN for the ket-side leg), which
-is what makes the test sensitive to the slot assignment of S9.5.1(3).
-
-THE CONTRACTION, DERIVED ONCE ([HAM] S9.5, RAMAN reading -- photon 2 emitted,
-hence conjugated; the same reading heff.twophoton.dyad_weights implements).
-
-  T_eff = sum_i (d.eps2*) |i><i| (d.eps1) / Delta
-        = (1/Delta) sum_{p_a p_b} c_a[p_a] c_b[p_b] sum_i <f|T^1_{p_a}|i><i|T^1_{p_b}|g>
-
-  with c_a[p] = (-1)^p (eps2*)_{-p} on the BRA-side leg and c_b[p] =
-  (-1)^p (eps1)_{-p} on the KET-side leg (S9.5.1(3)), written out here from
-  that line rather than imported, so V27 cross-checks `dyad_weights` too.
-
-  RESOLVED SIDE. Each leg is elements_c2.axial_geometry at k = 1 with the
-  molecule-frame component q forced by the Omega's, times the reduced dipole
-  of that (Omega, Omega_i) pair. The intermediate sum runs over
-  (Omega_i, J'', F1'', F'', m''_F) with the FULL hyperfine set at each
-  (Omega_i, J'') and J'' = 0..3, complete for an X block at J = 1, 2.
-
-  RANK-K SIDE.  A = sum_K sum_P w^K_P alpha^K(Om_f, Om_g) G_K(f, g, P),
-  w^K_P = dyad_weights(eps1, eps2), G_K = two_photon_geometry (K = 0, 2, the
-  registered channels) and axial_geometry at k = 1 for the unregistered K = 1.
-  The geometry is NOT rescaled: heff's normalisation is
-  <eta'||alpha^K||eta> == 1 per channel (conventions.two_photon_norm =
-  'bc_5p142_reduced'), so the closure-valued alpha is computed here, on the
-  resolved side, from the same reduced dipoles -- B&C (5.141) inverted in the
-  MOLECULE frame, which is (5.142) read backwards one level in:
-
-      alpha^K_q = (1/Delta) (-1)^q (2K+1)^(1/2)
-                  sum_{q1 + q2 = q} (1 1 K; q1 q2 -q) D_UP[Om_f, Om_i] D_DN[Om_i, Om_g]
-
-  with Om_i = Om_g + q2. No spectator 6j enters this independent coefficient.
-
-K = 1, [HAM] S9.5.3. This fixture's manifold is RESTRICTED in
-Omega (no Omega_i = +-2), which is the physical ThF+/HfF+ situation, so K = 1
-survives at O(1): the K = 1 piece is 6-9 % of the amplitude here (and exactly
-zero for sigma+sigma-, where the K = 1 dyad weights vanish). It is reported,
-never asserted against. What kills it is COMPLETENESS OF THE MANIFOLD, not a
-common Delta and not the J'' range: test_K1_vanishes_when_the_manifold_is_complete
-adds Omega_i = +-2 with a dipole product matched to the Omega_i = 0 path and
-alpha^1 drops to 0.0 exactly, while the J'' range governs the closure identity
-for EVERY K (test_closure_fails_with_a_truncated_intermediate_J).
+The fixture has a complete J''=0..3 projector and common detuning, so it tests
+algebra rather than disputed ThF+ excited structure. It retains K=1 for its
+restricted Omega manifold; completeness in Omega, not J'', removes it.
 """
 import numpy as np
 import pytest

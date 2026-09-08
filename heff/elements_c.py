@@ -1,16 +1,7 @@
-"""Case (c) matrix elements for |J, Omega, F, m_F>.
+"""Case-(c) elements for |J, Omega, F, m_F>; see the cited decorators and [HAM].
 
-EVERY element in this file is copied from
-docs/thf-plus-x3delta1-effective-hamiltonian.md with its primary-source citation
-carried into the decorator. Nothing here was re-derived. If a check disagrees
-with one of these forms, report both with citations -- do not adjust a sign
-(Arian's standing rule; [HAM] S7 lists the fifteen open items).
-
-Sign conventions in force (heff.conventions.Conventions defaults):
-  n_hat = 'F_to_Th'  (JILA): Omega = +1 for Lambda = +2, d_mf = +3.37 D
-  zeeman_sign = 'plus_Gpar': +G_par mu_B (J.n)(n.B), NOT as Ng Eq. C.6 prints it
-  edm_factor = 'ng': no Leanhardt 1/2
-  parity: E* |J, Omega> = (-1)^(J-S+s) |J, -Omega>  (heff.conventions.parity_phase)
+Defaults use F→Th n_hat, +G_par mu_B (J.n)(n.B), Ng's eEDM normalization, and
+E*|J,Omega> = (-1)^(J-S+s)|J,-Omega>.
 """
 import numpy as np
 
@@ -20,13 +11,7 @@ from .wigner import w3j, w6j
 
 
 def _ph(x):
-    """(-1)**x for an x that must be an integer.
-
-    Guarded on purpose: every phase exponent in this file is an integer (a sum
-    like F + J' + 1 + I with two half-integers), and `(-1.0) ** 2.5` in Python
-    is a complex number, so a half-integer slipping in would silently poison the
-    matrix instead of raising.
-    """
+    """Return (-1)**x, rejecting noninteger phase exponents."""
     n = round(float(x))
     if abs(float(x) - n) > 1e-9:
         raise ValueError(f"phase exponent {x!r} is not an integer")
@@ -37,7 +22,6 @@ def _same(bra, ket, *fields):
     return all(bra[f] == ket[f] for f in fields)
 
 
-# ----------------------------------------------------------------- rotation
 
 @term(name="rotation", param=("B0",), cases=("c",),
       rules=Rules(dJ=(0,), dOm=(0.0,), dF=(0,), dmF=(0,)),
@@ -66,7 +50,6 @@ def centrifugal(bra, ket, ctx):
     return -((J * (J + 1.0)) ** 2)
 
 
-# ------------------------------------------------------------ Omega-doubling
 
 @term(name="omega_doubling", param=("omega_ef",), cases=("c",),
       rules=Rules(dJ=(0,), dOm=(-2.0, 2.0), dF=(0,), dmF=(0,)),
@@ -92,7 +75,6 @@ def omega_doubling(bra, ket, ctx):
     return -J * (J + 1.0) / 4.0
 
 
-# ----------------------------------------------------------------- hyperfine
 
 @term(name="hyperfine_A_par", param=("A_par",), cases=("c",),
       rules=Rules(dJ=(0,), dOm=(0.0,), dF=(0,), dmF=(0,)),
@@ -146,28 +128,11 @@ def spin_rotation_cI(bra, ket, ctx):
     return (F * (F + 1.0) - I * (I + 1.0) - J * (J + 1.0)) / 2.0
 
 
-# --------------------------------------------------- the shared E1 geometry
 
 def dipole_geometry(bra, ket, I, p):
-    """The three-factor geometry of a rank-1 molecule-frame operator along n_hat.
+    """Dimensionless rank-1 axial geometry (Ng C.5; B&C 5.172, 5.174, 5.186).
 
-    Ng thesis Eq. C.5 p.320 (H_Stark = -d_mf n_hat . E, q = 0 because the dipole
-    lies along the axis), independently re-derived in [HAM] S2 from B&C Eqs.
-    (5.174) + (5.172) + (5.186) and found identical term for term, including
-    every phase, with the two 6j symbols related by column exchange:
-
-      <J',Om',F',m'| . |J,Om,F,m>
-        = (-1)^(F + J' + 1 + I)  { J  F  I ;  F' J' 1 }
-        x (-1)^(F' - m') sqrt((2F+1)(2F'+1)) ( F'  1  F ; -m'  p  m )
-        x (-1)^(J' - Om') sqrt((2J+1)(2J'+1)) ( J'  1  J ; -Om' 0  Om )
-
-    Primed = bra. Diagonal in Omega. Returns a dimensionless float; the caller
-    supplies -d_mf E_p (Stark), +G_par mu_B B_p Omega (Zeeman) or the E1
-    transition dipole (heff.spectra). On the diagonal it evaluates to
-    <n_hat_z> = Omega m_F gamma_F ([HAM] S2.7 closed form, S2.8).
-
-    Public because heff.spectra calls it with p = +-1 while the Stark term uses
-    p = 0 -- one formula, one place, per spec S2.1(3).
+    Primed labels are bra; the operator is Omega-diagonal. See [HAM] S2.7.
     """
     if bra["Om"] != ket["Om"]:
         return 0.0
@@ -187,7 +152,6 @@ def dipole_geometry(bra, ket, I, p):
     return a * b * c
 
 
-# --------------------------------------------------------------------- Stark
 
 @term(name="stark_z", param=("d_mf", "E_z"), cases=("c",),
       rules=Rules(dJ=(-1, 0, 1), dOm=(0.0,), dF=(-1, 0, 1), dmF=(0,)),
@@ -203,7 +167,6 @@ def stark_z(bra, ket, ctx):
     return -n_hat_sign(ctx.conventions) * dipole_geometry(bra, ket, ctx.I, 0)
 
 
-# -------------------------------------------------------------------- Zeeman
 
 @term(name="zeeman_Gpar", param=("G_par", "B_z"), cases=("c",),
       rules=Rules(dJ=(-1, 0, 1), dOm=(0.0,), dF=(-1, 0, 1), dmF=(0,)),
@@ -245,15 +208,9 @@ def zeeman_nuclear(bra, ket, ctx):
     return -ctx.mu_N * a * b
 
 
-# -------------------------------------------------------------------- PT-odd
 
 def _pt_odd_matrix(bra, ket, ctx):
-    """The shared -Omega/|Omega| matrix of [HAM] S2.12, opt-in via its knob.
-
-    Odd in n_hat: flipping to 'Th_to_F' flips the sign of Omega's physical
-    meaning and with it E_eff and W_TP ([HAM] OPEN-11, and Skripnikov & Titov
-    2015 p.2, whose Omega = <Psi|J.n|Psi> is defined with n from Th to F).
-    """
+    """Return the n_hat-odd -Omega/|Omega| PT-odd matrix ([HAM] S2.12)."""
     if not _same(bra, ket, "J", "Om", "F", "mF"):
         return 0.0
     half = 0.5 if ctx.conventions.edm_factor == "leanhardt_half" else 1.0

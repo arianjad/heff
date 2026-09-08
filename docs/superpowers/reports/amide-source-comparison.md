@@ -7,7 +7,7 @@ symmetrization applied in either comparison path.
 
 ## Inputs and method
 
-- Live read-only source: `C:/Users/Arian/Code/C2V-Molecules/atm_core/physics.py`
+- Source: `C2V-Molecules/atm_core/physics.py`
   at `3b77b021ab2b3f9256f1af1b15ab3116eddb1068` (verified during this run;
   `git status --short -- atm_core/physics.py` was empty).
 - Basis: `S=1/2`, `I_N=1`, `i_H=1/2`, `I_M=0`, `N=0..1`, requested
@@ -43,13 +43,6 @@ observed raw property here.  This comparison establishes the `I_M=0`
 reduction only.  It does not validate nonzero-metal recoupling, molecular
 constants, or an end-to-end species model.
 
-## Reproduction
-
-From `C:/Users/Arian/Code/heff/.worktrees/toml-model-foundation`:
-
-```powershell
-& 'C:\Users\Arian\anaconda3\envs\heff\python.exe' -c "import runpy; runpy.run_path(r'.superpowers\sdd\2026-09-07-heff-toml-model-foundation\amide-source-comparison.py', run_name='__main__')"
-```
-
-The probe is intentionally retained under ignored `.superpowers/sdd/`; the
-report is the tracked review artifact.
+The original comparison probe is archived privately with the source checkout.
+This report records that comparison; the package's maintained amide checks are
+in `tests/test_elements_amide.py`.

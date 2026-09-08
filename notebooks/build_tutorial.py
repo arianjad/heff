@@ -708,7 +708,7 @@ and [scientific limitations](../docs/open-questions.md):
 `tests/` check kernel behavior and symmetry identities; comparisons to
 published numbers are opt-in behind `HEFF_RUN_LITERATURE=1`. These checks
 support software consistency, not a claim that the effective Hamiltonian is
-physically complete. Design: [v1 specification](../docs/superpowers/specs/2026-09-05-heff-design.md).
+physically complete.
 """),
 ]
 

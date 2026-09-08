@@ -11,9 +11,7 @@ used to support a downstream conclusion. Where a matrix element or a number is
 simply not in the literature I read, the row says **GAP** and section 5 records
 the exact query I ran. I have not guessed a single matrix element.
 
-**Sources read at source in this session** (local PDFs under `docs/lit/`, text
-extracted with PyMuPDF, tables rendered as images where the PDF text layer
-scrambles them):
+**Sources read for this digest:**
 **Cossel PhD thesis** ("Techniques in molecular spectroscopy: from broad
 bandwidth to high resolution", Colorado 2014, downloaded from the public JILA
 Cornell-group thesis list, PDF pp. 179, 184, 218–226, 234–242) — **the single
@@ -25,9 +23,9 @@ Ng et al. PRA **105**, 022823 (2022) §II and Fig. 6; Gresh et al. JMS **319**, 
 (2016) Table 2 (rendered); Denis et al. NJP **17**, 043005 (2015) Tables 3, 9, 10
 (Table 9 rendered as an image — its PDF text layer is rotated and scrambled);
 Petrov & Skripnikov arXiv:2503.02840; Leanhardt et al. JMS **270**, 1 (2011)
-= arXiv:1008.2997; Brown & Carrington §5.5.4–5.5.6 and Appendix 5.1 (local
-extract `docs/lit/bc-pages/bc_p195-210_ch5-matrixelements.txt`, Eqs. 5.141,
-5.142, 5.165–5.179); Bray & Hochstrasser, Mol. Phys. **31**, 1199 (1976),
+= arXiv:1008.2997; Brown & Carrington §5.5.4–5.5.6 and Appendix 5.1,
+pp. 195–210, Eqs. 5.141, 5.142, and 5.165–5.179; Bray & Hochstrasser,
+Mol. Phys. **31**, 1199 (1976),
 **abstract only** — body paywalled.
 
 ---
@@ -379,7 +377,7 @@ final |Ω| are both 1, the reachable ΔΩ is 0 or ±2 with
 
 **Verified numerically this session** with a scratch probe built on `heff.wigner`
 and `heff.conventions` (script kept out of the repo, at
-`…/scratchpad/twophoton_probe.py`), summing coherently over the intermediate
+in a direct numerical probe, summing coherently over the intermediate
 manifold for X J = 1,2, Ω = ±1, I = ½:
 
 ```
@@ -572,23 +570,17 @@ assertion.
 
 | # | Gap | Query run | Result |
 |---|---|---|---|
-| 1 | Published Raman/two-photon **rate or line strength for a transition within X ³Δ₁** (either molecule) | PyMuPDF regex `raman\|two-photon\|two photon` over all of `ng-thesis-JILA.pdf`, `cairncross-thesis-JILA.pdf`, `gresh-thesis-JILA.pdf`, `cossel.pdf`, plus `grep -rniE "raman\|two-photon\|two photon\|2-photon\|stimulated"` over every `docs/lit/*.txt` | Nothing. Every hit is inter-electronic transfer, REMPD/REMPI, or fibre-optic Raman. Ng thesis p. 102 proposes it and says the spectroscopy is undone. **Positive control**: the same query shape found 12 real Raman hits in `cairncross-thesis-JILA.pdf` and the whole of Cossel §6.3, so the query is not silently mis-shaped |
+| 1 | Published Raman/two-photon **rate or line strength for a transition within X ³Δ₁** (either molecule) | Full-text search for `raman`, `two-photon`, `two photon`, `2-photon`, and `stimulated` across the Ng, Cairncross, Gresh, and Cossel theses and the reviewed papers | Nothing. Every hit is inter-electronic transfer, REMPD/REMPI, or fibre-optic Raman. Ng thesis p. 102 proposes it and says the spectroscopy is undone. **Positive control**: the same query found 12 real Raman hits in the Cairncross thesis and the whole of Cossel §6.3, so the query is not silently mis-shaped |
 | 2 | **0⁺ vs 0⁻ reflection parity** of Denis's low-lying Ω = 0 ThF⁺ states | Read Denis Table 9 as a rendered image (its PDF text layer is rotated and scrambled) and read §3.2.3 in full | Denis labels them ¹Σ₀(³Π₀), ³Π₀, ³Π₀(¹Σ₀) with no ± superscript. Needed for the relative sign of interfering ΔΩ = ±2 amplitudes (§3.5) |
 | 3 | **Which ab initio ladder is right** below 10 000 cm⁻¹ | Compared Denis 2015 Table 9 (Ω = 0 at 6344/6528/6747 cm⁻¹) against Petrov & Skripnikov arXiv:2503.02840 (³Π₀₋ at 3044, ³Π₀₊ at 3395) against Gresh 2016 Table 2 (nothing measured between 3150 and 10 472) | Irreconcilable from the sources read. Any two-photon detuning quoted for ThF⁺ inherits this |
-| 4 | **Excited-state lifetimes / linewidths** for ThF⁺ | Gresh 2016 Table 2 read in full (rendered); `grep -niE "lifetime"` over `ng2022*.txt` | Gresh Table 2 carries T₀, T_e, B_e, ω_e, ω_eχ_e, α_e only. Ng 2022's lifetimes are all for X ³Δ₁ v = 0/1 and a ¹Σ⁺, not for the optical intermediates |
+| 4 | **Excited-state lifetimes / linewidths** for ThF⁺ | Gresh 2016 Table 2 and a full-text `lifetime` search of Ng 2022 | Gresh Table 2 carries T₀, T_e, B_e, ω_e, ω_eχ_e, α_e only. Ng 2022's lifetimes are all for X ³Δ₁ v = 0/1 and a ¹Σ⁺, not for the optical intermediates |
 | 5 | **Excited-state hyperfine A∥** for ThF⁺ | same sweep as #4 | Nothing. Blocks any resolved-hyperfine intermediate sum |
-| 6 | **Bonin & McIlrath 1984** full text | `ctx_fetch_and_index` on `opg.optica.org/josab/abstract.cfm?uri=josab-1-1-52` and `ui.adsabs.harvard.edu/abs/1984JOSAB...1...52B/abstract` | Optica returned a login wall; ADS returned HTTP 405. Held at search-summary level and marked UNVERIFIED in §3.0 |
-| 7 | **Bray & Hochstrasser 1976** full text | `ctx_fetch_and_index` on `tandfonline.com/doi/abs/10.1080/00268977600100931`, and on the 1999 follow-up `…/00268979909482813` | Abstract retrieved and quoted in §3.0; body paywalled. The 1999 "Interference in two-photon rotational line strengths of diatomic molecules" (Mol. Phys. 97, 1) returned empty content — **it is the single most on-target unread reference for the interference question** and is worth an institutional-access retrieval |
-| 8 | **Zare, "Angular Momentum" ch. 5** | not attempted — no local copy and no open source | The B&C extracts (5.141, 5.142, 5.165–5.178) cover the same algebra and are local, so this is a redundancy gap, not a blocking one |
+| 6 | **Bonin & McIlrath 1984** full text | Publisher and ADS records | Full text was inaccessible. Held at search-summary level and marked UNVERIFIED in §3.0 |
+| 7 | **Bray & Hochstrasser 1976** full text | Publisher record and the 1999 follow-up | Abstract retrieved and quoted in §3.0; body paywalled. The 1999 "Interference in two-photon rotational line strengths of diatomic molecules" (Mol. Phys. 97, 1) also remained unread — **it is the single most on-target unread reference for the interference question** |
+| 8 | **Zare, "Angular Momentum" ch. 5** | not attempted — no copy was available | Brown & Carrington Eqs. 5.141, 5.142, and 5.165–5.178 cover the same algebra, so this is a redundancy gap rather than a blocking one |
 | 9 | A **measured** X ³Δ₁ ↔ Ω=0 transition dipole for **ThF⁺** | Denis 2015 §3.2.3 and Tables 9/10 read in full; Gresh 2016 Table 2 | Only ab initio. HfF⁺ has the one measured number (0.27(3) e·a₀, Cossel p. 218); ThF⁺ has none |
 
-**Tool note for the record.** `pdf-mcp` and the `zotero` MCP server both failed to
-connect this session (ConnectionRefused and HTTP 401 respectively), so every PDF
-above was read with PyMuPDF (1.27.2.2) out of the `claude-code` conda env, and
-`C:/Users/Arian/Zotero/storage` was not searched — it exists (5543 entries) and
-may hold the two paywalled Molecular Physics papers.
-
-**One file was downloaded**, Cossel's thesis, from
-`https://www.colorado.edu/jila/media/696` (13.3 MB, linked from the public JILA
-Cornell-group thesis list). It lives in the session scratchpad, not in the repo.
+**Coverage limit.** The search did not include institutional full text for the
+two paywalled Molecular Physics papers. Cossel's thesis was obtained from the
+public JILA Cornell-group thesis list.
 

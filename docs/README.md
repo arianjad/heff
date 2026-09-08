@@ -14,7 +14,7 @@ is available now.
 
 ## Worked material
 
-- [232ThF+ tutorial](../notebooks/ThF_plus_X3Delta1_Tutorial.ipynb): basis,
+- [232ThF+ tutorial](https://github.com/arianjad/heff/blob/main/notebooks/ThF_plus_X3Delta1_Tutorial.ipynb): basis,
   Hamiltonian terms, parity, field shifts, observables, and E1 lines.
 - [Isotopologues and two-photon tutorial](../notebooks/ThF_plus_Isotopologues.ipynb):
   two coupled nuclear spins and the scope of the closure operator.
@@ -37,15 +37,7 @@ provide dated source evidence for current uncertainty labels. The
 [amide source comparison](superpowers/reports/amide-source-comparison.md) records
 the restricted port's matrix-element comparison.
 
-## Research and development records
-
-`briefs/`, the design/digest files, and the plans/specifications/handoffs under
-`superpowers/` preserve development and source-review evidence. Their task
-assignments and per-run approvals are not current operating instructions.
-Use the guides above for the present API and supported scope. Historical
-calculations are not relabeled as newer runs when parameter choices change.
-
-Raw literature extracts in `lit/` and `thesis-text/` are local research inputs,
-not runtime dependencies or required reading for installation. The student
-archive omits these extracted texts while retaining the source citations and
-review notes. Consult the cited primary publications for their full text.
+The source reviews are dated evidence for parameter choices and uncertainty
+labels. Use the guides above for the supported API and current model scope, and
+consult the cited primary publications for the underlying measurements and
+calculations.

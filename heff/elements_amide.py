@@ -1,15 +1,8 @@
-"""Low-level 14-QN matrix elements for the amide spectator basis.
+"""Amide spectator-basis elements ported from ``C2V-Molecules/atm_core/physics.py``
+at ``3b77b021ab2b3f9256f1af1b15ab3116eddb1068``; quadrupole requires I_N=1.
 
-This is a source-preserving port of the named functions in
-``C:/Users/Arian/Code/C2V-Molecules/atm_core/physics.py`` at commit
-``3b77b021ab2b3f9256f1af1b15ab3116eddb1068``.  The source comments cite
-Sears (1984), Eqs. (21), (22), and (41), and Hirota, Eqs. (2.3.70),
-(2.3.79)-(2.3.80), for the corresponding Zeeman and quadrupole conventions.
-Only the Wigner backend import is changed here, to ``heff.wigner``.
-
-The ``quadrupole`` expression is explicitly limited to nitrogen spin I_N=1:
-its nuclear 3j normalization and 6j recoupler contain literal spin 1.  This
-module does not generalize that expression or claim physics for another spin.
+See Sears (1984) Eqs. (21), (22), (41), and Hirota Eqs. (2.3.70),
+(2.3.79)-(2.3.80) for the retained conventions.
 """
 
 import numpy as np

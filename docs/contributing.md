@@ -78,12 +78,11 @@ python -m pip wheel --no-deps . --wheel-dir dist
 python scripts/package_students.py
 ```
 
-The wheel contains the Python package and bundled TOML model. The archive
-contains the repository material students need: source, tests, examples,
-notebooks, guides, figures/data, and supporting Markdown source notes. It omits
-Git metadata, caches, machine-local coordination files, build products, and raw
-literature/thesis extracts. Its included-file list and source commit are saved
-inside the archive. Packaging uses local files and does not push or publish.
+The wheel contains the Python package and bundled TOML model. The student
+archive contains source, tests, examples, notebooks, guides, figures, data, and
+supporting Markdown source notes. It omits Git metadata, caches, and build
+products. The archive records its included-file list and source commit.
+Packaging uses local files and does not push or publish.
 
 ## Sources and attribution
 
@@ -93,6 +92,3 @@ Carrington's *Rotational Spectroscopy of Diatomic Molecules* supplies the main
 diatomic tensor conventions. Molecule-specific measurements and calculations
 are cited in the [Hamiltonian reference](thf-plus-x3delta1-effective-hamiltonian.md).
 The restricted amide implementation also records its C2V-Molecules provenance.
-
-The repository currently has no `LICENSE` file. The student archive preserves
-that state and does not assign a new license to the code or cited source material.

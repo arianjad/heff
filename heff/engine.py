@@ -1,9 +1,4 @@
-"""Batched CPU diagonalisation with eigenvalues and eigenvectors retained.
-
-`chunk_bytes` estimates the chunk size from matrix dimension and dtype;
-`chunk` overrides it with an explicit point count. Result metadata records
-state ordering, gauge, assignment strategy, and the tracking reference.
-"""
+"""Batched CPU diagonalisation with tracked eigenvectors."""
 from dataclasses import dataclass
 
 import numpy as np
@@ -19,11 +14,7 @@ _DEFAULT_CHUNK_BYTES = 200_000_000
 
 @dataclass(frozen=True)
 class SweepResult:
-    """Sweep arrays, label conventions, active terms, and matrix provenance.
-
-    `reference` records the grid index used as the zero-field anchor by
-    `order='adiabatic_zero_field'`; the sweep need not start at zero field.
-    """
+    """Sweep arrays, tracking choices, active terms, and provenance."""
     knobs: dict
     evals: np.ndarray
     evecs: np.ndarray
@@ -44,11 +35,7 @@ def _chunk_size(n, d, dtype, chunk_bytes):
 
 
 def eigh_batch(H, *, chunk=None, chunk_bytes=_DEFAULT_CHUNK_BYTES):
-    """Chunked batched eigh. Returns (w (n, d) ascending, v (n, d, d) columns).
-
-    `chunk=None` (default) derives a chunk size from `chunk_bytes`; pass an
-    explicit `chunk` to force a point count.
-    """
+    """Chunked batched eigh; ``chunk=None`` derives a point count from bytes."""
     H = np.asarray(H)
     n, d, _ = H.shape
     if chunk is None:
@@ -64,17 +51,7 @@ def eigh_batch(H, *, chunk=None, chunk_bytes=_DEFAULT_CHUNK_BYTES):
 
 def sweep(tm, pset, knob_arrays, *, chunk=None, chunk_bytes=_DEFAULT_CHUNK_BYTES,
           order="energy", gauge="none", assignment="adaptive", reference=0):
-    """Diagonalise one block over a collection of knob values.
-
-    knob_arrays values are broadcast against each other, so a 1D sweep is
-    {'E_z': E, 'B_z': zeros}, and a 2D grid is flattened after broadcasting.
-
-    `reference` (default 0) is the grid index `order=
-    'adiabatic_zero_field'` treats as the zero-field point; it is ignored by
-    the other two order policies. Pass it whenever the sweep's own knob_arrays
-    do not start at the zero-field point, or tracking silently anchors to
-    whatever point 0 happens to be.
-    """
+    """Diagonalise broadcast knob arrays; set ``reference`` for zero-field tracking."""
     c = sweep_coefficients(tm, pset, knob_arrays)
     w, v = eigh_batch(hamiltonian_batch(tm, c), chunk=chunk, chunk_bytes=chunk_bytes)
     perm = order_states(w, v, order=order, strategy=assignment, reference=reference)

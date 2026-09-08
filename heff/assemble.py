@@ -1,10 +1,4 @@
-"""Reusable term matrices and Hamiltonian assembly.
-
-Build parameter-free matrices once per basis, then assemble sweeps by the
-tensor contraction H[n, i, j] = sum_k c[n, k] M[k, i, j]. The manifest records
-sources, conventions, and a basis-aware specification fingerprint; it is
-provenance metadata, not a disk cache.
-"""
+"""Build reusable term matrices and assemble H = sum_k c_k M_k."""
 import hashlib
 import json
 import time
@@ -17,11 +11,7 @@ from .terms import REGISTRY, terms_for_case
 
 @dataclass(frozen=True)
 class TermMatrices:
-    """Parameter-free matrices for one block with their provenance manifest.
-
-    Each (d, d) matrix retains its own real or complex dtype. Assembly promotes
-    to a common dtype using only terms with nonzero coefficients.
-    """
+    """Parameter-free matrices and provenance for one block."""
     names: tuple
     params: tuple
     mats: tuple
@@ -30,19 +20,13 @@ class TermMatrices:
 
 
 def build_term_matrices(kets, ctx, *, case="c", registry=REGISTRY, term_names=None):
-    """Evaluate every applicable term once over one block.
-
-    The declared selection rules are used as a sparsity mask so only allowed
-    (i, j) are evaluated -- the dominant build cost (spec S3.2).
-    """
+    """Evaluate each applicable term once, masking by its declared rules."""
     terms = terms_for_case(case, names=term_names, registry=registry)
     if not terms:
-        # Two-spin terms use REGISTRY_C2; importing them does not fill REGISTRY.
         fix = ("pass registry=heff.elements_c2.REGISTRY_C2" if case == "c2"
                else "import heff.elements_c")
         raise ValueError(f"no terms registered for case {case!r}; {fix}")
     d = len(kets)
-    # Transverse/rotating-field terms need a basis spanning their m_F couplings.
     single_mF = len({float(v) for v in np.asarray(kets["mF"], dtype=float)}) == 1
     if single_mF:
         for t in terms:
@@ -64,7 +48,6 @@ def build_term_matrices(kets, ctx, *, case="c", registry=REGISTRY, term_names=No
         if t.hermitian and not np.allclose(M, M.conj().T, atol=1e-10, rtol=0):
             raise ValueError(f"term {t.name!r} is declared hermitian but its matrix is not")
         mats.append(M)
-    # Preserve per-term dtype until the active terms are known.
     stack = tuple(mats)
     try:
         import sympy
@@ -83,7 +66,6 @@ def build_term_matrices(kets, ctx, *, case="c", registry=REGISTRY, term_names=No
         "wigner_version": wigner_version,
         "build_seconds": time.perf_counter() - t0,
     }
-    # Include kets so equal-sized blocks (e.g. opposite m_F) remain distinct.
     ket_hash = hashlib.sha256(np.ascontiguousarray(kets).tobytes()).hexdigest()
     spec_desc = {"case": case, "dimension": d, "terms": sorted(manifest["terms"]),
                  "conventions": manifest["conventions"], "ket_hash": ket_hash}
@@ -112,12 +94,7 @@ def _validate_knobs(tm, knobs):
 
 
 def _knob(symbol, pset, knobs):
-    """A knob's scalar value: `knobs` first, then the ParamSet, then 0.0.
-
-    Defaulting to 0 is what makes the PT-odd block opt-in and what lets the
-    thesis's own H_K = 0 deperturbation study work -- and it is why `active()`
-    exists, so a term that is off is reported rather than silently absent.
-    """
+    """Return a knob from overrides, ParamSet, or zero."""
     if knobs is not None and symbol in knobs:
         return float(knobs[symbol])
     return pset.value(symbol, default=0.0)
@@ -142,10 +119,7 @@ def active(tm, pset, knobs):
 
 
 def hamiltonian(tm, pset, knobs):
-    """H = sum_k c_k M_k for one parameter set and one field point.
-
-    Complex dtype promotion includes only terms with nonzero coefficients.
-    """
+    """Assemble H = sum_k c_k M_k with active-term dtype promotion."""
     return hamiltonian_batch(tm, coefficients(tm, pset, knobs))[0]
 
 
@@ -174,13 +148,7 @@ def sweep_coefficients(tm, pset, knob_arrays):
 
 
 def hamiltonian_batch(tm, c):
-    """(n_sets, d, d) in one BLAS call. Chunking is the caller's job (heff.engine).
-
-    Same active-only promotion rule as `hamiltonian`:
-    a term is active for the batch if any set gives it a nonzero coefficient.
-    No hard float cast on `c` -- the caller's own dtype (always real for a
-    physical field/parameter sweep) is preserved.
-    """
+    """Return ``(n_sets, d, d)`` in one contraction; callers choose chunking."""
     c = np.atleast_2d(np.asarray(c))
     if c.shape[-1] != len(tm.names):
         raise ValueError(
@@ -196,14 +164,7 @@ def hamiltonian_batch(tm, c):
 
 
 def vertex(tm, pset, knobs, knob):
-    """Exact dH/d(knob) at the given point.
-
-    Free, because dH/dc_k = M_k is already in the catalogue: a knob's vertex is
-    the sum over the terms containing it of (product of the OTHER knobs) x M_k.
-    This is what makes g-factors and dipoles exact derivatives rather than
-    finite differences (spec S3.6), and it is the analytic fit Jacobian for
-    Hamiltonian parameters at zero extra cost.
-    """
+    """Return exact dH/d(knob) from cached term matrices."""
     _validate_knobs(tm, knobs)
     known = _known_knob_symbols(tm)
     if knob not in known:

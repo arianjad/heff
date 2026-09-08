@@ -1,16 +1,15 @@
-# Development and review records
+# Scientific design references
 
 For the present implementation and student workflow, use the
 [documentation index](../README.md), [model guide](../models.md), and
 [architecture guide](../architecture.md).
 
-This directory retains design specifications, implementation plans, source
-audits, and verification reports. A dated record establishes what was checked
-for that revision and parameter set. It does not describe current task status
-or create an outstanding approval request.
+This directory retains architecture specifications and dated scientific source
+audits. The specifications explain physical and software contracts that are
+still cited by the implementation. Source audits record the evidence available
+for a stated revision or parameter set.
 
-The TOML foundation, equivalent-proton amide extension, ThF isotope integration,
-and field-plot work are implemented. Current scientific limitations are in
-[open questions](../open-questions.md). Consult live Git and the current task
-before deciding what to change next. The handoff entry points link to this
-current context; accepted work should not be restarted from an old task number.
+For current capabilities and limitations, use the [model guide](../models.md),
+[architecture guide](../architecture.md), and
+[open questions](../open-questions.md). A dated reference establishes its own
+source coverage; it does not supersede those maintained guides.
