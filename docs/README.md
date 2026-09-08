@@ -1,15 +1,16 @@
 # Documentation
 
-Start with [the repository README](../README.md) and
-[getting started](getting-started.md). The guides below describe the code that
-is available now.
+Start with [getting started](getting-started.md) to install `heff` and calculate
+a spectrum. Then work through the
+[232ThF+ notebook](../notebooks/ThF_plus_X3Delta1_Tutorial.ipynb), where we connect
+the basis and Hamiltonian terms to the level structure and field shifts.
 
 | If you want to… | Read |
 |---|---|
 | Install, diagonalize, and plot your first spectrum | [Getting started](getting-started.md) |
 | Choose an isotope/backend and understand its inputs | [Models, units, and conventions](models.md) |
 | Learn how model files become matrices and spectra | [Architecture and API map](architecture.md) |
-| Understand limitations before making a physical claim | [Scientific limitations and current decisions](open-questions.md) |
+| Check which inputs and approximations limit a calculation | [Scientific limitations](open-questions.md) |
 | Change code, refresh notebooks, or package a student copy | [Contributing](contributing.md) |
 
 ## Worked material
@@ -27,8 +28,8 @@ is available now.
 
 [The ThF+ Hamiltonian reference](thf-plus-x3delta1-effective-hamiltonian.md)
 contains the equations, phase conventions, source comparisons, and physical
-approximations behind the implemented case-(c) operators. Equation and OPEN
-identifiers are retained because the code cites them.
+approximations behind the case-(c) operators. The code cites its equation and
+OPEN identifiers.
 
 The [parameter audit](superpowers/reports/2026-09-08-thf-estimate-audit.md),
 [nuclear-moment review](superpowers/reports/2026-09-08-thf-nuclear-estimate-audit.md),
@@ -37,7 +38,5 @@ provide dated source evidence for current uncertainty labels. The
 [amide source comparison](superpowers/reports/amide-source-comparison.md) records
 the restricted port's matrix-element comparison.
 
-The source reviews are dated evidence for parameter choices and uncertainty
-labels. Use the guides above for the supported API and current model scope, and
-consult the cited primary publications for the underlying measurements and
-calculations.
+Use the guides above for the API and supported models. The cited primary
+publications contain the underlying measurements and calculations.

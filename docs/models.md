@@ -1,9 +1,10 @@
 # Models and TOML files
 
-`heff` separates a molecular definition from a numerical problem. A TOML file
-selects a backend, basis, terms, parameters, conventions, and isotopologue.
-`load_model()` reads that definition; `model.problem()` makes an executable
-problem and may override basis limits without changing the loaded model.
+Before calculating a spectrum, we need a basis, a set of interactions, and
+their coefficients. A TOML file records these choices, the isotopologue, and
+the conventions. Its backend supplies the basis and matrix elements.
+`load_model()` reads the file; `model.problem()` prepares a calculation. You
+can change the basis cutoff for that calculation without editing the model.
 
 ## Supported model classes
 
@@ -39,7 +40,7 @@ A bare number uses the backend's canonical unit:
 B0 = 7274.3325
 ```
 
-A rich record can carry provenance:
+To record the unit and source, use a parameter record:
 
 ```toml
 d_mf = { value = 3.37, unit = "D", status = "measured", convention = "center_of_mass", source = "Ng 2022 Table I" }
@@ -50,9 +51,10 @@ The recognized fields are `value`, `unit`, `uncertainty`, `status`, `source`,
 does not disable a term. Unknown metadata is retained with a warning. An
 unknown unit fails when the problem resolves parameters.
 
-The molecular dipole of an ion depends on its origin. A `d_mf` record must
-carry a `convention` matching `conventions.dipole_origin`; the loader rejects
-an untagged or mismatched dipole before matrix construction.
+The molecular dipole of an ion depends on the coordinate origin. We therefore
+record that origin explicitly: the `d_mf` parameter's `convention` must match
+`conventions.dipole_origin`. The loader rejects an untagged or mismatched
+dipole before constructing matrices.
 
 ## Complete case-c example
 
@@ -117,7 +119,7 @@ and missing parameters fail with their TOML path.
 
 ## Bundled ThF+ example
 
-`heff.list_models()` currently returns `("thf_plus",)`. The bundled file
+Use `heff.list_models()` to list the bundled models. The file
 [thf_plus.toml](../heff/models/thf_plus.toml) contains one shared X 3Delta1
 manifold and three isotopologues:
 
@@ -151,7 +153,7 @@ either odd-isotope spectrum.
 
 ## Complete amide example
 
-The repository ships a complete synthetic file at
+For the amide backend, start with the synthetic model in
 [amide_synthetic.toml](../examples/models/amide_synthetic.toml):
 
 ```python
@@ -171,7 +173,7 @@ print(H.shape)            # (264, 264)
 print(scan.evals.shape)   # (2, 264)
 ```
 
-The spin declaration is part of the backend contract:
+The order of the spin records specifies the coupling chain:
 
 ```toml
 [[isotopologues.test.spins]]
@@ -199,8 +201,8 @@ signs when the basis is enumerated.
 
 ## Inspect before calculating
 
-Use `model.describe()` to print the selected model, manifold, isotopologue,
-backend, basis, terms, and parameter provenance. Use `model.validate()` for a
-cheap structural check. Accessing `problem.kets` or `problem.term_matrices`
-then builds the basis or matrices lazily. For the end-to-end introduction, see
+Use `model.describe()` to inspect the basis, active interactions, and parameter
+sources for the selected model and isotopologue. `model.validate()` checks the
+input structure. The basis and term matrices are built when you first access
+`problem.kets` or `problem.term_matrices`. For a worked calculation, see
 [Getting started](getting-started.md).

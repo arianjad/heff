@@ -1,23 +1,24 @@
-# heff — molecular effective Hamiltonians
+# heff: molecular effective Hamiltonians
 
-`heff` builds and diagonalizes effective Hamiltonians for molecular rotation,
-hyperfine structure, and external fields. Use it to learn how a model becomes
-an energy spectrum, inspect individual interactions, and explore Stark and
-Zeeman shifts with traceable parameter choices.
+`heff` calculates molecular energy levels and their response to electric and
+magnetic fields. In the [232ThF+ tutorial](notebooks/ThF_plus_X3Delta1_Tutorial.ipynb),
+we build the basis, add the interactions, and follow how each term changes the
+spectrum. You can run the notebook, vary the fields, and inspect the states.
 
-The central idea is
+We write the effective Hamiltonian as
 
 ```text
 H/h = sum_k c_k M_k       (frequencies in MHz)
 ```
 
-The matrices `M_k` describe the operators in a chosen basis. The coefficients
-`c_k` contain molecular parameters and field strengths. Changing a field or
-parameter reuses the matrices; changing the basis or operator model rebuilds them.
+Each matrix `M_k` describes one interaction in the chosen basis. Its coefficient
+`c_k` contains the molecular parameters or field strengths. A field sweep
+therefore reuses the angular-momentum algebra. Changing the basis or operator
+model requires new matrices.
 
 ## Start here
 
-1. **Install** using Python 3.12 or newer:
+1. Install using Python 3.12 or newer:
 
    ```shell
    git clone https://github.com/arianjad/heff.git
@@ -28,7 +29,7 @@ parameter reuses the matrices; changing the basis or operator model rebuilds the
    For an isolated virtual environment and platform-specific activation steps,
    see [getting started](docs/getting-started.md#1-clone-and-install).
 
-2. **Calculate** the 232ThF+ spectrum:
+2. Calculate the 232ThF+ spectrum:
 
    ```python
    import numpy as np
@@ -43,14 +44,14 @@ parameter reuses the matrices; changing the basis or operator model rebuilds the
    print(energies[:6] - energies[0])  # MHz above the lowest level
    ```
 
-   Fields are **V/cm** and **gauss**. Columns of `states` are eigenvectors in
-   `problem.kets`. The small cutoff is an example, not a convergence guarantee.
+   Fields are in V/cm and gauss. Columns of `states` are eigenvectors in
+   `problem.kets`. Increase the cutoff to check convergence for your calculation.
 
-3. **Explore** [your first field sweep](docs/getting-started.md#3-plot-a-stark-sweep),
+3. Plot [your first field sweep](docs/getting-started.md#3-plot-a-stark-sweep),
    then open [the 232ThF+ tutorial on GitHub](https://github.com/arianjad/heff/blob/main/notebooks/ThF_plus_X3Delta1_Tutorial.ipynb).
    Run `python -m jupyterlab` from this environment to work through it.
 
-4. **Check assumptions** in [models and units](docs/models.md) before comparing
+4. Check the assumptions in [models and units](docs/models.md) before comparing
    to a measurement. Inspect `model.describe()` for parameter sources and status.
 
 ## What is available
@@ -65,7 +66,7 @@ Select an isotope with
 `load_model("thf_plus", isotope="229Th19F")`, or load a custom TOML file with
 `load_model("examples/models/amide_synthetic.toml")`. See
 [the model guide](docs/models.md) for coupling order, supported terms, and units.
-TOML describes inputs for existing backends; it does not generate missing physics.
+Each TOML file selects a basis and interactions that its backend implements.
 
 The lower-level API also exposes E1 line strengths and rank-0/rank-2 effective
 two-photon operators. Their validity conditions and parameter limitations are
@@ -79,9 +80,9 @@ J=1–3, electric fields to 10 kV/cm, and magnetic fields to 100 G.
 
 ![Zero-field rotational structure of three ThF+ isotopes](results/thf-fields-2026-09-08/thf-level-overview.png)
 
-The [figure notes and data](results/thf-fields-2026-09-08/README.md) record the
-actual inputs, state labels, and basis-convergence checks. These plotting
-parameter sets are deliberately separate from the bundled defaults:
+The [figure notes and data](results/thf-fields-2026-09-08/README.md) give the
+inputs, state labels, and basis-convergence checks. The plotting parameters
+differ from the bundled defaults:
 
 - The 229Th baseline omits unknown quadrupoles; an extra page shows an
   unvalidated sensitivity case.
@@ -90,13 +91,13 @@ parameter sets are deliberately separate from the bundled defaults:
 
 ## Before interpreting a result
 
-Parameter status matters: a placeholder can produce a smooth, converged plot
-without being a reliable molecular prediction. Odd-isotope constants are not
-all independently measured or fitted. Increase the rotational cutoff for the
-states and fields you study, and distinguish energy ordering from eigenstate
-tracking at crossings. [Current scientific limitations](docs/open-questions.md)
-and the [Hamiltonian reference](docs/thf-plus-x3delta1-effective-hamiltonian.md)
-explain these boundaries and the source conventions.
+A smooth, converged spectrum can still depend on an unknown molecular constant.
+Several odd-isotope inputs are estimates or placeholders. Check their sources
+and status, then test the rotational cutoff for the states and fields you study.
+At crossings, also check whether a curve follows energy order or eigenstate
+character. The [scientific limitations](docs/open-questions.md) and
+[Hamiltonian reference](docs/thf-plus-x3delta1-effective-hamiltonian.md) explain
+the approximations and conventions.
 
 ## Tests and repository map
 
@@ -104,9 +105,10 @@ explain these boundaries and the source conventions.
 python -m pytest -q
 ```
 
-The default suite checks assembly, symmetries, analytic limits, parameter
-metadata, and model loading. Two literature comparisons are opt-in; commands
-are in [contributing](docs/contributing.md). Tests do not certify unknown inputs.
+Run the tests when checking an installation or changing code; calculations do
+not run them automatically. The suite checks assembly, symmetries, analytic
+limits, parameter metadata, and model loading. Two literature comparisons are
+opt-in; commands are in [contributing](docs/contributing.md).
 
 | Directory | Purpose |
 |---|---|

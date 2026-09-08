@@ -1,8 +1,8 @@
 # Getting started
 
-This guide takes you from a fresh checkout of `heff` to an energy spectrum and
-a field sweep. You need basic Python, matrix diagonalization, and
-angular-momentum notation.
+We will calculate the 232ThF+ spectrum, then vary the electric field and plot
+the Stark shifts. This guide assumes basic Python, matrix diagonalization,
+and angular-momentum notation.
 
 ## 1. Clone and install
 
@@ -29,17 +29,20 @@ Or in a macOS/Linux shell:
 source .venv/bin/activate
 ```
 
-Install the package, plotting/notebook tools, and tests:
+Install the package and notebook tools, then check the installation:
 
 ```shell
 python -m pip install -e ".[notebooks,test]"
 python -m pytest -q
 ```
 
-The editable install makes changes to local `heff/` files visible to Python.
+The `-e` option makes edits to local `heff/` files visible to Python.
 Dependencies are declared in [pyproject.toml](../pyproject.toml). For calculations
 without plots or notebooks, `python -m pip install -e .` is sufficient. For
 scripts with plots, use `python -m pip install -e ".[plot]"`.
+
+Tests run only when you call pytest. You do not need to run them each time you
+open a notebook or calculate a spectrum.
 
 If PowerShell does not allow activation, use the environment's interpreter
 directly, without changing your execution policy:
@@ -55,6 +58,10 @@ so you use the code and model files described in this guide.
 
 ## 2. Calculate a spectrum
 
+First choose the model and rotational cutoff. `hamiltonian()` combines the
+interactions at the requested fields; diagonalization gives the energies and
+states.
+
 ```python
 import numpy as np
 from heff import load_model
@@ -69,8 +76,8 @@ print(energies[:6] - energies[0])  # MHz above the lowest state
 print(model.describe())  # basis, active terms, parameters, provenance
 ```
 
-The matrix represents `H/h` in **MHz**. `E_z` is in **V/cm** and `B_z` in
-**gauss**; 10 kV/cm is `E_z=10000`, not `10`. Columns of `vectors` are
+The matrix represents `H/h` in MHz. `E_z` is in V/cm and `B_z` in
+gauss (10 kV/cm corresponds to `E_z=10000`). Columns of `vectors` are
 eigenstates expressed in the ordered basis `problem.kets`. A common energy
 offset has no effect on a transition frequency.
 
@@ -79,10 +86,13 @@ high-level `Problem` assembles the full matrix even when the basis metadata
 says `M="blocks"`; the low-level API provides explicit `block_by_mF` handling
 for larger calculations. Collinear static fields preserve signed mF.
 
-`J_max=3` is a small starting basis, not a convergence guarantee. Increase the
-cutoff and compare the states you care about before reporting precise shifts.
+Start with `J_max=3`, then increase the cutoff and compare the states you care
+about before reporting precise shifts.
 
 ## 3. Plot a Stark sweep
+
+Now vary `E_z` while holding `B_z=0`. We subtract the same reference energy at
+every field so the plot retains the field-dependent shifts.
 
 ```python
 import matplotlib.pyplot as plt
@@ -96,13 +106,13 @@ ax.set(xlabel="Electric field (V/cm)", ylabel="Energy / h (MHz, common zero)")
 fig.savefig("first_stark.png", dpi=180, bbox_inches="tight")
 ```
 
-This displays the twelve lowest eigenvalues at each field, relative to one
-common zero-field energy. `Problem.sweep` defaults to energy ordering: a line
-index is an energy rank, not a tracked quantum-state identity. The low-level
-`heff.sweep` supports explicit tracking and gauge choices; see
+The plot shows the twelve lowest eigenvalues at each field, relative to the
+lowest zero-field energy. `Problem.sweep` sorts by energy at each step, so a
+curve can change state character at a crossing. The low-level
+`heff.sweep` supports state tracking and gauge choices; see
 [architecture](architecture.md) and the tutorials for that workflow.
 
-The ready-made [isotope figure set](../results/thf-fields-2026-09-08/README.md)
+The saved [isotope figure set](../results/thf-fields-2026-09-08/README.md)
 uses a larger basis, branch labels, and numerical convergence checks. It also
 documents its parameter overrides; its odd-isotope plots are not identical
 to loading the bundled defaults.
@@ -124,7 +134,8 @@ plots use a deformed-nucleus theory estimate. The amide example contains
 synthetic coefficients. Read [models and units](models.md) before interpreting
 any of these as a spectrum of a real isotope.
 
-To change a parameter without changing the bundled file, make a new problem:
+To see the contribution of one interaction, make a copy of the problem with
+that coefficient set to zero. Here we omit fluorine spin rotation:
 
 ```python
 from dataclasses import replace
@@ -138,7 +149,7 @@ without_spin_rotation = replace(
 )
 ```
 
-This retains the unit and creates new metadata for the chosen assumption.
+The copy retains the unit and records why we set the coefficient to zero.
 For a reusable model file, copy [thf_plus.toml](../heff/models/thf_plus.toml)
 or the [amide example](../examples/models/amide_synthetic.toml), edit it, and
 pass its path to `load_model`.
@@ -165,8 +176,8 @@ python scripts/plot_thf_isotopes.py --render-only
 ```
 
 Omit `--render-only` to recompute them. This overwrites the corresponding
-generated figures/data; copy the result folder first if you are preserving a
-separate experiment. The script needs no machine-specific launcher.
+figures and data; copy the result folder first if you want to preserve a
+separate calculation.
 
 ## When an example fails
 
@@ -178,7 +189,6 @@ separate experiment. The script needs no machine-specific launcher.
 | Slow odd-isotope calculation | Reduce the exploratory cutoff; use explicit mF blocks for large sweeps. Keep a separate convergence check for reported results. |
 | Unexpected ordering at a crossing | Inspect `result.order` and state character; energy order does not follow an eigenvector through a crossing. |
 
-Tests check code behavior and specified physical identities. Two comparisons to
-published numbers are opt-in; the [contributing guide](contributing.md) gives
-the commands. Passing tests does not establish the accuracy of an estimated
-Hamiltonian parameter.
+For checks against published numbers, see the opt-in comparisons in
+[contributing](contributing.md). These test the calculation under stated
+assumptions; they do not determine unknown Hamiltonian parameters.

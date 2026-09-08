@@ -1,7 +1,8 @@
 # Package architecture
 
-`heff` uses a term-matrix design. Basis enumeration and angular-momentum
-algebra depend on the model; parameter scans do not rebuild those matrices.
+For a fixed basis and set of interactions, a field sweep changes the
+coefficients of the Hamiltonian. We calculate each interaction's matrix once,
+then reuse it at every field. The package follows that separation:
 
 ```text
 TOML or bundled model
@@ -21,7 +22,7 @@ model_io.py -> model.py -> backend adapter
                     eigenvalues, eigenvectors, manifest
 ```
 
-## Public composition layer
+## Loading a model
 
 - `heff.model_io` parses schema version 1, freezes definitions, applies
   isotopologue overrides, checks convention records, and converts parameters
@@ -34,9 +35,8 @@ model_io.py -> model.py -> backend adapter
   registry, units, runtime knobs, and conventions. Bundled adapters load only
   when a model is selected.
 
-The high-level import stays light: importing `heff` does not initialize model
-backends, SymPy, SciPy, or plotting libraries. Public model symbols are loaded
-on first access.
+Importing `heff` loads neither model backends nor SymPy, SciPy, or plotting
+libraries. Model symbols load when first accessed.
 
 ## Physics backends
 
@@ -49,9 +49,9 @@ on first access.
   live in `heff.elements_amide`; the backend recouples them through the outer
   metal spin and defines the metal contact and Zeeman terms.
 
-Each backend names its canonical units, accepted basis shape, runtime knobs,
-and selected term registry. The TOML loader does not infer a basis or operator
-from a molecule's name.
+Each backend specifies its units, allowed basis, field controls, and
+interactions. The TOML file must select a backend that implements the intended
+physics.
 
 ## Shared numerical core
 
@@ -70,7 +70,7 @@ from a molecule's name.
   observables, and one-photon spectroscopy on the assembled representation.
   `heff.twophoton` supplies the separate rank-K closure operator.
 
-The matrix cache boundary is the practical center of the package:
+This example shows which work is reused during a scan:
 
 ```python
 import numpy as np
@@ -87,20 +87,21 @@ B = np.zeros_like(E)
 scan = problem.sweep(E_z=E, B_z=B)     # batched coefficients and eigh
 ```
 
-## Data ownership and extension points
+## Where to make a change
 
-Model files own molecular constants, term selection, coupling records, basis
-limits, and convention choices. Backends own the translation from those
-records to an existing basis and operator family. Matrix-element modules own
-the physics formulas. The engine owns coefficient assembly, diagonalization,
-ordering, and result metadata.
+Edit model files to change constants, active terms, spin coupling, basis
+limits, or conventions. Backends translate those records into a basis and
+operators; the matrix-element modules contain the formulas. The engine
+assembles and diagonalizes the Hamiltonian, orders the states, and records the
+calculation's settings.
 
 To add an isotopologue that uses an existing backend, add or override TOML data
 and verify its parameter provenance and basis convergence. To add a new model
 class, implement its basis and matrix elements, register a backend adapter, and
 compare signed matrix elements against an independent limit or construction.
-Do not encode missing physics as a silent zero: omit or refuse an unsupported
-term, or label a deliberate switch-off or sensitivity value in the model data.
+If an interaction is unsupported, omit it or reject the input. If you set a
+coefficient to zero for a comparison, record that choice in the parameter
+metadata so it cannot be mistaken for a measured value.
 
 See [Models and TOML files](models.md) for the executable schema and current
 backend limits. The canonical ThF+ equations and convention decisions remain

@@ -1,11 +1,11 @@
 # ThF+ isotope level and field plots
 
-Complete, 2026-09-08. [Open the five-page PDF](thf-isotopes-levels-stark-zeeman.pdf).
+Calculations from 2026-09-08. [Open the five-page PDF](thf-isotopes-levels-stark-zeeman.pdf).
 
-The figures contain the zero-field structure and shifts of every state
+The figures show the zero-field structure and shifts of every state
 correlated with J=1–3: 60 states for 232Th, 360 for 229Th, and 120 for 227Th,
-including magnetic degeneracy. Stark scans cover 0–10 kV/cm at B=0; Zeeman
-scans cover 0–100 G at E=0. They are separate scans, not simultaneous fields.
+including magnetic degeneracy. We vary one field at a time: Stark scans cover
+0–10 kV/cm at B=0, and Zeeman scans cover 0–100 G at E=0.
 
 ## Figures
 
@@ -17,8 +17,8 @@ scans cover 0–100 G at E=0. They are separate scans, not simultaneous fields.
 
 ## Adopted parameters and limits
 
-These are separate exploratory parameter sets. Package defaults were not changed.
-All values and provenance are exported in `parameters.csv` and the per-case JSON files.
+These exploratory parameter sets differ from the package defaults.
+`parameters.csv` and the per-case JSON files record every value and its source.
 
 | Input | 232Th | 229Th baseline | 227Th theory |
 |---|---:|---:|---:|
@@ -42,8 +42,8 @@ no calibrated moment error is quoted. A=(-10408 MHz)*g_N transfers the existing
 molecular electronic factor. These figures use +1.79 GHz, not the +39.8 GHz
 Schmidt stress-test default.
 
-229Th has **no validated complete parameter set here**: its quadrupole terms
-may substantially alter its spectrum. The baseline sets them to zero to show
+The 229Th parameter set is incomplete: unknown quadrupole terms may
+substantially alter its spectrum. The baseline sets them to zero to show
 what the supported magnetic-hyperfine model produces; zero is not their
 physical estimate. The separate sensitivity figure uses -2600 and +300 MHz
 as raw B&C-parameter scenarios. Neither signs, conversion, nor magnitudes are
@@ -97,8 +97,6 @@ python scripts/plot_thf_isotopes.py
 ```
 
 `--render-only` regenerates figures/tables from the saved NPZ and JSON data.
-The calculation builds term matrices from the current source; no machine-local
-checkpoint or disk matrix cache is required. Raw curve arrays and plotting
-parameter sets are committed. The script uses existing native heff operators
-and NumPy diagonalization; no package matrix element is replaced.
-No GPU, installation, external write, or package-default update was needed.
+The calculation builds term matrices from the current source and diagonalizes
+them with NumPy. The saved curve arrays and parameter records let you inspect
+or redraw these results without repeating the calculation.

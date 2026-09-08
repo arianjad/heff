@@ -1,9 +1,9 @@
-# Current scientific limitations and decisions
+# Scientific limitations and conventions
 
-This page records the live scope of the implemented models. The numbered
-`OPEN-*` labels are stable references used by code, tests, notebooks, and the
-canonical [ThF+ Hamiltonian note](thf-plus-x3delta1-effective-hamiltonian.md).
-A resolved item remains here when software cites its identifier.
+Use this page to identify which inputs or approximations limit your
+calculation. It also records sign and labeling conventions, with `OPEN-*`
+identifiers shared by the code and the
+[ThF+ Hamiltonian reference](thf-plus-x3delta1-effective-hamiltonian.md).
 
 ## ThF+ X 3Delta1 model
 
@@ -29,7 +29,7 @@ A resolved item remains here when software cites its identifier.
 
 ### `OPEN-16`: sign of A_parallel(229Th)
 
-**Decision:** the bundled `229Th19F` model uses the negative branch,
+The bundled `229Th19F` model uses the negative branch,
 `A_par_Th = -1510 MHz`, following Skripnikov and Titov. The positive Denis
 branch remains a real disagreement between electronic-structure calculations;
 an axis reversal does not resolve it. The older `thf_v2()` API can select the
@@ -38,7 +38,7 @@ See section 9.4.3 of the Hamiltonian note.
 
 ### `OPEN-17` and `OPEN-18`: thorium quadrupole inputs
 
-**Unresolved:** the signed normalization bridge from Petrov's `eQq0/eQq2`
+The signed normalization bridge from Petrov's `eQq0/eQq2`
 definitions to the Brown-and-Carrington matrix elements is not established.
 The bundled `229Th19F` values `eQq0_Th = -2600 MHz` and
 `eQq2_Th = +300 MHz` are `placeholder` sensitivity points with no numerical
@@ -50,19 +50,19 @@ gradient calculation is the missing input. See the
 
 ### `OPEN-19`: thorium spin rotation
 
-**Unresolved:** no ThF+ value for `c_I_Th` is available. The package holds it
+No ThF+ value for `c_I_Th` is available. The package holds it
 at zero for both odd isotopologues. Zero switches off an unknown operator; it
 is not a physical estimate. The earlier 1 kHz--1 MHz bracket is a scale study,
 not an uncertainty interval.
 
 ### `OPEN-20`: 227Th spin and magnetic moment
 
-**Chosen package default:** the bundled `227Th19F` model retains the
+The bundled `227Th19F` model uses the
 `A_par_Th = +39.821 GHz`, `g_N_Th = -3.826` Schmidt single-particle values as
 explicit `placeholder` stress-test inputs. The tentative `I^pi = (1/2+)`
 assignment does not imply a pure spherical `s_1/2` neutron state.
 
-**Distinct theory case:** Minkov et al. (2024) predict
+Minkov et al. (2024) predict
 `mu(227Th) = -0.0860 mu_N`, hence `g_N = -0.1720` and
 `A_par_Th = +1.790176 GHz` with the same molecular electronic factor. The
 field-plot dataset uses this value, but the bundled package model does not.
@@ -73,7 +73,7 @@ assignments remain experimental and nuclear-model limitations. See the
 
 ### `OPEN-21`: rank-one two-photon channel
 
-**Resolved for the implemented operator:** exact closure over a complete
+Exact closure over a complete
 opposite-parity intermediate space makes the antisymmetric `K = 1` tensor
 zero. The registered closure operator therefore contains only `K = 0, 2`.
 `K = 1` can reappear for energy-resolved denominators or a restricted
@@ -81,7 +81,7 @@ intermediate manifold; those are different operators and are not implemented.
 
 ### `OPEN-22`: rotational truncation
 
-**Current default:** the bundled model uses `J_max = 4`. Convergence must be
+The bundled model uses `J_max = 4`. Convergence must be
 checked for the selected odd-isotope parameters because thorium hyperfine can
 mix adjacent J manifolds strongly. The separate field-plot calculation used
 `J <= 8` and sampled `J <= 7` versus `J <= 8`; that result does not prove the
@@ -89,7 +89,7 @@ bundled Schmidt stress-test model converged at `J_max = 4`.
 
 ### `OPEN-23`: closure validity for the experiment
 
-**Model limitation:** the rank-K closure form requires detuning large compared
+The rank-K closure form requires detuning large compared
 with the intermediate rotational structure, approximately 7 GHz for the
 relevant ThF+ states. The cited JILA detunings are 0.16--1.5 GHz. The package
 therefore supplies the closure operator's tensor structure and placeholder

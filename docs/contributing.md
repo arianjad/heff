@@ -5,7 +5,7 @@ Use [getting started](getting-started.md) to install the local checkout. The
 notebook tools. Read [models](models.md) and [architecture](architecture.md)
 before adding or changing a physical interaction.
 
-## Make one interpretable change
+## Changing a calculation
 
 1. Identify the model, basis, units, and observable affected. Record the primary
    source and any phase or normalization conversion.
@@ -16,22 +16,24 @@ before adding or changing a physical interaction.
 4. Update the current guide and affected generated artifacts. Preserve earlier
    scientific runs as separate parameter/data records when inputs change.
 
-Do not tune a constant or numerical tolerance merely to pass a check. A
-Hermitian matrix does not establish correct matrix elements, and a correct
-matrix does not establish accurate molecular parameters.
+A check is useful when it can distinguish a correct calculation from an
+incorrect one. Hermiticity alone leaves many matrix-element errors undetected;
+even correct matrix elements leave uncertainty in the molecular parameters.
+Choose tolerances from the comparison being made, rather than adjusting them
+or the constants to obtain a pass.
 
-Comments and docstrings describe current behavior, physical assumptions, and
-the reasons for non-obvious choices. Keep development history in Git or dated
-research records; retain source citations and unresolved scientific questions.
+Keep comments short. Explain a physical assumption, cite a source, or give the
+reason for a non-obvious choice. Development history belongs in Git or dated
+research records; unresolved scientific questions belong with the relevant
+model or convention.
 
 ## Test commands
 
-Keep tests that exercise supported behavior, a reproduced bug, or an independent
-physical identity. Check the existing coverage before adding another test.
-Standalone demonstrations that deliberately corrupt a correct formula are
-development diagnostics; they do not need permanent copies beside the direct
-regression check. Retain negative cases that test actual validation behavior,
-and do not replace signed matrix comparisons with symmetry checks alone.
+Tests run when you call pytest, independently of ordinary calculations. Keep
+checks of supported behavior, reproduced bugs, and independent physical
+identities. Before adding a test, check whether an existing one covers the
+same failure. Include invalid inputs where rejection matters, and preserve
+signed matrix comparisons where a symmetry check would miss a sign error.
 
 ```shell
 python -m pytest -q
@@ -57,8 +59,9 @@ those numbers is a consistency check rather than independent validation.
 
 ## Refresh notebooks
 
-The `.py` files are the editable notebook sources. Regeneration replaces the
-corresponding notebook, so preserve any student edits before running it.
+Edit notebook prose in both the `.py` generator and the `.ipynb` notebook.
+For prose-only edits, preserve the saved code and outputs. When code or
+numerical inputs change, regenerate and execute the affected notebook:
 
 ```shell
 python notebooks/build_tutorial.py
@@ -67,8 +70,9 @@ python -m jupyter nbconvert --to notebook --execute --inplace notebooks/ThF_plus
 python -m jupyter nbconvert --to notebook --execute --inplace notebooks/ThF_plus_Isotopologues.ipynb
 ```
 
-Run these in the environment where `heff` is installed. The kernel must use
-that environment; inspect its `sys.executable` if execution cannot import the
+Regeneration replaces the notebook, so save any student edits first. Run these
+commands in the environment where `heff` is installed, with a kernel that uses
+the same environment. Inspect `sys.executable` if the kernel cannot import the
 package. Saved outputs belong to the parameter sets stated in each notebook.
 
 ## Build a local wheel or student archive
@@ -81,8 +85,8 @@ python scripts/package_students.py
 The wheel contains the Python package and bundled TOML model. The student
 archive contains source, tests, examples, notebooks, guides, figures, data, and
 supporting Markdown source notes. It omits Git metadata, caches, and build
-products. The archive records its included-file list and source commit.
-Packaging uses local files and does not push or publish.
+products. The archive records its included-file list and source commit. Both
+commands write local files under `dist/`.
 
 ## Sources and attribution
 
