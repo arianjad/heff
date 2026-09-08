@@ -24,6 +24,13 @@ KET_C = np.dtype([("J", "f8"), ("Om", "f8"), ("F", "f8"), ("mF", "f8")])
 # and nowhere else.
 KET_C2 = np.dtype([("J", "f8"), ("Om", "f8"), ("F1", "f8"), ("F", "f8"), ("mF", "f8")])
 
+# Full unsymmetrized three-spin sequential basis,
+# |(((J I_1) F1, I_2) F2, I_3) F, m_F>. Species/exchange symmetry is a
+# separate physical model, so it does not belong in this enumerator.
+KET_C3 = np.dtype([
+    ("J", "f8"), ("Om", "f8"), ("F1", "f8"), ("F2", "f8"), ("F", "f8"), ("mF", "f8")
+])
+
 _M_MODES = ("none", "blocks", "all")
 
 _ISOTOPOLOGUES = ("232", "229", "227")
@@ -137,6 +144,10 @@ def enumerate_kets(spec):
     key deeper. At I_1 = 0 the F1 column is identically J and the order
     collapses to the v1 order, which is what makes the v1 basis a special case
     of this one rather than a different basis (spec-v2 S2.1).
+
+    With three coupled spins it is |(((J I_1) F1, I_2) F2, I_3) F, m_F>,
+    dtype KET_C3, sorted by (J, F1, F2, F, m_F, Omega). This is the full
+    sequential basis only; equivalent-particle symmetry is not imposed here.
     """
     if spec.case != "c":
         raise NotImplementedError(f"no enumerator registered for case {spec.case!r}")
@@ -144,10 +155,11 @@ def enumerate_kets(spec):
         raise NotImplementedError("v1 enumerates exactly one electronic state")
     if len(spec.spins) == 2:
         return _enumerate_kets_two_spin(spec)
-    if len(spec.spins) > 2:
+    if len(spec.spins) == 3:
+        return _enumerate_kets_three_spin(spec)
+    if len(spec.spins) > 3:
         raise NotImplementedError(
-            "no enumerator for more than two coupled spins; add a third dtype when "
-            "a species with three coupled nuclear spins arrives")
+            "case-(c) enumeration supports at most three coupled spins")
     Om0 = abs(spec.electronic[0].Omega)
     # `spins` is the authority when it is there; `I` is the v1 spelling of the
     # same single spin. Identical for spins=() -- the v1 path is untouched.
@@ -186,6 +198,29 @@ def _enumerate_kets_two_spin(spec):
     return kets
 
 
+def _enumerate_kets_three_spin(spec):
+    """|(((J I_1) F1, I_2) F2, I_3) F, m_F> in the fixed sequential order."""
+    Om0 = abs(spec.electronic[0].Omega)
+    twoI1 = int(round(2 * spec.spins[0].I))
+    twoI2 = int(round(2 * spec.spins[1].I))
+    twoI3 = int(round(2 * spec.spins[2].I))
+    rows = []
+    for J in range(spec.J_range[0], spec.J_range[1] + 1):
+        twoJ = 2 * J
+        for Om in (-Om0, Om0):
+            if abs(Om) > J:
+                continue
+            for twoF1 in range(abs(twoJ - twoI1), twoJ + twoI1 + 1, 2):
+                for twoF2 in range(abs(twoF1 - twoI2), twoF1 + twoI2 + 1, 2):
+                    for twoF in range(abs(twoF2 - twoI3), twoF2 + twoI3 + 1, 2):
+                        for twomF in range(-twoF, twoF + 1, 2):
+                            rows.append((float(J), float(Om), twoF1 / 2.0,
+                                         twoF2 / 2.0, twoF / 2.0, twomF / 2.0))
+    kets = np.array(rows, dtype=KET_C3)
+    kets.sort(order=["J", "F1", "F2", "F", "mF", "Om"])
+    return kets
+
+
 def check_basis_invariants(kets, spec):
     """Raise ValueError on any basis invariant violation (gate A7).
 
@@ -198,7 +233,18 @@ def check_basis_invariants(kets, spec):
     J, Om, F, mF = (np.asarray(kets[n], dtype=float) for n in ("J", "Om", "F", "mF"))
     if np.any(np.abs(Om) > J):
         raise ValueError("|Omega| > J for at least one ket")
-    if "F1" in kets.dtype.names:
+    if "F2" in kets.dtype.names:
+        I1, I2, I3 = (spin.I for spin in spec.spins)
+        F1 = np.asarray(kets["F1"], dtype=float)
+        F2 = np.asarray(kets["F2"], dtype=float)
+        if np.any(F1 < np.abs(J - I1) - 1e-12) or np.any(F1 > J + I1 + 1e-12):
+            raise ValueError(
+                "F1 violates the triangle condition |J - I_1| <= F1 <= J + I_1")
+        if np.any(F2 < np.abs(F1 - I2) - 1e-12) or np.any(F2 > F1 + I2 + 1e-12):
+            raise ValueError(
+                "F2 violates the triangle condition |F1 - I_2| <= F2 <= F1 + I_2")
+        lo, hi, parent = np.abs(F2 - I3), F2 + I3, "F2"
+    elif "F1" in kets.dtype.names:
         # v2: F couples to F1, not to J, and F1 carries its own triangle.
         I1, I2 = spec.spins[0].I, spec.spins[1].I
         F1 = np.asarray(kets["F1"], dtype=float)
