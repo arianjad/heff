@@ -8,7 +8,7 @@ import sys
 import json
 import argparse
 import csv
-from dataclasses import asdict, replace
+from dataclasses import asdict
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -23,6 +23,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from heff import load_model, parity_operator
 from heff.assemble import build_term_matrices, hamiltonian
 from heff.terms import ctx_from
+from scripts._thf_params import parameters
 
 OUT = ROOT / "results/thf-fields-2026-09-08"
 EGRID = np.unique(np.r_[0, np.geomspace(.001, 100, 151), np.linspace(100, 10000, 397),
@@ -32,29 +33,6 @@ ISOS = ("232", "229", "227")
 TITLES = {"232": "²³²Th¹⁹F⁺ · measured / adopted inputs",
           "229": "²²⁹Th¹⁹F⁺ · quadrupole-omitted baseline",
           "227": "²²⁷Th¹⁹F⁺ · deformed-nucleus theory estimate"}
-
-
-def parameters(iso, scenario="baseline"):
-    problem = load_model("thf_plus", isotope=f"{iso}Th19F").problem(J_max=8)
-    p = problem.params
-    if iso == "229":
-        p = p.with_(g_N_Th=replace(p.params["g_N_Th"], value=.1460, uncertainty=.0012,
-                   source="Zitzer et al. PRA111 L050802 (2025), Table I: mu=.365(3) mu_N / I=2.5",
-                   note="Plot-specific update from the 2021 input."),
-                   A_par_Th=replace(p.params["A_par_Th"], value=-1519.495,
-                   source="Skripnikov & Titov PRA91 042504 (2015), Table II: -4163*.365 MHz",
-                   note="Single-source negative branch; about 7% theory scale, no calibrated combined interval."))
-        if scenario == "baseline":
-            p = p.with_(**{name: replace(p.params[name], value=0, status="held-fixed",
-                   uncertainty=None, source="Explicit omission for this plotting baseline",
-                   note="Unknown physical quadrupole, NOT an estimate of zero; compare sensitivity figure.")
-                   for name in ("eQq0_Th", "eQq2_Th")})
-    if iso == "227":
-        for name, value in (("g_N_Th", -.1720), ("A_par_Th", 1790.176)):
-            p = p.with_(**{name: replace(p.params[name], value=value, uncertainty=None,
-                status="estimate", source="Minkov et al. PRC110 034327 (2024), Table IV",
-                note="mu=-.0860 mu_N, I=.5; g=mu/I, A=(-10408 MHz)*g. Nuclear-model uncertainty unquantified; no Coriolis/collective mixing correction.")})
-    return problem, p
 
 
 def matrices(iso, m, p, jmax):

@@ -123,3 +123,48 @@ Physical invariants, not smoke tests. Each must be able to both pass and fail.
 - Do not touch `results/thf-fields-2026-09-08/`. New output goes in its own dated
   directory.
 - The existing suite (351 passed, 2 skipped) must stay green.
+
+## Progress (Scope B, 2026-09-09)
+
+Data layer green. `scripts/_thf_params.py` holds `parameters()`, imported by both
+`plot_thf_isotopes.py` (unchanged otherwise) and `scripts/plot_thf_mf_resolved.py`.
+
+`level_records(iso, E_z, B_z)` returns a structured array with fields
+`mF, J, F, parity, index, E0_MHz, E_MHz`. Field energies follow the zero-field
+states along a linear field ramp (`RAMP = 201` points), because a direct
+zero-field-to-field overlap match is ambiguous: the Omega doublet is ~50/50
+Stark-mixed at 100 V/cm (measured best-match fidelity 0.30). Endpoint energies
+are unchanged at 401 and 801 ramp points, for every block and configuration.
+
+All ten checks pass (`tests/test_mf_resolved.py`). Suite: 367 passed, 2 skipped,
+against a 357/2 baseline -- ten added, none broken.
+
+Each check was seen to fail first. Checks 1, 7 and 8 failed against stubs. The
+rest are invariants of a data layer that already existed by then, so each was
+driven RED by injecting the specific defect it guards -- a 0.01 G stray field
+(2), a stray field in the ramp (3), `abs(B_z)` (4), a 1% Zeeman scale error (5),
+a 1 mV/cm leak into the zero-field Hamiltonian (6), a cutoff shifted by two (9),
+and a silent fallback to `problem.params` (10) -- then reverted to green. That is
+stronger evidence than a stub RED: it shows each check discriminates the error it
+exists to catch, not merely the absence of a function.
+
+Check 5 is tight: the injected 1% error in g violated the bound by a factor 90.
+Its tolerance is the exact second derivative `g_factors` returns rather than a
+fitted number, and the residual uses at most 0.69 of it. The bound leaves room
+for a wrong g only where the curvature is itself comparable to the linear term,
+so the test also asserts that a 25% error would be caught for >75% of states
+(measured 80% / 100% / 92%).
+
+Figures: twelve PNG + PDF pairs in `results/thf-mf-resolved-2026-09-09/`,
+`thf-<iso>-E<E>-B<B>.{png,pdf}`. Whole run 47 s; the largest isotopologue (229)
+is 36 s of that, far inside the time budget.
+
+Known cosmetic issue, not fixed: where two F bands are nearly degenerate (F = 0
+and F = 1 at the top of the 229 J = 1 and J = 3 panels) their inline labels
+overlap. Colour is already spent on parity, so separating them needs a different
+channel; left for review.
+
+Measured while designing: parity is +/-1 to 3e-15 and F to 2e-14 at zero field;
+J_max 6 vs 8 agree to ~7e-10 MHz at (100 V/cm, 100 G); building all signed-M_F
+blocks costs 0.5 s (232), 1.1 s (227), 7.7 s (229), so the full twelve-figure run
+is minutes, not tens of minutes.
