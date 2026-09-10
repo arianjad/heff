@@ -4,6 +4,7 @@ The records come from `scripts/plot_thf_mf_resolved.py`; the checks compare them
 against an independently enumerated basis, against exact symmetries of the
 Hamiltonian, and against `heff.observe.g_factors`.
 """
+import re
 from collections import Counter
 
 import numpy as np
@@ -13,7 +14,9 @@ from heff.assemble import hamiltonian
 from heff.terms import ctx_from
 from scripts._thf_params import parameters
 from scripts.plot_thf_mf_resolved import (CONFIGS, JS, centroids, draw_panel,
-                                          level_records, plt, zero_field)
+                                          draw_manifold_grid, level_records,
+                                          manifold_groups, manifold_reference,
+                                          plt, zero_field)
 
 ISOS = ("232", "229", "227")
 
@@ -228,6 +231,98 @@ def test_the_plotted_energies_are_converged_against_the_J_cutoff():
         for key in fine:
             err = float(np.max(np.abs(np.sort(coarse[key]) - np.sort(fine[key]))))
             assert err < 1e-3, (iso, key, err)
+
+
+def test_recovered_F1_lies_on_the_basis_lattice_and_couples_to_F():
+    """The zoomed grid groups panels by the intermediate F1 = J + I_Th, so F1
+    has to be a genuine label and not a relabelled F. Two independent
+    constraints: every recovered F1 is a value the basis itself enumerates, and
+    it couples to that record's F through the remaining spin,
+    |F1 - I| <= F <= F1 + I. An off-by-one in the F1(F1+1) inversion leaves the
+    lattice; reading the F column instead breaks the triangle rule wherever
+    F1 != F.
+
+    232Th has no second spin, so its basis carries no F1 column and F1 falls
+    back to F; the lattice check still applies.
+    """
+    for iso in ISOS:
+        problem = load_model("thf_plus", isotope=f"{iso}Th19F").problem(J_max=8)
+        column = "F1" if "F1" in problem.kets.dtype.names else "F"
+        lattice = set(np.unique(problem.kets[column]).tolist())
+        rec = level_records(iso, 0.0, 0.0)
+        assert set(np.unique(rec["F1"]).tolist()) <= lattice, iso
+        I = problem.spec.I
+        assert np.all(np.abs(rec["F1"] - I) <= rec["F"] + 1e-9), iso
+        assert np.all(rec["F"] <= rec["F1"] + I + 1e-9), iso
+
+
+def test_manifold_groups_partition_every_record_into_exactly_one_J_F1_panel():
+    """The zoomed grid draws one panel per (J, F1), so the grouping has to be a
+    partition: no record dropped, none drawn twice, and every panel homogeneous
+    in both labels. Grouping on a float F1 is where this would break -- a
+    tolerance-based match would merge adjacent F1, and a stale key would drop a
+    manifold silently, since the figure gives no count to check against.
+    """
+    for iso in ISOS:
+        rec = level_records(iso, 0.0, 0.0)
+        groups = manifold_groups(rec)
+        assert set(groups) == {(int(r["J"]), float(r["F1"])) for r in rec}, iso
+        assert sum(len(g) for g in groups.values()) == len(rec), iso
+        for (j, f1), g in groups.items():
+            assert len(g) > 0 and np.all(g["J"] == j) and np.all(g["F1"] == f1), (iso, j, f1)
+
+
+def test_zoomed_grid_gives_every_panel_in_a_J_row_one_shared_energy_window():
+    """Two requirements meet in the y axis. Referencing each panel to its own
+    (J, F1) zero-field centroid is what keeps it zoomed; sharing one window
+    across a row is what keeps splittings comparable between the F1 manifolds of
+    one J. Together they force identical ylim within a row.
+
+    Rows must differ from each other or the check is vacuous -- a single global
+    window would satisfy 'identical within a row' while zooming nothing. All
+    three rows are required distinct, which no global window can satisfy, plus a
+    factor 1.3 between the first and last: 227Th19F spans 32.5, 35.3 and 49.4 MHz
+    for J = 1, 2, 3, a measured ratio of 1.52.
+    """
+    iso = "227"
+    groups = manifold_groups(level_records(iso, 0.0, 100.0))
+    fig, panels = draw_manifold_grid(iso, 0.0, 100.0)
+    assert set(panels) == set(groups)
+    rows = {}
+    for key, ax in panels.items():
+        rows.setdefault(key[0], []).append(ax.get_ylim())
+        assert len(ax.lines) == len(groups[key]), key
+    for j, lims in rows.items():
+        assert len({tuple(np.round(lim, 9)) for lim in lims}) == 1, (j, lims)
+    spans = [rows[j][0][1] - rows[j][0][0] for j in JS]
+    assert len({round(s, 6) for s in spans}) == len(JS), spans
+    assert spans[-1] > 1.3 * spans[0], spans
+    plt.close(fig)
+
+
+def test_each_zoomed_panel_reports_the_offset_its_own_window_hides():
+    """Referencing every panel to its own centroid is what removes the
+    information needed to compare manifolds, so each panel has to state the
+    constant it subtracted. The test reads those numbers back off the titles and
+    requires their differences to reproduce the true spacing between manifold
+    centroids -- the quantity the labels exist to let a reader compute, rather
+    than merely that some number is printed.
+
+    229Th19F, whose F1 manifolds are split by the ~1.5 GHz Th hyperfine, so
+    within-J and between-J spacings are both exercised. Tolerance 2 kHz: the
+    labels carry 1 kHz (six decimals in GHz) and a difference of two of them
+    inherits at most twice that rounding.
+    """
+    iso = "229"
+    ref = manifold_reference(iso)
+    fig, panels = draw_manifold_grid(iso, 0.0, 100.0)
+    shown = {k: float(re.search(r"([\d.]+)\s*GHz", ax.get_title()).group(1)) * 1e3
+             for k, ax in panels.items()}
+    assert set(shown) == set(ref)
+    keys = sorted(shown)
+    for a, b in zip(keys, keys[1:]):
+        assert abs((shown[a] - shown[b]) - (ref[a] - ref[b])) < 2e-3, (a, b)
+    plt.close(fig)
 
 
 def test_the_exploratory_parameter_set_is_the_one_actually_diagonalised():
