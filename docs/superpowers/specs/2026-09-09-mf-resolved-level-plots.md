@@ -1,6 +1,6 @@
-# M_F-resolved level plots per J manifold — ThF+ X3Delta1 isotopologues
+# M_F-resolved level plots — ThF+ X3Delta1 isotopologues
 
-Status: in progress, 2026-09-09. Requested by Arian.
+Status: complete, 2026-09-11. Requested by Arian.
 
 ## Goal
 
@@ -124,22 +124,23 @@ Physical invariants, not smoke tests. Each must be able to both pass and fail.
   directory.
 - The existing suite (351 passed, 2 skipped) must stay green.
 
-## Progress (Scope B, 2026-09-09)
+## Implementation
 
-Data layer green. `scripts/_thf_params.py` holds `parameters()`, imported by both
+`scripts/_thf_params.py` holds `parameters()`, imported by both
 `plot_thf_isotopes.py` (unchanged otherwise) and `scripts/plot_thf_mf_resolved.py`.
 
 `level_records(iso, E_z, B_z)` returns a structured array with fields
-`mF, J, F, parity, index, E0_MHz, E_MHz`. Field energies follow the zero-field
+`mF, J, F1, F, parity, index, E0_MHz, E_MHz`. Field energies follow the zero-field
 states along a linear field ramp (`RAMP = 201` points), because a direct
 zero-field-to-field overlap match is ambiguous: the Omega doublet is ~50/50
 Stark-mixed at 100 V/cm (measured best-match fidelity 0.30). Endpoint energies
 are unchanged at 401 and 801 ramp points, for every block and configuration.
 
-All ten checks pass (`tests/test_mf_resolved.py`). Suite: 367 passed, 2 skipped,
-against a 357/2 baseline -- ten added, none broken.
+All fourteen checks pass (`tests/test_mf_resolved.py`). Suite: 371 passed,
+2 skipped, against a 357/2 baseline -- fourteen added, none broken.
 
-Each check was seen to fail first. Checks 1, 7 and 8 failed against stubs. The
+Each check was seen to fail first. Of the first ten, checks 1, 7 and 8 failed
+against stubs. The
 rest are invariants of a data layer that already existed by then, so each was
 driven RED by injecting the specific defect it guards -- a 0.01 G stray field
 (2), a stray field in the ramp (3), `abs(B_z)` (4), a 1% Zeeman scale error (5),

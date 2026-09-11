@@ -1,7 +1,8 @@
 """M_F-resolved static level diagrams for ThF+ X3Delta1 isotopologues.
 
-One figure per (isotopologue, field configuration); three axes for J = 1, 2, 3.
-Static diagonalisations at fixed field, not the sweeps of plot_thf_isotopes.py.
+Two figure sets per (isotopologue, field configuration): an overview with one
+axis per J, and a zoomed grid with one panel per (J, F1) manifold. Static
+diagonalisations at fixed field, not the sweeps of plot_thf_isotopes.py.
 
 Run from the worktree: python scripts/plot_thf_mf_resolved.py
 """

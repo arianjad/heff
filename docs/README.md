@@ -21,6 +21,11 @@ the basis and Hamiltonian terms to the level structure and field shifts.
   two coupled nuclear spins and the scope of the closure operator.
 - [Three-isotope field figures and data](../results/thf-fields-2026-09-08/README.md):
   J=1–3, fields to 10 kV/cm and 100 G, with plot-specific parameter choices.
+- M_F-resolved static level diagrams at four fixed (E_z, B_z) configurations,
+  from `scripts/plot_thf_mf_resolved.py`: one axis per J in
+  `results/thf-mf-resolved-2026-09-09/`, and one panel per (J, F1) manifold,
+  each carrying its energy offset and fitted g factors, in
+  `results/thf-mf-resolved-zoom-2026-09-10/`.
 - [Synthetic amide model](../examples/models/amide_synthetic.toml): the
   equivalent-proton backend exercised with illustrative coefficients.
 
