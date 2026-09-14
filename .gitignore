@@ -15,5 +15,7 @@ dist/
 docs/lit/**/*.pdf
 docs/lit/**/*.png
 docs/lit/**/*.txt
+# Our own summaries are tracked, unlike downloaded papers.
+!docs/lit/2026-09-14-thf-zeeman-second-order-summary.pdf
 docs/thesis-text/
 docs/briefs/

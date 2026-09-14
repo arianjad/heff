@@ -2,7 +2,8 @@
 
 One page. The derivations, citations and conventions are in
 [the Hamiltonian reference](thf-plus-x3delta1-effective-hamiltonian.md); the Zeeman tensor's
-sources are in [docs/lit/lookup-effective-zeeman-tensor.md](lit/lookup-effective-zeeman-tensor.md);
+sources are in [docs/lit/lookup-effective-zeeman-tensor.md](lit/lookup-effective-zeeman-tensor.md)
+and its typeset companion [the second-order Zeeman summary](lit/2026-09-14-thf-zeeman-second-order-summary.pdf);
 the limits of every input are in [open-questions.md](open-questions.md). Every value below
 is the shipped default in `heff/models/thf_plus.toml`.
 

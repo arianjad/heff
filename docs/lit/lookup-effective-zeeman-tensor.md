@@ -14,6 +14,11 @@ Local source texts (extracted from ar5iv; untracked per `.gitignore`, like every
 - `docs/lit/petrov2014-arXiv1404.4024-ThO-zeeman.txt`
 - `docs/lit/petrov2017-arXiv1704.06631-HfFplus-zeeman.txt`
 
+A typeset companion with a level diagram of the perturbers, the Van Vleck reduction, the
+exact mapping to Petrov's g(J) form, and the ThF⁺/ThO/HfF⁺ checks:
+[2026-09-14-thf-zeeman-second-order-summary.pdf](2026-09-14-thf-zeeman-second-order-summary.pdf). Its G∥ = 0.04680 is Petrov's
+G₀ − C̄₀ + C₂/2; the package carries G_zz = 0.046532 from the measured sum (§5.5).
+
 **Summary.** Through second order in the Coriolis × Zeeman cross terms with the nearby
 Ω = 0±, 2 electronic states, the ³Δ₁ g-factor spectrum is exactly that of one
 J-independent body-frame tensor G = diag(G_xx, G_yy, G_zz). Petrov & Skripnikov's published
