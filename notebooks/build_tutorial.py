@@ -454,16 +454,21 @@ print("m_F of this block:", res_g0['mF'], " conventions:", res_g0['conventions']
     md("""
 ## 12. The differential g-factor Δg
 
-The two Stark components of the J = 1, F = 3/2 doublet acquire slightly
-different J = 2 admixtures, so their g-factors differ. This difference is an
-important systematic in the eEDM experiment. We evaluate the named pair with
-`pair_differential`, which preserves its sign and records which of the two
-circulating definitions was used.
+The two components of the J = 1, F = 3/2 doublet differ in g for two reasons.
+At zero field the `G_Δ` part of the Zeeman tensor enters them with opposite
+sign (§8). Under an E field they also acquire different J = 2 admixtures
+through the Stark ΔJ = ±1 element, which contributes with the opposite sign and
+dominates at the operating field. The difference is an important systematic in
+the eEDM experiment. We evaluate the named pair with `pair_differential`, which
+preserves its sign and records which of the two circulating definitions was
+used.
 
-The comparison has a known limitation ([HAM] §1.2): a single-electronic-state model is expected to
-miss δg/g by about 15 %, because the ³Δ₂ coupling is not in the basis. Ng's own
-32-level Ω = ±1 model gives −0.00223 against a measured −0.00255(6). We should
-therefore interpret a discrepancy at this scale as a limitation of the basis.
+Two caveats bound how much the number below proves. The basis omits the ³Δ₂
+coupling ([HAM] §1.2), and `G_Δ` is a second-order estimate carrying roughly
+20 %. In the axial-only limit `G_xx = G_yy` this model gives −0.00213, next to
+Ng's axial 32-level −0.00223; `G_Δ` then carries it to −0.00261 against a
+measured −0.00255(6). Both caveats are larger than that residual, so the
+agreement is not a test of either.
 """),
 
     code("""
@@ -548,7 +553,7 @@ The left panel plots all six levels on one g-factor axis, where the J = 1
 pair's motion is smaller than a pixel (§9 gives the fractional scale).
 The right panel isolates levels 0 and 1 and plots the fractional
 change `(g − g(E_ref)) / |g(E_ref)|` relative to `E_ref = 10 V/cm` (the first
-field point, past the low-field polarisation knee), which resolves the ∓0.4 %
+field point, past the low-field polarisation knee), which resolves the ∓0.14 %
 opposite-signed motion that is Δg.
 """),
 
@@ -575,7 +580,7 @@ ax[1].legend(fontsize=8)
 plt.tight_layout()
 plt.show()
 
-print("the two J = 1 components move by about 0.4 % across 10-120 V/cm, "
+print("the two J = 1 components move by about 0.14 % across 10-120 V/cm, "
       "in opposite directions -- that opposite motion is Delta g:")
 for s in (0, 1):
     print(f"  level {s}: {g_all[0, s]:+.7f} -> {g_all[-1, s]:+.7f}   "

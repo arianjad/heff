@@ -169,9 +169,9 @@ The one-spin terms are ([HAM] §2, `heff/elements_c.py`):
 - Rotation + centrifugal (§2.1): `H_rot = B₀ J(J+1) − D₀ [J(J+1)]²`,
   diagonal.
 - Ω-doubling (§2.3, Ng Eq. C.3): off-diagonal element between `Ω = ±1` at
-  fixed `J`, `−ω_ef J(J+1)/4`; splitting `ω_ef J(J+1)/2`. Ng's own printed
+  fixed `J`, `+ω_ef J(J+1)/4`; splitting `ω_ef J(J+1)/2`. Ng's own printed
   operator carries an extra `(−1)^J` prefactor on this element; `heff` uses
-  the J-independent sign by convention ([HAM] §2.3). Both give the identical
+  the J-independent sign that puts e below f at every J ([HAM] §2.3). Both give the identical
   physical splitting law, `ω_ef J(J+1)/2`, and only the J-dependent phase of
   the off-diagonal element differs.
 - ¹⁹F hyperfine, ΔJ = 0 (§2.4, B&C (9.50)): diagonal,
