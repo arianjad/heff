@@ -165,9 +165,9 @@ A, cI, D0, wef = (pset.value(s) for s in ('A_par', 'c_I', 'D0', 'omega_ef'))
 print(f"H[0,0] - 2B0 = {H0[0, 0] - OFF:+.6f} MHz   "
       f"A/4 + c_I/2 - 4 D0 = {A / 4 + cI / 2 - 4 * D0:+.6f}   (hyperfine + spin-rotation + centrifugal)")
 print(f"H[0,1]       = {H0[0, 1]:+.6f} MHz   "
-      f"-w_ef J(J+1)/4 = {-wef * 1 * 2 / 4:+.6f}   (Omega-doubling, J = 1)")
+      f"+w_ef J(J+1)/4 = {wef * 1 * 2 / 4:+.6f}   (Omega-doubling, J = 1; e below f)")
 print(f"H[2,3]       = {H0[2, 3]:+.6f} MHz   "
-      f"-w_ef J(J+1)/4 = {-wef * 2 * 3 / 4:+.6f}   (Omega-doubling, J = 2)")
+      f"+w_ef J(J+1)/4 = {wef * 2 * 3 / 4:+.6f}   (Omega-doubling, J = 2)")
 print(f"H[0,2]       = {H0[0, 2]:+.6f} MHz   "
       f"(the dJ = +-1 axial hyperfine, B&C Eq. 9.51 -- same A_par, no free parameter)")
 """),

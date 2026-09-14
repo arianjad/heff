@@ -151,7 +151,7 @@
       "status": "placeholder",
       "isotopologue": null,
       "convention": null,
-      "note": "Sensitivity placeholder only: the electronic EFG transfer factor R_el and former +/-1000 MHz range are not source-calibrated. The signed Petrov-to-B&C normalization is unresolved, including q=0. Do not treat this as a convention-validated ThF+ quadrupole prediction. See docs/superpowers/reports/2026-09-08-thf-quadrupole-estimate-audit.md"
+      "note": "Sensitivity placeholder only: the electronic EFG transfer factor R_el and former +/-1000 MHz range are not source-calibrated. The signed Petrov-to-B&C normalization is unresolved, including q=0. Do not treat this as a convention-validated ThF+ quadrupole prediction. See docs/lit/2026-09-08-thf-quadrupole-estimate-audit.md"
     },
     "eQq2_Th": {
       "value": 300.0,
