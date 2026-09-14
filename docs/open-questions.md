@@ -46,7 +46,7 @@ uncertainty. They are not a convention-validated pair or a prediction. The
 only implemented `eqq2_norm` is `bc_9p52_q2`; selecting
 `petrov2018_eq23` raises rather than guessing. A matched ThF+ electric-field-
 gradient calculation is the missing input. See the
-[quadrupole audit](superpowers/reports/2026-09-08-thf-quadrupole-estimate-audit.md).
+[quadrupole audit](lit/2026-09-08-thf-quadrupole-estimate-audit.md).
 
 ### `OPEN-19`: thorium spin rotation
 
@@ -69,7 +69,7 @@ field-plot dataset uses this value, but the bundled package model does not.
 The calculation quotes no calibrated uncertainty and omits Coriolis and
 collective mixing corrections. The ground-state moment and low-lying spin
 assignments remain experimental and nuclear-model limitations. See the
-[nuclear estimate audit](superpowers/reports/2026-09-08-thf-nuclear-estimate-audit.md).
+[nuclear estimate audit](lit/2026-09-08-thf-nuclear-estimate-audit.md).
 
 ### `OPEN-21`: rank-one two-photon channel
 

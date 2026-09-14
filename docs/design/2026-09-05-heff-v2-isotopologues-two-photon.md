@@ -47,8 +47,8 @@ are reachable (a deliberately transposed 6j fails it; the shipped code passes it
 [HAM] §1.4 stay out). No resolved-intermediate two-photon spectrum as a *product*
 (§3 keeps it as a *test fixture* only, because the ThF⁺ intermediate ladder is contested,
 [2γ] §2.2, gap 3). No MQM operator (it needs I ≥ 1 and W_M, and the observable is not in
-this slice; [HAM] §2.12). No fitting. No parity-dependent Zeeman, no `e_Δ` — those are
-[HAM] OPEN-8 and OPEN-10 and are unchanged by isotopologues.
+this slice; [HAM] §2.12). No fitting. No `e_Δ` — that is [HAM] OPEN-8 and is unchanged
+by isotopologues.
 
 ---
 
@@ -71,7 +71,7 @@ The deciding argument is not elegance, it is the master gate. A2 is a perfectly 
 — it is what Petrov actually diagonalises — but it cannot reduce to v1, so adopting it
 would throw away 164 passing tests and every closed form in [HAM] §6 as a check on the new
 code. A1 keeps them all: at I_Th = 0 the F₁ column is identically J, the recouplers
-collapse to identity 6j's, and `hyperfine_A_par`, `stark_z`, `zeeman_Gpar`,
+collapse to identity 6j's, and `hyperfine_A_par`, `stark_z`, `zeeman_Gzz`, `zeeman_Gxx`, `zeeman_Gyy`,
 `zeeman_nuclear`, `omega_doubling`, `spin_rotation_cI` and both PT-odd terms must come back
 bit-for-bit. A2's own advantage — no 6j's — is worth nothing here, because the term-matrix
 architecture pays the Wigner cost **once per basis**, not once per parameter set (v1 spec

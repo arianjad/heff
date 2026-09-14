@@ -72,7 +72,7 @@ References used below are the [Hamiltonian reference][HAM],
 [HAM]: ../docs/thf-plus-x3delta1-effective-hamiltonian.md
 [TH]: ../docs/digest-literature-th-hyperfine.md
 [2γ]: ../docs/digest-literature-two-photon.md
-[SPEC-v2]: ../docs/superpowers/specs/2026-09-05-heff-v2-isotopologues-two-photon.md
+[SPEC-v2]: ../docs/design/2026-09-05-heff-v2-isotopologues-two-photon.md
 """),
 
     # ------------------------------------------------------------- 2 -----
@@ -182,7 +182,11 @@ The one-spin terms are ([HAM] §2, `heff/elements_c.py`):
   `c_I [F(F+1) − I(I+1) − J(J+1)] / 2`.
 - Stark (§2.7): `−n̂_sign · d_mf E_z` × the rank-1 axial geometry
   (`elements_c.dipole_geometry`), `Δm_F = 0`, parity-odd.
-- Zeeman `+G∥` (§2.8, sign corrected from Ng Eq. C.6): `+G∥ μ_B Ω (J·n̂)(n̂·B)`.
+- Zeeman (§2.8, sign corrected from Ng Eq. C.6): `+μ_B B·G·J` with the
+  body-frame tensor `G = diag(G_xx, G_yy, G_zz)`, one term per component. The
+  axial piece is `+G_zz μ_B Ω (J·n̂)(n̂·B)`; the perpendicular pair carries
+  `G_perp = (G_xx + G_yy)/2` on `B·J − (B·n̂)(J·n̂)` and
+  `G_Delta = (G_xx − G_yy)/2` on the ΔΩ = ±2 channel.
 - Nuclear Zeeman, PT-odd EDM and scalar–pseudoscalar (§2.8, §2.12): opt-in,
   zero by default.
 
@@ -245,11 +249,13 @@ hyperfine (`(3/4)|A∥| = 15.07 MHz` at J = 1, [HAM] §2.4) and the Ω-doubling
 `omega_ef` is measured (Ng 2022 Table I). Both are carried unchanged by
 `thf_v2('232')` from `thf_v1()`.
 
-e/f labels: the upper Ω-doublet component has parity `(−1)^J` at every
-J. Equivalently, e lies `ω_ef J(J+1)/2` above f, uniformly in J (Brown 1975
-convention; [HAM] §2.3, OPEN-2). Here parity refers to the eigenstate's parity,
-while the e/f label includes the J-dependent convention. Thus upper-state
-parity `(−1)^J` gives e above f at every J.
+e/f labels: the upper Ω-doublet component has parity `−(−1)^J` at every
+J. Equivalently, f lies `ω_ef J(J+1)/2` above e, uniformly in J (Brown 1975
+convention; [HAM] §2.3, OPEN-2). The a ¹Σ⁺ state 314 cm⁻¹ above carries only
+e levels, so it mixes with the ³Δ₁ e component alone and pushes it down. Here
+parity refers to the eigenstate's parity, while the e/f label includes the
+J-dependent convention. Thus upper-state parity `−(−1)^J` gives f above e at
+every J.
 """),
 
     code("""
@@ -506,9 +512,11 @@ for iso, mF in (('229', 0.0), ('227', 0.0)):
 We evaluate Hellmann–Feynman g-factors with `observe.g_factors`, using one
 non-zero signed-`m_F` block per isotopologue: `m_F = +1/2` for ²³² (matches the
 tutorial's block), `m_F = +1` for ²²⁹/²²⁷ (smallest non-zero integer m_F).
-Predicted g at J > 1 carries an unquantified ~1 % error from the absorbed
-rotational g-factor `g_r` ([HAM] §2.10, OPEN-7). It is not fitted for any
-isotopologue, so the same caveat applies to every g below. All J = 1 states
+Predicted g at J > 1 rests on `G_perp = (G_xx + G_yy)/2`, which carries the
+rotational g-factor and comes from Petrov's second-order sums at roughly 20 %
+rather than from a fit ([HAM] §2.8, §2.10, OPEN-7). Only the measured
+combination `G_zz + G_perp` is anchored, at J = 1, F = 3/2 for ²³², so the same
+caveat applies to every g below. All J = 1 states
 of the chosen `m_F` block are plotted below, with one panel per isotopologue.
 
 These curves use the parameter choices in §4–§6: ab-initio magnetic hyperfine
@@ -903,8 +911,7 @@ The two-spin model adds or recouples the following terms: `hyperfine_A_par_Th`,
 (`REGISTRY_2G`, never summed into a Hamiltonian).
 
 The model omits the following interactions (scales in [HAM] §5): `Ω = ±2, ±3` (³Δ₂, ³Δ₃);
-`e_Δ` (hyperfine-dependent Ω-doubling, OPEN-8); parity-dependent Zeeman
-(OPEN-10); the rotational `g_r` (OPEN-7); the rotating-frame term
+`e_Δ` (hyperfine-dependent Ω-doubling, OPEN-8); the rotating-frame term
 (`ħω_rot F_x`, breaks m_F blocking).
 
 The physical limits are:

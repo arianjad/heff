@@ -36,11 +36,11 @@ contains the equations, phase conventions, source comparisons, and physical
 approximations behind the case-(c) operators. The code cites its equation and
 OPEN identifiers.
 
-The [parameter audit](superpowers/reports/2026-09-08-thf-estimate-audit.md),
-[nuclear-moment review](superpowers/reports/2026-09-08-thf-nuclear-estimate-audit.md),
-and [quadrupole review](superpowers/reports/2026-09-08-thf-quadrupole-estimate-audit.md)
+The [parameter audit](lit/2026-09-08-thf-estimate-audit.md),
+[nuclear-moment review](lit/2026-09-08-thf-nuclear-estimate-audit.md),
+and [quadrupole review](lit/2026-09-08-thf-quadrupole-estimate-audit.md)
 provide dated source evidence for current uncertainty labels. The
-[amide source comparison](superpowers/reports/amide-source-comparison.md) records
+[amide source comparison](lit/amide-source-comparison.md) records
 the restricted port's matrix-element comparison.
 
 Use the guides above for the API and supported models. The cited primary

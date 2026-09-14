@@ -147,7 +147,7 @@ So the off-diagonal element between the two Ω components at fixed J, F, m_F is 
 
 **Selection rules**: ΔJ = ΔF = Δm_F = 0, Ω → −Ω. Diagonal in parity (it is the operator that *splits* parity).
 
-**Which component is upper — from the perturber, not from a figure.** The same ¹Σ⁺ state that generates most of ω_ef also fixes the ordering. An Ω = 0⁺ state carries only e levels (Brown's rule), so it mixes with the ³Δ₁ **e** component and with nothing else, and a perturber 314 cm⁻¹ *above* pushes that component **down**. Hence **e lies `ω_ef J(J+1)/2` below f, uniformly in J** `[derived; the second-order model of the 2026-09-14 handoff audit §3 measures the ratio of the Zeeman and Ω-doubling Ω-flip elements as −1.92 per cm⁻¹ for both reflection signs, so this is physics and not a phase choice]`. Gresh 2016 Table 1 gives `k″ > 0` on the Ω = 0⁺ ← ³Δ₁ bands, which says the same thing if `s` there labels the P/R-connected component.
+**Which component is upper — from the perturber, not from a figure.** The same ¹Σ⁺ state that generates most of ω_ef also fixes the ordering. An Ω = 0⁺ state carries only e levels (Brown's rule), so it mixes with the ³Δ₁ **e** component and with nothing else, and a perturber 314 cm⁻¹ *above* pushes that component **down**. Hence **e lies `ω_ef J(J+1)/2` below f, uniformly in J** `[derived; the second-order model of docs/lit/lookup-effective-zeeman-tensor.md §5.3 measures the ratio of the Zeeman and Ω-doubling Ω-flip elements as −1.92 per cm⁻¹ for both reflection signs, so this is physics and not a phase choice]`. Gresh 2016 Table 1 gives `k″ > 0` on the Ω = 0⁺ ← ³Δ₁ bands, which says the same thing if `s` there labels the P/R-connected component.
 
 Ng did not measure the ordering. The thesis says so in as many words (Fig. 1.4 caption, PDF p. 30: "We did not determine the energy ordering of the parity states"), so the level schematics in Ng 2022 Fig. 2 record an assumption, not a result, and are not evidence against the perturber argument.
 
@@ -615,7 +615,7 @@ Note the ordering is field-dependent and crosses over: at 60 V/cm the Stark shif
 
 **Basis**: Ω = ±1, J = 1–4, F = J ± ½, all m_F. 96 states; block-diagonal in M_F (16/14/10/6/2 per signed block) for collinear static fields.
 
-**Include (9 operators):**
+**Include (10 operators):**
 
 | # | Term | Form | Parameters | Why |
 |---|---|---|---|---|
@@ -624,10 +624,11 @@ Note the ordering is field-dependent and crosses over: at 60 V/cm the Stark shif
 | 3 | Axial hyperfine, ΔJ = 0 | Ng Eq. C.2 = B&C 9.50 | A∥ | MHz |
 | 4 | Axial hyperfine, ΔJ = ±1 | B&C 9.51 | A∥ (same parameter) | 1.6–2.6 kHz; free once (3) is coded |
 | 5 | Stark | Ng Eq. C.5 | d_mf | MHz; also generates δg via J-mixing |
-| 6 | Zeeman, axial | `+G_zz μ_B (J·n̂)(n̂·B)` — **sign per §2.8, not as Ng prints it** | G_zz | tens of kHz/G |
-| 7 | Zeeman, perpendicular | `μ_B B·G·J` with `G = diag(G_xx, G_yy, G_zz)`, one term per Cartesian component (§2.8) | G_xx, G_yy | ~1 kHz/G on levels; sets the zero-field Δg |
-| 8 | Nuclear Zeeman | `−g_N μ_N I·B` | g_N (fixed) | 4 kHz/G |
-| 9 | Nuclear spin–rotation | `c_I T¹(J)·T¹(I)`, B&C 8.7 / 8.20 | c_I (**estimate**) | 30–90 kHz; must be a knob, default 20 kHz, and it biases A∥ |
+| 6 | Zeeman, `G_zz` | `+G_zz μ_B (J·n̂)(n̂·B)` — **sign per §2.8, not as Ng prints it** | G_zz | tens of kHz/G |
+| 7 | Zeeman, `G_xx` | `μ_B G_xx B_x J_x = ½ G_xx μ_B [P + C]`, §2.8 | G_xx | ~1 kHz/G on levels |
+| 8 | Zeeman, `G_yy` | `μ_B G_yy B_y J_y = ½ G_yy μ_B [P − C]`, §2.8. Together with row 7 this carries `G⊥` on `P` and `G_Δ` on `C`, the term that sets the zero-field Δg | G_yy | ~1 kHz/G on levels |
+| 9 | Nuclear Zeeman | `−g_N μ_N I·B` | g_N (fixed) | 4 kHz/G |
+| 10 | Nuclear spin–rotation | `c_I T¹(J)·T¹(I)`, B&C 8.7 / 8.20 | c_I (**estimate**) | 30–90 kHz; must be a knob, default 20 kHz, and it biases A∥ |
 
 **Add as an opt-in PT-odd block** (not part of the structural Hamiltonian): `H_PT = −(d_e E_eff + W_{T,P} k_{T,P}) Ω/|Ω|`, following Ng Eq. C.8 (no Leanhardt ½).
 
@@ -641,7 +642,7 @@ Note the ordering is field-dependent and crosses over: at 60 V/cm the Stark shif
 | ²³²Th hyperfine, ²³²Th quadrupole, ¹⁹F quadrupole | identically 0 | I(²³²Th) = 0, I(¹⁹F) = ½ |
 | Off-diagonal-in-Ω hyperfine | ~10⁻⁵ Hz | ratio hyperfine/spin-orbit = 6 × 10⁻⁷ |
 | e_Δ hyperfine Ω-doubling | ~1–10 kHz **estimate** | **borderline** — omitted, flagged OPEN-8; the only omitted term above the kHz line |
-| Transverse-B and 2nd-order Zeeman | 7 × 10⁻⁹ Hz at B⊥ = 1 mG | Leanhardt Eq. 72. Distinct from the PERPENDICULAR COMPONENTS of the body-frame G tensor, which are included (row 7) |
+| Transverse-B and 2nd-order Zeeman | 7 × 10⁻⁹ Hz at B⊥ = 1 mG | Leanhardt Eq. 72. Distinct from the PERPENDICULAR COMPONENTS of the body-frame G tensor, which are included (rows 7 and 8) |
 | Electronic polarizability | ~10⁻⁸ Hz | §2.7 |
 | Rotating-frame `ℏω_rot F_x` | not a static-field term | §2.13; add when Berry phase or Δ^{u,ℓ} is wanted |
 | Vibrational structure | 653 cm⁻¹ | v = 0 only |
@@ -693,8 +694,10 @@ it places e BELOW f at every J, following the ¹Σ⁺ mixing argument of §2.3. 
 thesis expression `P=(−1)^{J−S−ℓ}` is an S = 1/2 specialization and cannot be
 applied here.
 
-**`OPEN-3` — resolved implementation sign.** The package uses
-`+G_zz μ_B (J·n̂)(n̂·B) − g_N μ_N I·B` for the axial component. This branch reproduces Ng's printed
+**`OPEN-3` — resolved implementation sign.** The Zeeman operator is the
+full body-frame tensor, `+μ_B B·G·J − g_N μ_N I·B` with
+`G = diag(G_xx, G_yy, G_zz)`. The sign question OPEN-3 records concerns the
+axial component alone, `+G_zz μ_B (J·n̂)(n̂·B)`. This branch reproduces Ng's printed
 g-factor relation and the measured magnitude; Ng's Eq. C.6 prints the
 opposite G∥ sign. The discrepancy in the source remains unconfirmed by its
 authors.
@@ -1500,7 +1503,7 @@ The narrowing to `{0, ±2}` is the operational statement: Ng's target `|J=1, F=3
 
 ### 9.6 ²²⁷ThF⁺: the A∥(Th) placeholder from the Schmidt moment
 
-**Why the default remains a placeholder.** The checked nuclear-moment compilations contain no measured ²²⁷Th moment, but the previous claim that no theoretical estimate exists was incorrect. [Minkov et al., Phys. Rev. C 110, 034327 (2024), Table IV](https://arxiv.org/abs/2408.11010) predicts μ(²²⁷Th) = −0.0860 μ_N for its octupole-deformed 1/2 ground solution. With I = 1/2 and the existing molecular factor −10408 MHz, this gives g_N = −0.1720 and A∥ = +1790.176 MHz. This is a model prediction without a calibrated uncertainty, not a measurement. The ENSDF ground-state assignment remains tentative (1/2⁺); see the [source audit](superpowers/reports/2026-09-08-thf-nuclear-estimate-audit.md). The previously chosen Schmidt value is retained as a stress-test default, not promoted to a physical prediction.
+**Why the default remains a placeholder.** The checked nuclear-moment compilations contain no measured ²²⁷Th moment, but the previous claim that no theoretical estimate exists was incorrect. [Minkov et al., Phys. Rev. C 110, 034327 (2024), Table IV](https://arxiv.org/abs/2408.11010) predicts μ(²²⁷Th) = −0.0860 μ_N for its octupole-deformed 1/2 ground solution. With I = 1/2 and the existing molecular factor −10408 MHz, this gives g_N = −0.1720 and A∥ = +1790.176 MHz. This is a model prediction without a calibrated uncertainty, not a measurement. The ENSDF ground-state assignment remains tentative (1/2⁺); see the [source audit](lit/2026-09-08-thf-nuclear-estimate-audit.md). The previously chosen Schmidt value is retained as a stress-test default, not promoted to a physical prediction.
 
 **Package default:** use the Schmidt single-particle moment as a stress test, rather than the older `μ(²²⁷) = μ(²²⁹)` assumption. The field-plot dataset uses the separate Minkov value described above.
 

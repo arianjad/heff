@@ -18,41 +18,23 @@ model requires new matrices.
 
 ## Start here
 
-1. Install using Python 3.12 or newer:
+```python
+import numpy as np
+from heff import load_model
 
-   ```shell
-   git clone https://github.com/arianjad/heff.git
-   cd heff
-   python -m pip install -e ".[notebooks,test]"
-   ```
+model = load_model("thf_plus")
+problem = model.problem(J_max=3)
+H = problem.hamiltonian(E_z=20.0, B_z=0.01)
+energies, states = np.linalg.eigh(H)
+print(energies[:6] - energies[0])  # MHz above the lowest level
+```
 
-   For an isolated virtual environment and platform-specific activation steps,
-   see [getting started](docs/getting-started.md#1-clone-and-install).
+Fields are in V/cm and gauss. Columns of `states` are eigenvectors in
+`problem.kets`.
 
-2. Calculate the 232ThF+ spectrum:
-
-   ```python
-   import numpy as np
-   from heff import load_model
-
-   model = load_model("thf_plus")
-   problem = model.problem(J_max=3)
-   H = problem.hamiltonian(E_z=20.0, B_z=0.01)
-   energies, states = np.linalg.eigh(H)
-
-   print(H.shape)  # (60, 60)
-   print(energies[:6] - energies[0])  # MHz above the lowest level
-   ```
-
-   Fields are in V/cm and gauss. Columns of `states` are eigenvectors in
-   `problem.kets`. Increase the cutoff to check convergence for your calculation.
-
-3. Plot [your first field sweep](docs/getting-started.md#3-plot-a-stark-sweep),
-   then open [the 232ThF+ tutorial on GitHub](https://github.com/arianjad/heff/blob/main/notebooks/ThF_plus_X3Delta1_Tutorial.ipynb).
-   Run `python -m jupyterlab` from this environment to work through it.
-
-4. Check the assumptions in [models and units](docs/models.md) before comparing
-   to a measurement. Inspect `model.describe()` for parameter sources and status.
+For install instructions and the full walkthrough (field sweeps, plots, and
+the [232ThF+ tutorial notebook](https://github.com/arianjad/heff/blob/main/notebooks/ThF_plus_X3Delta1_Tutorial.ipynb)),
+see [getting started](docs/getting-started.md).
 
 ## What is available
 

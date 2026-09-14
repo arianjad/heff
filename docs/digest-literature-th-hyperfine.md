@@ -94,7 +94,7 @@ Consequences and current input status:
    exactly as for ¹⁹F ([HAM] §2.11). Only the Th magnetic dipole and Th
    spin–rotation survive, and the Th hyperfine has the *same algebraic shape* as
    the ¹⁹F structure already coded, with I_Th = 1/2.
-2. **A model-dependent hyperfine estimate is available.** [Minkov et al., Phys. Rev. C 110, 034327 (2024), Table IV](https://arxiv.org/abs/2408.11010) predicts μ(²²⁷Th) = −0.0860 μ_N for its octupole-deformed 1/2 ground solution. With I = 1/2 and the existing molecular factor −10408 MHz, this gives g_N = −0.1720 and A∥ = +1790.176 MHz. This is a model prediction without a calibrated uncertainty, not a measurement. See the [current audit](superpowers/reports/2026-09-08-thf-nuclear-estimate-audit.md); the selected Schmidt default is retained separately.
+2. **A model-dependent hyperfine estimate is available.** [Minkov et al., Phys. Rev. C 110, 034327 (2024), Table IV](https://arxiv.org/abs/2408.11010) predicts μ(²²⁷Th) = −0.0860 μ_N for its octupole-deformed 1/2 ground solution. With I = 1/2 and the existing molecular factor −10408 MHz, this gives g_N = −0.1720 and A∥ = +1790.176 MHz. This is a model prediction without a calibrated uncertainty, not a measurement. See the [current audit](lit/2026-09-08-thf-nuclear-estimate-audit.md); the selected Schmidt default is retained separately.
 
 If the tentative 1/2⁺ assignment is wrong (the 9.3 keV 5/2⁺ is only 9 keV away),
 the quadrupole conclusion and moment-to-g conversion change. The ENSDF parentheses are a live caveat.

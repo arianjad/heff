@@ -53,7 +53,7 @@ All three retain F spin rotation 20 kHz as an analogy-based estimate. Th spin
 rotation is held at zero for missing input. Shared B, D, dipole, omega-doubling,
 F hyperfine, and electronic g inputs are unscaled isotope transfers; the plots
 are exploratory structure predictions, not precision spectroscopy fits.
-See [the parameter audit](../../docs/superpowers/reports/2026-09-08-thf-estimate-audit.md).
+See [the parameter audit](../../docs/lit/2026-09-08-thf-estimate-audit.md).
 
 ## Reading the figures
 

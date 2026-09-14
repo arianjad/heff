@@ -49,7 +49,8 @@ Software tests check implementation identities and regressions; they do not
 establish that the model is physically complete.
 
 We use the following defaults: n̂ from F to Th
-(JILA), e/f by Brown 1975, Zeeman `+G∥ μ_B (J·n̂)(n̂·B)`, `E = −g μ_B B m_F`,
+(JILA), e/f by Brown 1975, Zeeman `+μ_B B·G·J` with the body-frame
+tensor `G = diag(G_xx, G_yy, G_zz)`, `E = −g μ_B B m_F`,
 `Δg = g^u − g^ℓ`, eEDM with no Leanhardt ½.
 """),
 
@@ -220,12 +221,15 @@ parity. Accordingly, `⟨P⟩` below is exactly ±1. The e/f label follows Brown
 S = 1 would invert every label ([HAM] §2.3, OPEN-2). `label_lines` reads
 the labels from the eigenvectors.
 
-The upper component of each doublet has parity `(−1)^J`, i.e. e lies above f
-uniformly in J (Ng 2022 Fig. 2; [HAM] §2.3, OPEN-2).
-`omega_doubling` uses `−ω_ef J(J+1)/4`; Ng Eq. C.3 prints an additional
+The upper component of each doublet has parity `−(−1)^J`, i.e. f lies above e
+uniformly in J. The ¹Σ⁺ state 314 cm⁻¹ above sets the ordering: an Ω = 0⁺
+state carries only e levels, so it mixes with the ³Δ₁ e component alone and
+pushes it down (Petrov & Skripnikov arXiv:2503.02840; [HAM] §2.3, OPEN-2). Ng's
+experiment is insensitive to it (thesis Fig. 1.4 caption).
+`omega_doubling` uses `+ω_ef J(J+1)/4`; Ng Eq. C.3 prints an additional
 `(−1)^J` prefactor. The splitting magnitude is the same either way.
-Gresh 2016's `k″ < 0` also depends on upper-state branch bookkeeping, so its
-sign alone does not determine this ordering ([HAM] OPEN-13).
+Gresh 2016's `k″` sign tracks upper-state branch bookkeeping, so it agrees
+without deciding the ordering on its own ([HAM] OPEN-13).
 """),
 
     code("""
@@ -317,11 +321,12 @@ print(f"order = {res_E.order!r}, gauge = {res_E.gauge!r}, reference index = {res
 We plot the shift from B = 0. This makes the Zeeman slope visible beside the
 roughly 100 MHz Stark splitting.
 
-At E = 0 the Zeeman shift is even in Ω, so the two doublet components move
-together: `g^u = g^ℓ` exactly, and the right panel is identically zero. The
-differential g-factor in §12 therefore comes from the E field:
-at 60 V/cm the two slopes differ by about 4.5 parts in a thousand, which is
-`Δg/ḡ`, twice the `δg/g` of §12.
+The Zeeman operator is even under Ω → −Ω, but its ΔΩ = ±2 part enters the two
+parity components with opposite sign, so the doublet components have different
+g-factors already at E = 0: `Δg = g^u − g^ℓ = 2.74 × 10⁻⁴` at J = 1, F = 3/2,
+which is `−2.88 kHz` across 0–5 G in the right panel. Turning the E field on
+quenches most of that splitting and adds the Stark J-mixing contribution of
+§12 with the opposite sign; at 60 V/cm the residual is `−0.82 kHz`.
 """),
 
     code("""
@@ -338,7 +343,7 @@ for Ez, ls in ((0.0, '-'), (60.0, '--')):
 ax[0].set_ylabel('E(B) - E(0)  (MHz)')
 ax[0].set_title('Zeeman shift of the J = 1 doublet')
 ax[1].set_ylabel('upper minus lower  (kHz)')
-ax[1].set_title('they differ only once E_z is on')
+ax[1].set_title('the parity components differ even at E_z = 0')
 for a in ax:
     a.set_xlabel('B_z (G)')
     a.legend(fontsize=8)
@@ -683,8 +688,9 @@ print(f"hyperfine interval at A_par = -20 MHz  (closed form (3/4)|A| - (3/2)c_I 
 
 The model includes nine Hamiltonian terms plus an opt-in PT-odd pair: rotation,
 centrifugal distortion, Ω-doubling, axial hyperfine ΔJ = 0 and ΔJ = ±1 (one
-parameter, A∥, for both), nuclear spin–rotation `c_I`, Stark, `+G∥` Zeeman,
-nuclear Zeeman; then `pt_odd_edm` and `pt_odd_scalar_pseudoscalar`.
+parameter, A∥, for both), nuclear spin–rotation `c_I`, Stark, the three
+body-frame Zeeman components `G_zz`, `G_xx`, `G_yy`, nuclear Zeeman; then
+`pt_odd_edm` and `pt_odd_scalar_pseudoscalar`.
 
 The following interactions are omitted (scales from [HAM] §5):
 
@@ -693,10 +699,6 @@ The following interactions are omitted (scales from [HAM] §5):
   for the 15 % discrepancy in δg discussed in §12.
 - `e_Δ`, the hyperfine-dependent Ω-doubling: 1–10 kHz estimate, the only
   dropped term above the kHz line (OPEN-8).
-- Parity-dependent Zeeman (`g_rS`, `g'_rS`): ≈ 1 kHz at 1 G; required for any
-  zero-field Δg (OPEN-10).
-- Rotational `g_r`: ≤ 0.6 % of g_F, absorbed into the fitted G∥ at J = 1, so
-  the predicted g at J = 2–4 carries an unquantified ~1 % error (OPEN-7).
 - Rotating-frame `ħω_rot F_x`: not a static-field term, and it breaks m_F
   blocking.
 
@@ -709,10 +711,11 @@ measured, only |g| (OPEN-4); E_eff is 35 vs 37.3 GV/cm across sources
 For the conventions and parameter limits, see [the model guide](../docs/models.md)
 and [scientific limitations](../docs/open-questions.md):
 
-- The upper Ω-doublet component has parity `(−1)^J` in the implemented
-  convention; §5 explains its relation to the e/f labels.
-- The [HAM] §2.8 g_F table uses the same G∥ = 0.04756 as the code. §11
-  demonstrates its agreement with the adopted |g| = 0.0149 scale.
+- The upper Ω-doublet component has parity `−(−1)^J` in the implemented
+  convention, i.e. f above e; §5 explains its relation to the e/f labels.
+- The [HAM] §2.8 g_F table uses the same three Zeeman parameters as the code,
+  `G_zz = 0.046532`, `G_xx = 8.2211e−4`, `G_yy = 1.23327e−3`. §11
+  demonstrates their agreement with the adopted |g| = 0.0149 scale.
 
 `tests/` check kernel behavior and symmetry identities; comparisons to
 published numbers are opt-in behind `HEFF_RUN_LITERATURE=1`. These checks

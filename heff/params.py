@@ -337,7 +337,7 @@ def thf_v2(isotopologue, *, a_par_th_sign="negative"):
                      "and former +/-1000 MHz range are not source-calibrated. "
                      "The signed Petrov-to-B&C normalization is unresolved, including q=0. "
                      "Do not treat this as a convention-validated ThF+ quadrupole prediction. "
-                     "See docs/superpowers/reports/2026-09-08-thf-quadrupole-estimate-audit.md"),
+                     "See docs/lit/2026-09-08-thf-quadrupole-estimate-audit.md"),
             "eQq2_Th": P(300, "MHz", status="placeholder",
                 source="Petrov 2018 Eqs. (24)-(25) route with w(ThF+) = "
                        "G_zz + 0.002319 = 0.0499 against w(HfF+) = 0.014 "

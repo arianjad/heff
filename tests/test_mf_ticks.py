@@ -1,6 +1,6 @@
 """M_F axis tick formatting: physicists write M_F as an integer or a reduced
 half-integer fraction, never as a bare float (Scope A of
-docs/superpowers/specs/2026-09-09-mf-resolved-level-plots.md)."""
+docs/design/2026-09-09-mf-resolved-level-plots.md)."""
 import pytest
 
 from scripts._mf_ticks import format_mF
