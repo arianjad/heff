@@ -147,6 +147,55 @@ def inner_axial(J_bra, Om_bra, J_ket, Om_ket):
             * w3j(J_bra, 1, J_ket, -Om_ket, 0, Om_ket))
 
 
+def inner_J(J_bra, Om_bra, J_ket, Om_ket):
+    """<J',Om'||T1(J)||J,Om> = delta_JJ' delta_{Om Om'} [J(J+1)(2J+1)]^(1/2).
+
+    B&C Eq. (5.174) PDF p.205 / book p.173 closed on the standard
+    angular-momentum reduced element Eq. (5.179). This is the J-space factor of
+    the lab operator T1_0(J), i.e. of B.J with B along z. [HAM] S2.8.
+    """
+    if J_bra != J_ket or Om_bra != Om_ket:
+        return 0.0
+    return np.sqrt(J_ket * (J_ket + 1.0) * (2 * J_ket + 1.0))
+
+
+def inner_flip(J_bra, Om_bra, J_ket, Om_ket):
+    """J-space factor of C = B_x J_x - B_y J_y, the Delta-Omega = +-2 channel.
+
+    In body spherical components C = (1/sqrt(2)) [D1*_{0,-1} J^b_+ -
+    D1*_{0,+1} J^b_-] (B&C Eq. (9.70) term (vii) and Eq. (9.71) PDF pp.652-653;
+    body components of J have the ANOMALOUS commutation of B&C Eqs.
+    (5.152)-(5.153) PDF p.200, so J^b_+ LOWERS Omega, and the operator is
+    evaluated Brown-Howard style, Eqs. (5.155)-(5.162) pp.201-202). The relative
+    minus is forced by Hermiticity, (D1*_{0,-1})^dagger = -D1*_{0,+1}; without
+    it the operator is anti-Hermitian. The two factors in each product commute,
+    so ladder-on-bra and ladder-on-ket orderings agree.
+
+    Writing q = Om' - Om = +-2 and s = q/2, closure over the intermediate
+    Omega + s leaves one D1 element and one ladder factor:
+
+      -sign(q) sqrt(2) [J(J+1) - Om(Om+s)]^(1/2) (-1)^(J'-Om')
+      [(2J+1)(2J'+1)]^(1/2) (J' 1 J; -Om' s Om+s)
+
+    C is a lab rank-1 tensor times a lab scalar, so the k = 1 spectator chain in
+    front of it is unchanged -- a lab rank-2 geometry would be quadrupolar in
+    m_F and is the wrong operator, see the 2026-09-14 handoff audit S2.1. The
+    overall sqrt(2) is the normalisation that makes <J,-/+1,M|C|J,+/-1,M> = +M
+    exactly and J-independently, which is what fixes the meaning of G_Delta.
+    """
+    q = Om_bra - Om_ket
+    if abs(q) != 2.0:
+        return 0.0
+    s = q / 2.0
+    rad = J_ket * (J_ket + 1.0) - Om_ket * (Om_ket + s)
+    if rad <= 0.0:
+        return 0.0
+    return (-np.sign(q) * np.sqrt(2.0) * np.sqrt(rad)
+            * _ph(J_bra - Om_bra)
+            * np.sqrt((2 * J_ket + 1.0) * (2 * J_bra + 1.0))
+            * w3j(J_bra, 1, J_ket, -Om_bra, s, Om_ket + s))
+
+
 def dipole_geometry(bra, ket, I, p, *, inner=inner_axial):
     """Dimensionless rank-1 geometry (Ng C.5; B&C 5.172, 5.174, 5.186).
 
@@ -188,17 +237,70 @@ def stark_z(bra, ket, ctx):
 @term(name="zeeman_Gzz", param=("G_zz", "B_z"), cases=("c",),
       rules=Rules(dJ=(-1, 0, 1), dOm=(0.0,), dF=(-1, 0, 1), dmF=(0,)),
       hermitian=True, real=True,
-      cite="Ng thesis Eq. C.6 p.321 with the sign CORRECTED to "
-           "+G_zz mu_B (J.n_hat)(n_hat.B): the printed minus contradicts the "
-           "g_F formula three lines below it, Ng's own G_zz = 0.048(2) / "
-           "-0.042(2) pair, and the measured |g_F=3/2| = 0.0149(3). "
-           "[HAM] S2.8, OPEN-3. Same geometry as the Stark term with "
-           "-d_mf E_p -> +G_zz mu_B B_p Omega, as Ng notes himself. "
-           "PARITY-EVEN and EVEN in n_hat (quadratic in n_hat), so unlike the "
-           "Stark and PT-odd terms it does NOT carry n_hat_sign.")
+      cite="The zz component of H_Z = mu_B B.G.J with G = diag(G_xx, G_yy, G_zz) "
+           "in the molecule frame (z along n_hat): G_zz (B.n_hat)(J.n_hat). "
+           "G_zz IS Ng's G_par -- Ng thesis Eq. C.6 p.321 with the sign "
+           "CORRECTED to +G_zz mu_B (J.n_hat)(n_hat.B): the printed minus "
+           "contradicts the g_F formula three lines below it, Ng's own "
+           "G_par = 0.048(2) / -0.042(2) pair, and the measured "
+           "|g_F=3/2| = 0.0149(3). [HAM] S2.8, OPEN-3. Same geometry as the "
+           "Stark term with -d_mf E_p -> +G_zz mu_B B_p Omega, as Ng notes "
+           "himself. PARITY-EVEN and EVEN in n_hat (quadratic in n_hat), so "
+           "unlike the Stark and PT-odd terms it does NOT carry n_hat_sign.")
 def zeeman_Gzz(bra, ket, ctx):
     sign = 1.0 if ctx.conventions.zeeman_sign == "plus_Gpar" else -1.0
     return sign * ctx.mu_B * float(ket["Om"]) * dipole_geometry(bra, ket, ctx.I, 0)
+
+
+def _zeeman_perp(bra, ket, ctx, flip):
+    """mu_B/2 [P +- C] -- the x or y component of mu_B B.G.J ([HAM] S2.8).
+
+    P = B.J - (B.n_hat)(J.n_hat) is the isotropic perpendicular piece that
+    B_x J_x and B_y J_y share; C = B_x J_x - B_y J_y is the anisotropic,
+    Delta-Omega = +-2 piece they differ in. `flip` is +1 for xx and -1 for yy,
+    so G_xx and G_yy enter as (G_xx + G_yy)/2 on P and (G_xx - G_yy)/2 on C.
+    """
+    Om = float(ket["Om"])
+    P = (dipole_geometry(bra, ket, ctx.I, 0, inner=inner_J)
+         - Om * dipole_geometry(bra, ket, ctx.I, 0))
+    C = dipole_geometry(bra, ket, ctx.I, 0, inner=inner_flip)
+    return 0.5 * ctx.mu_B * (P + flip * C)
+
+
+_PERP_CITE = (
+    "The {c} component of H_Z = mu_B B.G.J with G = diag(G_xx, G_yy, G_zz) in "
+    "the molecule frame: B_{a} J_{a} = (1/2)[P {s} C] with "
+    "P = B.J - (B.n_hat)(J.n_hat) and C = B_x J_x - B_y J_y. P is B&C Eq. "
+    "(9.60) PDF p.638 (lab T1_0(J), inner_J) minus the axial piece the G_zz "
+    "term already carries (inner_axial); C is B&C Eq. (9.70) term (vii) and "
+    "Eq. (9.71) PDF pp.652-653, evaluated as inner_flip. Both sit under the "
+    "SAME lab rank-1 spectator recoupling as stark_z and zeeman_Gzz, B&C "
+    "(5.172) + (5.174) + (5.186), because every Zeeman term is linear in B: "
+    "Delta J = 0, +-1 and Delta F = 0, +-1. Delta Omega = 0 from P and +-2 "
+    "from C. PARITY-EVEN and even in n_hat (quadratic), so no n_hat_sign. "
+    "The measured datum constrains only G_zz + G_perp with "
+    "G_perp = (G_xx + G_yy)/2, so G_xx and G_yy separately are Petrov & "
+    "Skripnikov arXiv:2503.02840 Eqs. (3)-(15) second-order estimates; "
+    "G_Delta = (G_xx - G_yy)/2 < 0 is what splits g_e from g_f and it ADDS to "
+    "the e level (the component that mixes with the Omega = 0+ states). "
+    "docs/superpowers/reports/2026-09-14-zeeman-tensor-handoff-audit.md S2.2, "
+    "S3; [HAM] S2.8, OPEN-10.")
+
+_PERP_RULES = Rules(dJ=(-1, 0, 1), dOm=(-2.0, 0.0, 2.0), dF=(-1, 0, 1), dmF=(0,))
+
+
+@term(name="zeeman_Gxx", param=("G_xx", "B_z"), cases=("c",),
+      rules=_PERP_RULES, hermitian=True, real=True,
+      cite=_PERP_CITE.format(c="xx", a="x", s="+"))
+def zeeman_Gxx(bra, ket, ctx):
+    return _zeeman_perp(bra, ket, ctx, +1.0)
+
+
+@term(name="zeeman_Gyy", param=("G_yy", "B_z"), cases=("c",),
+      rules=_PERP_RULES, hermitian=True, real=True,
+      cite=_PERP_CITE.format(c="yy", a="y", s="-"))
+def zeeman_Gyy(bra, ket, ctx):
+    return _zeeman_perp(bra, ket, ctx, -1.0)
 
 
 @term(name="zeeman_nuclear", param=("g_N", "B_z"), cases=("c",),

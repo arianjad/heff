@@ -7,7 +7,7 @@ from dataclasses import replace
 import numpy as np
 
 from .conventions import n_hat_sign
-from .elements_c import _ph, _same
+from .elements_c import _ph, _same, inner_J, inner_flip
 from .elements_c import (centrifugal as _v1_centrifugal,
                          hyperfine_A_par as _v1_hyperfine_A_par,
                          hyperfine_A_par_dJ1 as _v1_hyperfine_A_par_dJ1,
@@ -295,7 +295,9 @@ def stark_z(bra, ket, ctx):
 
 @_term_c2(name="zeeman_Gzz", param=("G_zz", "B_z"), rules=_FIELD,
           hermitian=True, real=True,
-          cite="Ng thesis Eq. C.6 p.321 with the sign CORRECTED to +G_zz mu_B "
+          cite="The zz component of H_Z = mu_B B.G.J with "
+               "G = diag(G_xx, G_yy, G_zz) in the molecule frame; G_zz IS Ng's "
+               "G_par. Ng thesis Eq. C.6 p.321 with the sign CORRECTED to +G_zz mu_B "
                "(J.n^)(n^.B) ([HAM] S2.8, OPEN-3), evaluated with the [HAM] S9.1 "
                "two-spectator geometry at k = 1, q = 0, p = 0 -- same four cited "
                "B&C equations as stark_z with -d_mf E_p -> +G_zz mu_B B_p "
@@ -308,6 +310,53 @@ def zeeman_Gzz(bra, ket, ctx):
     sign = 1.0 if ctx.conventions.zeeman_sign == "plus_Gpar" else -1.0
     return sign * ctx.mu_B * float(ket["Om"]) * axial_geometry(
         bra, ket, ctx, k=1, q=0, p=0)
+
+
+def _zeeman_perp(bra, ket, ctx, flip):
+    """mu_B/2 [P +- C] in the two-spin basis; see elements_c._zeeman_perp.
+
+    The [HAM] S9.1 two-spectator recoupling is unchanged at k = 1: only the
+    J-space reduced element (line 4) differs between P's two pieces and C.
+    """
+    Om = float(ket["Om"])
+    P = (axial_geometry(bra, ket, ctx, k=1, p=0, inner=inner_J)
+         - Om * axial_geometry(bra, ket, ctx, k=1, q=0, p=0))
+    C = axial_geometry(bra, ket, ctx, k=1, p=0, inner=inner_flip)
+    return 0.5 * ctx.mu_B * (P + flip * C)
+
+
+_PERP_CITE_C2 = (
+    "The {c} component of H_Z = mu_B B.G.J with G = diag(G_xx, G_yy, G_zz) in "
+    "the molecule frame: B_{a} J_{a} = (1/2)[P {s} C] with "
+    "P = B.J - (B.n^)(J.n^) and C = B_x J_x - B_y J_y, evaluated with the "
+    "[HAM] S9.1 two-spectator geometry at k = 1, p = 0 -- the same four cited "
+    "B&C equations as stark_z, with the J-space reduced element replaced: "
+    "elements_c.inner_J for B&C Eq. (9.60) PDF p.638, the k = 1 q = 0 default "
+    "for the axial piece, and elements_c.inner_flip for B&C Eq. (9.70) term "
+    "(vii) / Eq. (9.71) PDF pp.652-653. Every Zeeman term is linear in B, hence "
+    "lab rank 1: Delta J = 0, +-1, Delta F1 = 0, +-1 and Delta F = 0, +-1 as "
+    "stark_z declares. Delta Omega = 0 from P and +-2 from C. PARITY-EVEN and "
+    "even in n^ (quadratic), so no n_hat_sign. At I_Th = 0 it reduces to the "
+    "v1 elements_c.zeeman_G{c} element (gate V16). "
+    "docs/superpowers/reports/2026-09-14-zeeman-tensor-handoff-audit.md S2.2; "
+    "[HAM] S2.8, S9.1, OPEN-10.")
+
+_PERP_FIELD = Rules(dJ=(-1, 0, 1), dOm=(-2.0, 0.0, 2.0), dF1=(-1, 0, 1),
+                    dF=(-1, 0, 1), dmF=(0,))
+
+
+@_term_c2(name="zeeman_Gxx", param=("G_xx", "B_z"), rules=_PERP_FIELD,
+          hermitian=True, real=True,
+          cite=_PERP_CITE_C2.format(c="xx", a="x", s="+"))
+def zeeman_Gxx(bra, ket, ctx):
+    return _zeeman_perp(bra, ket, ctx, +1.0)
+
+
+@_term_c2(name="zeeman_Gyy", param=("G_yy", "B_z"), rules=_PERP_FIELD,
+          hermitian=True, real=True,
+          cite=_PERP_CITE_C2.format(c="yy", a="y", s="-"))
+def zeeman_Gyy(bra, ket, ctx):
+    return _zeeman_perp(bra, ket, ctx, -1.0)
 
 
 

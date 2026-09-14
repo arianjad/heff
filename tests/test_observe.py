@@ -17,10 +17,10 @@ import pytest
 from _helpers import _gamma, _kappa
 
 from heff.assemble import build_term_matrices, hamiltonian, vertex
-from heff.conventions import Conventions
+from heff.conventions import Conventions, parity_operator
 from heff.observe import (expectation, g_factors, multi_curvature, offdiag,
                           pair_differential)
-from heff.params import MU_B, MU_N, thf_v1
+from heff.params import MU_B, MU_N, Param, thf_v1
 from heff.spec import ElecState, StateSpec, block_by_mF, enumerate_kets
 from heff.terms import ctx_from
 
@@ -149,18 +149,50 @@ def test_offdiag_is_the_only_route_to_an_imaginary_hermitian_operator():
     assert abs(offdiag(v[None, ...], op, 0, 1)[0]) > 1e-3
 
 
-def _g_by_JF(tm, ctx, pset, knobs):
-    """g grouped by the (J, F) of each eigenstate's dominant basis ket."""
+def _g_closed(J, F, parity, pset, *, gzz_sign=1.0):
+    """[HAM] V5 with the full body-frame tensor G = diag(G_xx, G_yy, G_zz).
+
+    g_J = -G_perp - (G_zz - G_perp)/[J(J+1)] +- G_Delta, the PLUS on the e level
+    (parity (-1)^J), which is the component that mixes with the Omega = 0+
+    states and therefore carries Petrov's C_0+; then
+    g_F = g_J [F(F+1)+J(J+1)-I(I+1)] / [2F(F+1)] + g_N (mu_N/mu_B) kappa_F.
+    G_perp = (G_xx + G_yy)/2 and G_Delta = (G_xx - G_yy)/2.
+
+    `gzz_sign` is the conventions block's zeeman_sign applied to G_zz alone.
+    """
+    Gzz = gzz_sign * pset.value("G_zz")
+    Gperp = 0.5 * (pset.value("G_xx") + pset.value("G_yy"))
+    GD = 0.5 * (pset.value("G_xx") - pset.value("G_yy"))
+    is_e = parity == int((-1) ** round(J))
+    g_J = -Gperp - (Gzz - Gperp) / (J * (J + 1.0)) + (GD if is_e else -GD)
+    proj = (F * (F + 1.0) + J * (J + 1.0) - I_F * (I_F + 1.0)) / (2 * F * (F + 1.0))
+    return g_J * proj + pset.value("g_N") * (MU_N / MU_B) * _kappa(J, F, I=I_F)
+
+
+def _g_by_JFP(tm, ctx, pset, knobs):
+    """g grouped by (J, F, parity).
+
+    J and F come from the eigenstate's dominant basis ket; parity is
+    <psi|P|psi>, exactly +-1 at E = 0 because the field-free Hamiltonian
+    commutes with the parity operator. The levels are now SPLIT by parity, so
+    grouping on (J, F) alone would average the two g's the G_Delta term
+    separates.
+    """
     res = g_factors(tm, pset, knobs, ctx=ctx)
+    P = parity_operator(tm.kets, ctx.S, ell=0.0, s=0.0)
     out = {}
     for k in range(len(res["g"])):
-        dom = tm.kets[int(np.argmax(np.abs(res["V"][:, k])))]
-        out.setdefault((float(dom["J"]), float(dom["F"])), []).append(float(res["g"][k]))
+        v = np.real(res["V"][:, k])
+        dom = tm.kets[int(np.argmax(np.abs(v)))]
+        par = float(v @ P @ v)
+        assert abs(abs(par) - 1.0) < 1e-9, f"state {k} is not a parity eigenstate"
+        key = (float(dom["J"]), float(dom["F"]), int(round(par)))
+        out.setdefault(key, []).append(float(res["g"][k]))
     return out
 
 
 def test_V5_g_factor_closed_form_is_exact_in_a_single_J_basis():
-    """[HAM] V5: g(J,F) = -G_zz gamma_F + g_N (mu_N/mu_B) kappa_F.
+    """[HAM] V5, parity-resolved: `_g_closed` at E = 0.
 
     Exact only when the basis holds one J -- the B&C 9.51 hyperfine term mixes
     J by ~3e-4, and the Delta-J = +-1 Zeeman cross term that mixing opens up
@@ -168,49 +200,85 @@ def test_V5_g_factor_closed_form_is_exact_in_a_single_J_basis():
     hyperfine, which is why his closed form is exact.
 
     Uniquely catches the Ng Eq. C.6 sign error of [HAM] S2.8: with Ng's printed
-    minus the model gives 23.5 kHz/G instead of 20.85 kHz/G -- a 13 % error no
+    minus the model gives ~23.5 kHz/G instead of ~20.85 kHz/G -- a 13 % error no
     other check sees. FAIL is reachable, and is
     test_V5_the_wrong_zeeman_sign_gives_the_wrong_g below.
     """
     pset = thf_v1()
-    G, gN = pset.value("G_zz"), pset.value("g_N")
     checked = 0
     for mF, J in ((1.5, 1), (0.5, 1), (2.5, 2), (1.5, 2)):
         tm, ctx = _block(mF, J_range=(J, J))
-        for (Jd, Fd), gs in _g_by_JF(tm, ctx, pset, {"E_z": 0.0, "B_z": 0.0}).items():
-            want = (-G * _gamma(Jd, Fd, I=I_F)
-                    + gN * (MU_N / MU_B) * _kappa(Jd, Fd, I=I_F))
+        for (Jd, Fd, par), gs in _g_by_JFP(tm, ctx, pset,
+                                           {"E_z": 0.0, "B_z": 0.0}).items():
+            want = _g_closed(Jd, Fd, par, pset)
             for g in gs:
-                assert g == pytest.approx(want, abs=1e-12), f"J={Jd} F={Fd}"
+                assert g == pytest.approx(want, abs=1e-12), \
+                    f"J={Jd} F={Fd} parity={par}"
             checked += 1
     assert checked >= 5
     tm, ctx = _block(1.5, J_range=(1, 1))
-    g = g_factors(tm, pset, {"E_z": 0.0, "B_z": 0.0}, ctx=ctx)["g"][0]
+    res = g_factors(tm, pset, {"E_z": 0.0, "B_z": 0.0}, ctx=ctx)
     # The same closed form again in MHz/G, from the ParamSet -- [HAM] S2.8 quotes
     # -20.85 kHz/G for this level, but the number a default-on gate compares
-    # against is computed, never a transcribed measurement.
-    want_MHz_per_G = MU_B * (-G * _gamma(1, 1.5, I=I_F)
-                             + gN * (MU_N / MU_B) * _kappa(1, 1.5, I=I_F))
-    assert g * MU_B == pytest.approx(want_MHz_per_G, abs=1e-12)
+    # against is computed, never a transcribed measurement. The parity average
+    # is G_Delta-free and is what the 0.04756 anchor fixes.
+    lowest_two = np.argsort(res["W"])[:2]
+    mean_g = float(np.mean(res["g"][lowest_two]))
+    want_MHz_per_G = MU_B * 0.5 * (_g_closed(1, 1.5, +1, pset)
+                                   + _g_closed(1, 1.5, -1, pset))
+    assert mean_g * MU_B == pytest.approx(want_MHz_per_G, abs=1e-12)
+    assert mean_g * MU_B * 1e3 == pytest.approx(-20.853, abs=1e-3)
 
 
 def test_V5_holds_in_the_full_basis_to_the_dJ1_hyperfine_level():
     """Same closed form in the J = 1-4 basis, where it is approximate.
 
     The residual is the cross term 2c <J|dH/dB|J+1> opened up by the B&C 9.51
-    J-mixing amplitude c ~ 3e-4; measured here it is 3.3e-6 at (J=1, F=3/2), falling
-    monotonically with J to 0 at (J=4, F=9/2). A tolerance at that scale would be tuned to the
-    residual; 1e-4 keeps 30x headroom and still fails the Ng-sign error by 300x,
-    whose residual is 0.03 in g.
+    J-mixing amplitude c ~ 3e-4; measured here it is 3.3e-6 at (J=1, F=3/2),
+    falling monotonically with J to 0 at (J=4, F=9/2). A tolerance at that scale
+    would be tuned to the residual; 1e-4 keeps 30x headroom and still fails the
+    Ng-sign error by 300x, whose residual is 0.03 in g.
     """
     pset = thf_v1()
-    G, gN = pset.value("G_zz"), pset.value("g_N")
     tm, ctx = _block(1.5)
-    for (Jd, Fd), gs in _g_by_JF(tm, ctx, pset, {"E_z": 0.0, "B_z": 0.0}).items():
-        want = (-G * _gamma(Jd, Fd, I=I_F)
-                + gN * (MU_N / MU_B) * _kappa(Jd, Fd, I=I_F))
+    for (Jd, Fd, par), gs in _g_by_JFP(tm, ctx, pset,
+                                       {"E_z": 0.0, "B_z": 0.0}).items():
+        want = _g_closed(Jd, Fd, par, pset)
         for g in gs:
-            assert g == pytest.approx(want, abs=1e-4), f"J={Jd} F={Fd}"
+            assert g == pytest.approx(want, abs=1e-4), f"J={Jd} F={Fd} parity={par}"
+
+
+def test_V5_parity_split_g_factors_at_the_shipped_parameters():
+    """The e/f closed form at E = 0 over J = 1-4, to 1e-10.
+
+    This is the gate the G_xx/G_yy terms exist for: the two parity components
+    of every Omega doublet now have DIFFERENT g-factors, g_e - g_f = 2 G_Delta
+    projected onto F, and G_Delta < 0 makes |g_e| the larger. Only the e level
+    mixes with the Omega = 0+ states, which is what fixes which sign goes where
+    (2026-09-14 handoff audit S2.3); with the shipped ordering (e below f) the
+    prediction is Delta g = g^u - g^l = -2 G_Delta (2/3) = +2.74e-4 at
+    J = 1, F = 3/2, the sign Petrov prints.
+
+    FAIL is reachable: flipping the sign inside inner_flip swaps the two g's,
+    and setting G_xx = G_yy collapses the split to zero (checked below).
+    """
+    pset = thf_v1()
+    for J in (1, 2, 3, 4):
+        tm, ctx = _block(0.5, J_range=(J, J))
+        groups = _g_by_JFP(tm, ctx, pset, {"E_z": 0.0, "B_z": 0.0})
+        assert len(groups) == 4                     # two F, two parities
+        for (Jd, Fd, par), gs in groups.items():
+            want = _g_closed(Jd, Fd, par, pset)
+            for g in gs:
+                assert g == pytest.approx(want, abs=1e-10), \
+                    f"J={Jd} F={Fd} parity={par}"
+        for F in (J - 0.5, J + 0.5):
+            g_e = groups[(float(J), F, int((-1) ** J))][0]
+            g_f = groups[(float(J), F, -int((-1) ** J))][0]
+            GD = 0.5 * (pset.value("G_xx") - pset.value("G_yy"))
+            proj = (F * (F + 1) + J * (J + 1) - I_F * (I_F + 1)) / (2 * F * (F + 1))
+            assert g_e - g_f == pytest.approx(2 * GD * proj, abs=1e-12)
+            assert abs(g_e) > abs(g_f)              # G_Delta < 0
 
 
 def test_V5_the_wrong_zeeman_sign_gives_the_wrong_g():
@@ -219,15 +287,17 @@ def test_V5_the_wrong_zeeman_sign_gives_the_wrong_g():
 
     The wrong value is the SAME closed form with the G_zz term's sign flipped,
     computed from the ParamSet rather than transcribed -- it is a prediction of
-    the convention block, not a measurement.
+    the convention block, not a measurement. Only G_zz carries the switch; the
+    perpendicular components do not.
     """
     bad = replace(thf_v1(), conventions=Conventions(zeeman_sign="minus_Gpar"))
     tm, ctx = _block(1.5, pset=bad)
-    g = g_factors(tm, bad, {"E_z": 0.0, "B_z": 0.0}, ctx=ctx)["g"][0]
-    G, gN = bad.value("G_zz"), bad.value("g_N")
-    want_bad = MU_B * (G * _gamma(1, 1.5, I=I_F)
-                       + gN * (MU_N / MU_B) * _kappa(1, 1.5, I=I_F))
-    assert abs(g * MU_B) == pytest.approx(abs(want_bad), abs=1e-4)
+    res = g_factors(tm, bad, {"E_z": 0.0, "B_z": 0.0}, ctx=ctx)
+    lowest_two = np.argsort(res["W"])[:2]
+    mean_g = float(np.mean(res["g"][lowest_two]))
+    want_bad = MU_B * 0.5 * (_g_closed(1, 1.5, +1, bad, gzz_sign=-1.0)
+                             + _g_closed(1, 1.5, -1, bad, gzz_sign=-1.0))
+    assert abs(mean_g * MU_B) == pytest.approx(abs(want_bad), abs=1e-4)
 
 
 def _omega_flip(kets):
@@ -365,7 +435,15 @@ def test_delta_g_scales_like_the_leanhardt_expression_within_a_factor_of_two():
 
 
 def test_delta_g_collapses_when_the_stark_J_mixing_is_removed():
-    """The fabricated failure that makes the previous check non-vacuous."""
+    """The fabricated failure that makes the previous check non-vacuous.
+
+    Two knobs are killed in turn, because there are now two sources of a
+    differential g-factor. Removing the Delta-J = +-1 Stark element leaves only
+    the parity-dependent G_Delta Zeeman, which is a 4x smaller residual at
+    60 V/cm rather than zero -- the Omega doublet is heavily polarised there, so
+    most of the G_Delta split is already quenched. Setting G_xx = G_yy on top of
+    that (G_Delta = 0) removes the last source and delta_g/g does collapse.
+    """
     pset = thf_v1()
     tm, ctx = _block(1.5)
     k = tm.names.index("stark_z")
@@ -373,7 +451,15 @@ def test_delta_g_collapses_when_the_stark_J_mixing_is_removed():
     J = np.asarray(tm.kets["J"], dtype=float)
     mats[k][J[:, None] != J[None, :]] = 0.0     # kill Delta-J = +-1 Stark
     crippled = replace(tm, mats=tuple(mats))
-    assert abs(_delta_g_over_g(pset, 60.0, tm_ctx=(crippled, ctx))) < 1e-4
+    no_dJ_stark = _delta_g_over_g(pset, 60.0, tm_ctx=(crippled, ctx))
+    assert abs(no_dJ_stark) < 0.25 * abs(_delta_g_over_g(pset, 60.0))
+    G_perp = 0.5 * (pset.value("G_xx") + pset.value("G_yy"))
+    isotropic = pset.with_(
+        G_xx=Param(G_perp, "", status="held-fixed",
+                   source="G_Delta = 0 control, this test"),
+        G_yy=Param(G_perp, "", status="held-fixed",
+                   source="G_Delta = 0 control, this test"))
+    assert abs(_delta_g_over_g(isotropic, 60.0, tm_ctx=(crippled, ctx))) < 1e-4
 
 
 @pytest.mark.skipif(os.environ.get("HEFF_RUN_LITERATURE") != "1",
@@ -382,14 +468,25 @@ def test_V7_delta_g_over_g_against_ng_thesis_opt_in():
     """TIER D, opt-in. Assumes the v1 conventions block (n_hat = F_to_Th,
     zeeman_sign = plus_Gpar, dg_def = delta for this quantity).
 
-    At E = 60 V/cm the Omega = +-1, J = 1-4 model gives delta_g/g = -0.00223,
-    identical to Ng thesis p.85's 32-level value ([HAM] S2.9, V7). The
-    measurement is -0.00255(6); the 15 % gap is the KNOWN missing 3Delta2
-    coupling and is a finding, not a failure. FAIL is reachable -- the same
-    crippled-Stark block that collapses the loose gate collapses this one.
+    Two comparisons, because heff's Zeeman operator is no longer Ng's. Ng
+    thesis p.85's 32-level model has an AXIAL Zeeman only, so the number it
+    prints, delta_g/g = -0.00223, is the one to compare against this package
+    with G_Delta switched off; the residual there is the tensor's G_perp piece
+    and the 0.6 % re-anchoring of G_zz. The FULL model, with the
+    parity-dependent G_xx/G_yy terms, is what the measurement -0.00255(6) sees.
+
+    FAIL is reachable -- the same crippled-Stark block that collapses the loose
+    gate collapses this one.
     """
-    got = _delta_g_over_g(thf_v1(), 60.0)
-    assert got == pytest.approx(-0.00223, rel=0.05)
+    pset = thf_v1()
+    G_perp = 0.5 * (pset.value("G_xx") + pset.value("G_yy"))
+    axial_only = pset.with_(
+        G_xx=Param(G_perp, "", status="held-fixed",
+                   source="G_Delta = 0, to compare with Ng's axial-only model"),
+        G_yy=Param(G_perp, "", status="held-fixed",
+                   source="G_Delta = 0, to compare with Ng's axial-only model"))
+    assert _delta_g_over_g(axial_only, 60.0) == pytest.approx(-0.00223, rel=0.10)
+    assert _delta_g_over_g(pset, 60.0) == pytest.approx(-0.00255, rel=0.05)
 
 
 @pytest.mark.skipif(os.environ.get("HEFF_RUN_LITERATURE") != "1",

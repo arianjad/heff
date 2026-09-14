@@ -177,10 +177,39 @@ def thf_v1():
                   source="Ng 2022 Table I p.5",
                   note="ORIGIN-DEPENDENT for an ion: 2.74 D w.r.t. the Th nucleus "
                        "(Skripnikov & Titov 2015 Table II) = 3.46 D at c.m."),
-        "G_zz": P(0.04756, "", uncertainty=0.002, status="derived",
-                   source="Ng thesis p.87 (0.048(2) for g_F < 0); reproduces "
-                          "|g_F=3/2| = 0.0149 exactly -- [HAM] S3",
-                   note="sign of g_F is NOT measured; theory forces g_F < 0. OPEN-4"),
+        # The Cartesian body-frame Zeeman tensor G = diag(G_xx, G_yy, G_zz),
+        # x and y perpendicular to n_hat and z along it. In the names the
+        # literature uses: G_par = G_zz, G_perp = (G_xx + G_yy)/2 = 1.02769e-3,
+        # G_Delta = (G_xx - G_yy)/2 = -2.0558e-4. The measurement constrains
+        # only the SUM G_zz + G_perp = 0.04756, so G_zz carries the constraint
+        # and G_xx/G_yy carry Petrov's second-order estimates.
+        "G_zz": P(0.046532, "", uncertainty=0.002, status="derived",
+                  source="Ng thesis p.87 (0.048(2) for g_F < 0) as the measured "
+                         "sum: G_zz = 0.04756 - G_perp, which keeps "
+                         "|g_F=3/2| = 0.0149 (Ng 2022) exact -- [HAM] S3",
+                  note="G_zz IS Ng's G_par. sign of g_F is NOT measured; theory "
+                       "forces g_F < 0. OPEN-4. The datum constrains G_zz + "
+                       "G_perp only, so the split between this value and "
+                       "G_xx/G_yy is Petrov's, not measured; the 0.6 % "
+                       "difference from the old G_par = 0.04756 sits well "
+                       "inside the +-0.002"),
+        "G_xx": P(8.2211e-4, "", status="estimate",
+                  source="G_perp + G_Delta with G_perp = 1.02769e-3 and "
+                         "G_Delta = -2.0558e-4 from the second-order sums of "
+                         "Petrov & Skripnikov arXiv:2503.02840 Eqs. (3)-(15); "
+                         "docs/lit/lookup-effective-zeeman-tensor.md S2, S4",
+                  note="ESTIMATE, not a measurement: second-order perturbation "
+                       "theory, ~20 % on G_Delta. G_Delta = (G_xx - G_yy)/2 < 0 "
+                       "is the parity-dependent part; it ADDS to the e level's "
+                       "g-factor, the component that mixes with the Omega = 0+ "
+                       "states (1Sigma+, 3Pi_0+). OPEN-10"),
+        "G_yy": P(1.23327e-3, "", status="estimate",
+                  source="G_perp - G_Delta with G_perp = 1.02769e-3 and "
+                         "G_Delta = -2.0558e-4 from the second-order sums of "
+                         "Petrov & Skripnikov arXiv:2503.02840 Eqs. (3)-(15); "
+                         "docs/lit/lookup-effective-zeeman-tensor.md S2, S4",
+                  note="ESTIMATE, not a measurement: second-order perturbation "
+                       "theory, ~20 % on G_Delta. See G_xx"),
         "g_N": P(5.25773, "", status="held-fixed",
                  source="19F nuclear g-factor, Petrov et al. arXiv:1704.06631 Eq. 3"),
         "E_eff": P(35.0, "GV/cm", uncertainty=2.45, status="ab-initio",
@@ -379,11 +408,14 @@ def thf_v2(isotopologue, *, a_par_th_sign="negative"):
 
     shared = dict(thf_v1().params)
     if isotopologue != "232":
-        for name in ("B0", "D0", "omega_ef", "A_par", "d_mf", "G_zz"):
+        for name in ("B0", "D0", "omega_ef", "A_par", "d_mf", "G_zz",
+                     "G_xx", "G_yy"):
             p = shared[name]
+            source_sigma = (f"{p.uncertainty} {p.unit}" if p.uncertainty is not None
+                            else "none quantified")
             note = (f"Transferred unchanged from 232Th19F+ to {isotopologue}Th19F+; "
                     "not measured for the target isotope and not mass-scaled. "
-                    f"Source-isotope uncertainty: {p.uncertainty} {p.unit}; "
+                    f"Source-isotope uncertainty: {source_sigma}; "
                     "target-isotope transfer uncertainty is unquantified. "
                     + (p.note or ""))
             shared[name] = replace(p, status="estimate", uncertainty=None,

@@ -56,12 +56,21 @@ def test_thf_v1_carries_the_documented_values_and_statuses():
     assert ps.value("omega_ef") == pytest.approx(5.29)
     assert ps.value("A_par") == pytest.approx(-20.1)
     assert ps.value("d_mf") == pytest.approx(1.6964978, abs=1e-7)
-    assert ps.value("G_zz") == pytest.approx(0.04756)
+    assert ps.value("G_zz") == pytest.approx(0.046532)
+    assert ps.value("G_xx") == pytest.approx(8.2211e-4)
+    assert ps.value("G_yy") == pytest.approx(1.23327e-3)
+    # The measured datum is the SUM G_zz + G_perp = 0.04756; that is the
+    # identity the G_zz value exists to preserve. The shipped G_zz is the
+    # difference rounded to six decimals, so the identity holds to 3.1e-7 --
+    # 2e-5 of |g|, five orders below the 0.002 uncertainty on G_zz.
+    assert ps.value("G_zz") + 0.5 * (ps.value("G_xx") + ps.value("G_yy")) == \
+        pytest.approx(0.04756, abs=5e-7)
     assert ps.value("g_N") == pytest.approx(5.25773)
     assert ps.value("c_I") == pytest.approx(0.020)
     assert ps.params["c_I"].status == "estimate"
     assert ps.params["A_par"].status == "measured"
     assert ps.params["G_zz"].status == "derived"
+    assert ps.params["G_xx"].status == ps.params["G_yy"].status == "estimate"
     assert ps.value("d_e") == 0.0 and ps.value("k_TP") == 0.0
 
 
@@ -168,7 +177,8 @@ def test_odd_thorium_transfers_do_not_claim_target_isotope_measurements():
     # A source-isotope error bar cannot be used as a transfer error bar.
     for isotope in ('229', '227'):
         ps = thf_v2(isotope)
-        for name in ('B0', 'D0', 'omega_ef', 'A_par', 'd_mf', 'G_zz'):
+        for name in ('B0', 'D0', 'omega_ef', 'A_par', 'd_mf',
+                     'G_zz', 'G_xx', 'G_yy'):
             p = ps.params[name]
             assert p.status == 'estimate'
             assert p.uncertainty is None

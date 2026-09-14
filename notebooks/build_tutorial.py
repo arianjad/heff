@@ -407,23 +407,36 @@ Both `g = −(∂E/∂B_z)/(μ_B m_F)` and `d_eff = −∂E/∂E_z` come from th
 Hellmann–Feynman kernel. Because `∂H/∂knob` is already a sum of catalogue
 matrices, we need neither a field step nor a finite-difference subtraction.
 
-At zero field the closed form is `g_F = −G∥ γ_F + g_N (μ_N/μ_B) κ_F`
-(Ng Eq. C.6's relation, also Petrov Eqs. 2–3), and `d_eff = 0` because the
-unpolarised doublet has no space-fixed dipole. At 60 V/cm `d_eff` approaches
-the fully polarised `γ_F m_F d_mf`.
+The Zeeman operator is `H_Z = μ_B B·G·J` with the body-frame tensor
+`G = diag(G_xx, G_yy, G_zz)`, so at zero field the two parity components of a
+doublet have different g-factors:
+
+`g_J(e/f) = −G⊥ − (G_zz − G⊥)/[J(J+1)] ± G_Δ`, with the `+` on `e`,
+
+`G⊥ = (G_xx + G_yy)/2`, `G_Δ = (G_xx − G_yy)/2`, and
+`g_F = g_J [F(F+1)+J(J+1)−I(I+1)]/[2F(F+1)] + g_N (μ_N/μ_B) κ_F`.
+Only the sum `G_zz + G⊥ = 0.04756` is measured. `d_eff = 0` at zero field
+because the unpolarised doublet has no space-fixed dipole; at 60 V/cm `d_eff`
+approaches the fully polarised `γ_F m_F d_mf`.
 """),
 
     code("""
 gam_ = gam(1, 1.5)
 kap = lambda J, F, I=0.5: (F * (F + 1) - J * (J + 1) + I * (I + 1)) / (2 * F * (F + 1))
-closed = -pset.value('G_zz') * gam_ + pset.value('g_N') * (heff.MU_N / heff.MU_B) * kap(1, 1.5)
+G_perp = 0.5 * (pset.value('G_xx') + pset.value('G_yy'))
+G_Delta = 0.5 * (pset.value('G_xx') - pset.value('G_yy'))
+proj = (1.5 * 2.5 + 1 * 2 - 0.5 * 1.5) / (2 * 1.5 * 2.5)
+nuc = pset.value('g_N') * (heff.MU_N / heff.MU_B) * kap(1, 1.5)
+closed_e = (-G_perp - (pset.value('G_zz') - G_perp) / 2 + G_Delta) * proj + nuc
+closed_f = (-G_perp - (pset.value('G_zz') - G_perp) / 2 - G_Delta) * proj + nuc
 
 res_g0 = g_factors(tm, pset, {'E_z': 0.0, 'B_z': 0.0}, ctx=ctx)
 res_g60 = g_factors(tm, pset, {'E_z': 60.0, 'B_z': 0.0}, ctx=ctx)
 
 print(f"model  g(J=1, F=3/2) = {res_g0['g'][0]:+.7f}   "
       f"({abs(res_g0['g'][0]) * heff.MU_B * 1e3:.3f} kHz/G)")
-print(f"closed form          = {closed:+.7f}   ({abs(closed) * heff.MU_B * 1e3:.3f} kHz/G)")
+print(f"closed form, e level = {closed_e:+.7f}   ({abs(closed_e) * heff.MU_B * 1e3:.3f} kHz/G)")
+print(f"closed form, f level = {closed_f:+.7f}   ({abs(closed_f) * heff.MU_B * 1e3:.3f} kHz/G)")
 print(f"measured |g|         =  0.0149(3)     (20.85 kHz/G)  [Ng 2022 Table I; sign not measured]")
 print()
 print(f"d_eff at   0 V/cm    = {res_g0['d_eff'][:4].round(6)} MHz/(V/cm)")

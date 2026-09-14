@@ -95,15 +95,14 @@ def test_dipole_geometry_supports_p_plus_minus_one_for_spectra(basis, ctx):
 
 # --------------------------------------------------------------------- Zeeman
 
-def test_V5_zeeman_Gpar_diagonal_gives_minus_Gpar_gamma_F(basis, ctx):
+def test_V5_zeeman_Gzz_diagonal_gives_minus_Gzz_gamma_F(basis, ctx):
     """[HAM] V5, G_zz half. With E = -g mu_B B m_F the G_zz term alone gives
-    g = -G_zz gamma_F, and g(1, 3/2) mu_B = -20.853 kHz/G once g_N is added --
-    the number [HAM] S2.8 confirms numerically at G_zz = 0.04756.
+    g = -G_zz gamma_F.
 
     Uniquely catches the Ng Eq. C.6 printed sign ([HAM] S2.8, OPEN-3): the
-    minus sign gives g = +G_zz gamma_F, i.e. 23.5 kHz/G rather than the
-    measured-consistent 20.85 kHz/G. Both outcomes are reachable from the
-    conventions block -- the 'minus_Gpar' branch is exercised below.
+    minus sign gives g = +G_zz gamma_F, i.e. the wrong sign of the dominant
+    contribution to g. Both outcomes are reachable from the conventions block
+    -- the 'minus_Gpar' branch is exercised below.
     """
     G, B = thf_v1().value("G_zz"), 1.0
     for J in (1, 2, 3, 4):
@@ -119,33 +118,45 @@ def test_V5_zeeman_Gpar_diagonal_gives_minus_Gpar_gamma_F(basis, ctx):
 
 
 def test_V5_total_g_factor_closed_form(basis, ctx):
-    """[HAM] V5 in full: both Zeeman terms together give
-    g_F = -G_zz gamma_F + g_N (mu_N/mu_B) kappa_F.
+    """[HAM] V5 in full: the four Zeeman terms' DIAGONAL elements give
+    g_F = -gamma_F [(G_zz - G_perp) + G_perp J(J+1)] + g_N (mu_N/mu_B) kappa_F,
+    with G_perp = (G_xx + G_yy)/2.
 
-    Uniquely catches a RELATIVE sign or scale error between the two Zeeman
-    terms, which the two single-term checks around it cannot see: they are the
-    same 10 % of g_F that [HAM] S2.8 calls "the cleanest experimental handle on
-    the nuclear contribution" (the ratio g(1,1/2)/g(1,3/2) is 2.19, not the
-    G_zz-only 2 of Leanhardt Eq. 24). FAIL is reachable and was measured:
-    flipping the relative sign of the two terms moves the ratio to 1.830, and
-    dropping the nuclear term moves it to exactly 2.
+    The G_Delta piece is purely OFF-diagonal in Omega, so it does not appear
+    here; the parity split it produces is gated on eigenstates in
+    tests/test_observe.py.
 
-    Gated against the closed form at the parameter set's own G_zz (0.04756),
-    NOT against [HAM] S2.8's printed g_F table -- that table is a known
-    erratum (it reproduces only at G_zz = 0.048, not its own printed header
-    value); see docs/open-questions.md "Erratum -- [HAM] S2.8 g_F table".
+    Uniquely catches a RELATIVE sign or scale error among the terms, which the
+    single-term checks around it cannot see: the nuclear piece is the same 10 %
+    of g_F that [HAM] S2.8 calls "the cleanest experimental handle on the
+    nuclear contribution" (the ratio g(1,1/2)/g(1,3/2) is 2.19, not the
+    axial-only 2 of Leanhardt Eq. 24). FAIL is reachable and was measured:
+    flipping the relative sign of the nuclear term moves the ratio to 1.830,
+    and dropping it moves the ratio to exactly 2.
+
+    Gated against the closed form at the parameter set's own values, NOT
+    against [HAM] S2.8's printed g_F table -- that table is a known erratum (it
+    reproduces only at G_par = 0.048, not its own printed header value); see
+    docs/open-questions.md "Erratum -- [HAM] S2.8 g_F table". The -20.853 kHz/G
+    anchor survives the tensor split because the parametrisation keeps the one
+    measured combination, G_zz + G_perp = 0.04756, fixed.
     """
     ps = thf_v1()
-    G, gN, B = ps.value("G_zz"), ps.value("g_N"), 1.0
+    gN, B = ps.value("g_N"), 1.0
+    Gzz, Gxx, Gyy = (ps.value(s) for s in ("G_zz", "G_xx", "G_yy"))
+    Gperp = 0.5 * (Gxx + Gyy)
 
     def g_of(J, F):
         i = _find(basis, J, 1.0, F, F)
-        shift = B * (G * _elem("zeeman_Gzz", basis, ctx, i, i)
+        shift = B * (Gzz * _elem("zeeman_Gzz", basis, ctx, i, i)
+                     + Gxx * _elem("zeeman_Gxx", basis, ctx, i, i)
+                     + Gyy * _elem("zeeman_Gyy", basis, ctx, i, i)
                      + gN * _elem("zeeman_nuclear", basis, ctx, i, i))
         return -shift / (MU_B * B * F)
 
     for J, F in ((1, 1.5), (1, 0.5), (2, 2.5), (4, 4.5)):
-        closed = -G * _gamma(J, F, I=0.5) + gN * (MU_N / MU_B) * _kappa(J, F, I=0.5)
+        closed = (-_gamma(J, F, I=0.5) * ((Gzz - Gperp) + Gperp * J * (J + 1))
+                  + gN * (MU_N / MU_B) * _kappa(J, F, I=0.5))
         assert g_of(J, F) == pytest.approx(closed, abs=1e-12)
     assert g_of(1, 1.5) * MU_B * 1e3 == pytest.approx(-20.853, abs=1e-3)
     assert g_of(1, 0.5) / g_of(1, 1.5) == pytest.approx(2.19, abs=5e-3)

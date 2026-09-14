@@ -29,6 +29,8 @@ V2_TO_V1 = {
     "spin_rotation_cI_F": "spin_rotation_cI",
     "stark_z": "stark_z",
     "zeeman_Gzz": "zeeman_Gzz",
+    "zeeman_Gxx": "zeeman_Gxx",
+    "zeeman_Gyy": "zeeman_Gyy",
     "zeeman_nuclear_F": "zeeman_nuclear",
     "pt_odd_edm": "pt_odd_edm",
     "pt_odd_scalar_pseudoscalar": "pt_odd_scalar_pseudoscalar",

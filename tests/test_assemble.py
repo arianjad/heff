@@ -137,9 +137,12 @@ def test_vertex_is_the_exact_derivative_of_H(block):
     pset = thf_v1()
     knobs = {"E_z": 7.0, "B_z": 0.0}
     V = vertex(tm, pset, knobs, "B_z")
-    k1, k2 = tm.names.index("zeeman_Gzz"), tm.names.index("zeeman_nuclear")
-    assert np.allclose(V, pset.value("G_zz") * tm.mats[k1]
-                       + pset.value("g_N") * tm.mats[k2], atol=1e-13)
+    # B_z now carries four terms: the three components of the body-frame G
+    # tensor plus the nuclear Zeeman.
+    want = sum(pset.value(sym) * tm.mats[tm.names.index(name)]
+               for name, sym in (("zeeman_Gzz", "G_zz"), ("zeeman_Gxx", "G_xx"),
+                                 ("zeeman_Gyy", "G_yy"), ("zeeman_nuclear", "g_N")))
+    assert np.allclose(V, want, atol=1e-13)
 
 
 def test_a_delta_mF_term_refuses_to_build_on_a_single_mF_block():

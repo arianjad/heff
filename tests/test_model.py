@@ -18,7 +18,8 @@ from heff.terms import ctx_from
 THF_PLUS_TERMS = (
     "centrifugal", "hyperfine_A_par", "hyperfine_A_par_dJ1",
     "omega_doubling", "pt_odd_edm", "pt_odd_scalar_pseudoscalar",
-    "rotation", "spin_rotation_cI", "stark_z", "zeeman_Gzz",
+    "rotation", "spin_rotation_cI", "stark_z",
+    "zeeman_Gxx", "zeeman_Gyy", "zeeman_Gzz",
     "zeeman_nuclear",
 )
 
@@ -62,7 +63,9 @@ omega_ef = {{ value = 5.29, unit = "MHz" }}
 A_par = {{ value = -20.1, unit = "MHz" }}
 c_I = {{ value = 20.0, unit = "kHz" }}
 d_mf = {{ value = 3.37, unit = "D", convention = "center_of_mass" }}
-G_zz = {{ value = 0.04756, unit = "" }}
+G_zz = {{ value = 0.046532, unit = "" }}
+G_xx = {{ value = 0.00082211, unit = "" }}
+G_yy = {{ value = 0.00123327, unit = "" }}
 g_N = {{ value = 5.25773, unit = "" }}
 E_eff = {{ value = 35.0, unit = "GV/cm" }}
 W_TP = {{ value = 50.0, unit = "kHz" }}
@@ -391,7 +394,9 @@ def test_bundled_thf_plus_matches_legacy_problem_exactly():
         "A_par": -20.1,
         "c_I": 0.02,
         "d_mf": 1.696497766,
-        "G_zz": 0.04756,
+        "G_zz": 0.046532,
+        "G_xx": 0.00082211,
+        "G_yy": 0.00123327,
         "g_N": 5.25773,
         "E_eff": 8.462962347e18,
         "W_TP": 0.05,

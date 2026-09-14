@@ -11,7 +11,9 @@ from ..terms import REGISTRY, terms_for_case
 
 CANONICAL_UNITS = {
     "B0": "MHz", "D0": "MHz", "omega_ef": "MHz", "A_par": "MHz",
-    "c_I": "MHz", "d_mf": "MHz/(V/cm)", "G_zz": "", "g_N": "",
+    "c_I": "MHz", "d_mf": "MHz/(V/cm)", "g_N": "",
+    # The body-frame Zeeman tensor G = diag(G_xx, G_yy, G_zz), all dimensionless.
+    "G_zz": "", "G_xx": "", "G_yy": "",
     "E_eff": "MHz/(e cm)", "W_TP": "MHz", "d_e": "", "k_TP": "",
 }
 
