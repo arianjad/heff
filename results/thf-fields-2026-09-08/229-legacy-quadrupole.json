@@ -63,15 +63,35 @@
       "convention": "center_of_mass",
       "note": "Transferred unchanged from 232Th19F+ to 229Th19F+; not measured for the target isotope and not mass-scaled. Source-isotope uncertainty: 0.09 D; target-isotope transfer uncertainty is unquantified. ORIGIN-DEPENDENT for an ion: 2.74 D w.r.t. the Th nucleus (Skripnikov & Titov 2015 Table II) = 3.46 D at c.m."
     },
-    "G_par": {
-      "value": 0.04756,
+    "G_zz": {
+      "value": 0.046532,
       "unit": "",
       "uncertainty": null,
-      "source": "Ng thesis p.87 (0.048(2) for g_F < 0); reproduces |g_F=3/2| = 0.0149 exactly -- [HAM] S3",
+      "source": "Ng thesis p.87 (0.048(2) for g_F < 0) as the measured sum: G_zz = 0.04756 - G_perp, which keeps |g_F=3/2| = 0.0149 (Ng 2022) exact -- [HAM] S3",
       "status": "estimate",
       "isotopologue": "229Th19F+",
       "convention": null,
-      "note": "Transferred unchanged from 232Th19F+ to 229Th19F+; not measured for the target isotope and not mass-scaled. Source-isotope uncertainty: 0.002 ; target-isotope transfer uncertainty is unquantified. sign of g_F is NOT measured; theory forces g_F < 0. OPEN-4"
+      "note": "Transferred unchanged from 232Th19F+ to 229Th19F+; not measured for the target isotope and not mass-scaled. Source-isotope uncertainty: 0.002 ; target-isotope transfer uncertainty is unquantified. G_zz IS Ng's G_par. sign of g_F is NOT measured; theory forces g_F < 0. OPEN-4. The datum constrains G_zz + G_perp only, so the split between this value and G_xx/G_yy is Petrov's, not measured; the 0.6 % difference from the old G_par = 0.04756 sits well inside the +-0.002"
+    },
+    "G_xx": {
+      "value": 0.00082211,
+      "unit": "",
+      "uncertainty": null,
+      "source": "G_perp + G_Delta with G_perp = 1.02769e-3 and G_Delta = -2.0558e-4 from the second-order sums of Petrov & Skripnikov arXiv:2503.02840 Eqs. (3)-(15); docs/lit/lookup-effective-zeeman-tensor.md S2, S4",
+      "status": "estimate",
+      "isotopologue": "229Th19F+",
+      "convention": null,
+      "note": "Transferred unchanged from 232Th19F+ to 229Th19F+; not measured for the target isotope and not mass-scaled. Source-isotope uncertainty: none quantified; target-isotope transfer uncertainty is unquantified. ESTIMATE, not a measurement: second-order perturbation theory, ~20 % on G_Delta. G_Delta = (G_xx - G_yy)/2 < 0 is the parity-dependent part; it ADDS to the e level's g-factor, the component that mixes with the Omega = 0+ states (1Sigma+, 3Pi_0+). OPEN-10"
+    },
+    "G_yy": {
+      "value": 0.00123327,
+      "unit": "",
+      "uncertainty": null,
+      "source": "G_perp - G_Delta with G_perp = 1.02769e-3 and G_Delta = -2.0558e-4 from the second-order sums of Petrov & Skripnikov arXiv:2503.02840 Eqs. (3)-(15); docs/lit/lookup-effective-zeeman-tensor.md S2, S4",
+      "status": "estimate",
+      "isotopologue": "229Th19F+",
+      "convention": null,
+      "note": "Transferred unchanged from 232Th19F+ to 229Th19F+; not measured for the target isotope and not mass-scaled. Source-isotope uncertainty: none quantified; target-isotope transfer uncertainty is unquantified. ESTIMATE, not a measurement: second-order perturbation theory, ~20 % on G_Delta. See G_xx"
     },
     "g_N": {
       "value": 5.25773,
@@ -157,7 +177,7 @@
       "value": 300.0,
       "unit": "MHz",
       "uncertainty": null,
-      "source": "Petrov 2018 Eqs. (24)-(25) route with w(ThF+) = G_par + 0.002319 = 0.0499 against w(HfF+) = 0.014 => ~200-400 MHz ([TH] S4.4)",
+      "source": "Petrov 2018 Eqs. (24)-(25) route with w(ThF+) = G_zz + 0.002319 = 0.0499 against w(HfF+) = 0.014 => ~200-400 MHz ([TH] S4.4)",
       "status": "placeholder",
       "isotopologue": null,
       "convention": null,
@@ -193,10 +213,10 @@
       "mF": 0.0,
       "dimension": 176,
       "parents": 56,
-      "min_zero_J_weight": 0.9918533393855173,
-      "min_stark_step_overlap": 0.9970108585024761,
-      "max_J7_to_J8_error_MHz": 4.555040504783392e-07,
-      "min_cutoff_overlap": 0.9999999999989271,
+      "min_zero_J_weight": 0.9918506103070063,
+      "min_stark_step_overlap": 0.9972295229697223,
+      "max_J7_to_J8_error_MHz": 4.532193997874856e-07,
+      "min_cutoff_overlap": 0.9999999999989577,
       "adaptive_tracking_bisections": 0,
       "convergence_E_V_cm": [
         0.0,
@@ -234,11 +254,11 @@
       "mF": 1.0,
       "dimension": 172,
       "parents": 52,
-      "min_zero_J_weight": 0.9918533393855169,
-      "min_stark_step_overlap": 0.9060967345223278,
-      "max_J7_to_J8_error_MHz": 5.775364115834236e-07,
-      "min_cutoff_overlap": 0.9999999999986724,
-      "adaptive_tracking_bisections": 36,
+      "min_zero_J_weight": 0.9918506103070057,
+      "min_stark_step_overlap": 0.9049729917171839,
+      "max_J7_to_J8_error_MHz": 5.754700396209955e-07,
+      "min_cutoff_overlap": 0.9999999999986773,
+      "adaptive_tracking_bisections": 44,
       "convergence_E_V_cm": [
         0.0,
         0.010797751623277094,
@@ -275,11 +295,11 @@
       "mF": 2.0,
       "dimension": 160,
       "parents": 42,
-      "min_zero_J_weight": 0.9918533393855182,
-      "min_stark_step_overlap": 0.9029773061162986,
-      "max_J7_to_J8_error_MHz": 8.134957170113921e-07,
-      "min_cutoff_overlap": 0.9999999999981324,
-      "adaptive_tracking_bisections": 53,
+      "min_zero_J_weight": 0.9918506103070064,
+      "min_stark_step_overlap": 0.9004318495229707,
+      "max_J7_to_J8_error_MHz": 8.135830285027623e-07,
+      "min_cutoff_overlap": 0.9999999999981326,
+      "adaptive_tracking_bisections": 33,
       "convergence_E_V_cm": [
         0.0,
         0.010797751623277094,
@@ -316,11 +336,11 @@
       "mF": 3.0,
       "dimension": 142,
       "parents": 30,
-      "min_zero_J_weight": 0.9918533393855178,
-      "min_stark_step_overlap": 0.9040744084523974,
-      "max_J7_to_J8_error_MHz": 9.166542440652847e-07,
+      "min_zero_J_weight": 0.9918506103070067,
+      "min_stark_step_overlap": 0.9012460877381968,
+      "max_J7_to_J8_error_MHz": 9.177601896226406e-07,
       "min_cutoff_overlap": 0.9999999999979032,
-      "adaptive_tracking_bisections": 26,
+      "adaptive_tracking_bisections": 37,
       "convergence_E_V_cm": [
         0.0,
         0.010797751623277094,
@@ -357,11 +377,11 @@
       "mF": 4.0,
       "dimension": 120,
       "parents": 18,
-      "min_zero_J_weight": 0.9918533393855165,
-      "min_stark_step_overlap": 0.9110785747815487,
-      "max_J7_to_J8_error_MHz": 9.229406714439392e-07,
-      "min_cutoff_overlap": 0.9999999999978886,
-      "adaptive_tracking_bisections": 6,
+      "min_zero_J_weight": 0.9918506103070072,
+      "min_stark_step_overlap": 0.9006958689082418,
+      "max_J7_to_J8_error_MHz": 9.236537152901292e-07,
+      "min_cutoff_overlap": 0.9999999999978844,
+      "adaptive_tracking_bisections": 17,
       "convergence_E_V_cm": [
         0.0,
         0.010797751623277094,
@@ -398,11 +418,11 @@
       "mF": 5.0,
       "dimension": 96,
       "parents": 8,
-      "min_zero_J_weight": 0.9958224324462182,
-      "min_stark_step_overlap": 0.9240865215190583,
-      "max_J7_to_J8_error_MHz": 7.299968274310231e-07,
-      "min_cutoff_overlap": 0.9999999999983349,
-      "adaptive_tracking_bisections": 3,
+      "min_zero_J_weight": 0.9958209133134228,
+      "min_stark_step_overlap": 0.9175391915533069,
+      "max_J7_to_J8_error_MHz": 7.308990461751819e-07,
+      "min_cutoff_overlap": 0.9999999999983351,
+      "adaptive_tracking_bisections": 4,
       "convergence_E_V_cm": [
         0.0,
         0.010797751623277094,
@@ -439,10 +459,10 @@
       "mF": 6.0,
       "dimension": 72,
       "parents": 2,
-      "min_zero_J_weight": 0.9985480600575009,
-      "min_stark_step_overlap": 0.9993556354295547,
-      "max_J7_to_J8_error_MHz": 3.3834658097475767e-07,
-      "min_cutoff_overlap": 0.9999999999992328,
+      "min_zero_J_weight": 0.9985439078480345,
+      "min_stark_step_overlap": 0.9969629456580434,
+      "max_J7_to_J8_error_MHz": 3.385212039574981e-07,
+      "min_cutoff_overlap": 0.9999999999992342,
       "adaptive_tracking_bisections": 0,
       "convergence_E_V_cm": [
         0.0,
@@ -477,399 +497,399 @@
       ]
     }
   ],
-  "time_reversal_error_MHz": 1.280568540096283e-09,
+  "time_reversal_error_MHz": 1.1641532182693481e-09,
   "levels": [
     {
       "J": 1,
-      "F": 3.9999999999999982,
+      "F": 4.0,
       "parity": -1,
-      "energy_MHz": 12391.150039268367,
-      "J_weight": 0.9944540729193823
+      "energy_MHz": 12385.974893513512,
+      "J_weight": 0.9944614792051573
     },
     {
       "J": 1,
-      "F": 3.000000000000003,
+      "F": 3.000000000000004,
       "parity": -1,
-      "energy_MHz": 12403.556836252199,
-      "J_weight": 0.994483796246018
+      "energy_MHz": 12398.381070091233,
+      "J_weight": 0.9944911646440391
     },
     {
       "J": 1,
       "F": 4.0,
       "parity": 1,
-      "energy_MHz": 12413.946380786743,
-      "J_weight": 0.9941866450495944
+      "energy_MHz": 12419.11545536393,
+      "J_weight": 0.994178874467677
     },
     {
       "J": 1,
-      "F": 3.000000000000002,
+      "F": 2.9999999999999973,
       "parity": 1,
-      "energy_MHz": 12426.37477007046,
-      "J_weight": 0.9942169199673213
+      "energy_MHz": 12431.544477814705,
+      "J_weight": 0.994209187873596
     },
     {
       "J": 1,
-      "F": 3.0000000000000013,
+      "F": 3.0000000000000004,
       "parity": 1,
-      "energy_MHz": 15356.888954952074,
-      "J_weight": 0.9966840183185619
+      "energy_MHz": 15362.110096053746,
+      "J_weight": 0.9966792621266835
     },
     {
       "J": 1,
       "F": 2.0000000000000013,
       "parity": 1,
-      "energy_MHz": 15361.285382200256,
-      "J_weight": 0.9967186369493961
+      "energy_MHz": 15366.507249425014,
+      "J_weight": 0.9967139302992676
     },
     {
       "J": 1,
-      "F": 3.0000000000000027,
+      "F": 2.999999999999999,
       "parity": -1,
-      "energy_MHz": 15473.414212760867,
-      "J_weight": 0.9964485829447111
+      "energy_MHz": 15468.197741497439,
+      "J_weight": 0.9964536904602201
     },
     {
       "J": 1,
-      "F": 1.9999999999999973,
+      "F": 2.0000000000000013,
       "parity": -1,
-      "energy_MHz": 15477.841294127495,
-      "J_weight": 0.996484624021923
+      "energy_MHz": 15472.624068226256,
+      "J_weight": 0.996489679816747
     },
     {
       "J": 1,
       "F": 1.0,
       "parity": -1,
-      "energy_MHz": 16941.112467224022,
-      "J_weight": 0.9989128078094542
+      "energy_MHz": 16935.845093485837,
+      "J_weight": 0.9989144168963402
     },
     {
       "J": 1,
-      "F": 2.0,
+      "F": 1.9999999999999978,
       "parity": -1,
-      "energy_MHz": 16948.53396985295,
-      "J_weight": 0.9988896779847812
+      "energy_MHz": 16943.267082519127,
+      "J_weight": 0.9988913219570736
     },
     {
       "J": 1,
       "F": 0.9999999999999998,
       "parity": 1,
-      "energy_MHz": 17044.08931357409,
-      "J_weight": 0.9990978977148519
+      "energy_MHz": 17049.36051895897,
+      "J_weight": 0.9990965526754707
     },
     {
       "J": 1,
-      "F": 2.0,
+      "F": 1.9999999999999991,
       "parity": 1,
-      "energy_MHz": 17051.56365211288,
-      "J_weight": 0.999076774750771
+      "energy_MHz": 17056.834412635533,
+      "J_weight": 0.9990753976308206
     },
     {
       "J": 2,
-      "F": 5.000000000000004,
+      "F": 5.000000000000002,
       "parity": 1,
-      "energy_MHz": 42336.29500177457,
-      "J_weight": 0.9974368720573592
+      "energy_MHz": 42320.54484990356,
+      "J_weight": 0.9974422654982062
     },
     {
       "J": 2,
       "F": 3.999999999999999,
       "parity": 1,
-      "energy_MHz": 42344.22714656322,
-      "J_weight": 0.9974488289893253
+      "energy_MHz": 42328.476430255265,
+      "J_weight": 0.99745419757693
     },
     {
       "J": 2,
-      "F": 5.0,
+      "F": 4.999999999999998,
       "parity": -1,
-      "energy_MHz": 42365.99114343798,
-      "J_weight": 0.9972834937871584
+      "energy_MHz": 42381.73347910942,
+      "J_weight": 0.9972777586129212
     },
     {
       "J": 2,
-      "F": 4.000000000000002,
+      "F": 4.0000000000000036,
       "parity": -1,
-      "energy_MHz": 42373.93824539455,
-      "J_weight": 0.9972957783290244
+      "energy_MHz": 42389.68116242702,
+      "J_weight": 0.9972900686941681
     },
     {
       "J": 2,
-      "F": 3.999999999999999,
+      "F": 3.9999999999999956,
       "parity": -1,
-      "energy_MHz": 43373.40514773492,
-      "J_weight": 0.9921754021071502
+      "energy_MHz": 43389.05057158645,
+      "J_weight": 0.9921778758083837
+    },
+    {
+      "J": 2,
+      "F": 3.0000000000000004,
+      "parity": -1,
+      "energy_MHz": 43394.272296523275,
+      "J_weight": 0.9922231845871592
+    },
+    {
+      "J": 2,
+      "F": 4.000000000000001,
+      "parity": 1,
+      "energy_MHz": 43470.028587271416,
+      "J_weight": 0.9918506103070063
+    },
+    {
+      "J": 2,
+      "F": 3.000000000000004,
+      "parity": 1,
+      "energy_MHz": 43475.233131701476,
+      "J_weight": 0.991896724197344
+    },
+    {
+      "J": 2,
+      "F": 2.9999999999999996,
+      "parity": -1,
+      "energy_MHz": 44334.57572640926,
+      "J_weight": 0.9951228370391976
+    },
+    {
+      "J": 2,
+      "F": 1.9999999999999978,
+      "parity": -1,
+      "energy_MHz": 44337.565885202814,
+      "J_weight": 0.9951730250832125
     },
     {
       "J": 2,
       "F": 3.000000000000001,
-      "parity": -1,
-      "energy_MHz": 43378.62550692034,
-      "J_weight": 0.9922207153281026
-    },
-    {
-      "J": 2,
-      "F": 4.0,
       "parity": 1,
-      "energy_MHz": 43485.66617276306,
-      "J_weight": 0.9918533393855173
+      "energy_MHz": 44359.88530434739,
+      "J_weight": 0.9952232788597347
     },
     {
       "J": 2,
-      "F": 3.000000000000003,
+      "F": 2.0000000000000018,
       "parity": 1,
-      "energy_MHz": 43490.872105370894,
-      "J_weight": 0.9918994487749037
-    },
-    {
-      "J": 2,
-      "F": 3.0000000000000018,
-      "parity": -1,
-      "energy_MHz": 44318.84368981651,
-      "J_weight": 0.9951206442665258
-    },
-    {
-      "J": 2,
-      "F": 2.0000000000000004,
-      "parity": -1,
-      "energy_MHz": 44321.83241239375,
-      "J_weight": 0.9951708526967102
-    },
-    {
-      "J": 2,
-      "F": 2.999999999999998,
-      "parity": 1,
-      "energy_MHz": 44375.61631649793,
-      "J_weight": 0.9952248502789814
-    },
-    {
-      "J": 2,
-      "F": 1.9999999999999996,
-      "parity": 1,
-      "energy_MHz": 44378.665927985,
-      "J_weight": 0.995274385229395
+      "energy_MHz": 44362.93347548166,
+      "J_weight": 0.9952728306183597
     },
     {
       "J": 2,
       "F": 1.9999999999999991,
       "parity": 1,
-      "energy_MHz": 45109.29772994352,
-      "J_weight": 0.9984098262080187
+      "energy_MHz": 45093.478892783125,
+      "J_weight": 0.9984099089339614
     },
     {
       "J": 2,
-      "F": 0.9999999999999993,
+      "F": 1.0000000000000007,
       "parity": 1,
-      "energy_MHz": 45110.05450887682,
-      "J_weight": 0.9984424846905977
+      "energy_MHz": 45094.23467536999,
+      "J_weight": 0.9984425739771997
     },
     {
       "J": 2,
-      "F": 2.0,
+      "F": 1.9999999999999996,
       "parity": -1,
-      "energy_MHz": 45155.32523122941,
-      "J_weight": 0.998314815835426
+      "energy_MHz": 45171.14441222034,
+      "J_weight": 0.9983151910136996
     },
     {
       "J": 2,
-      "F": 0.9999999999999991,
+      "F": 1.0000000000000007,
       "parity": -1,
-      "energy_MHz": 45155.995969246615,
-      "J_weight": 0.9983486241917908
+      "energy_MHz": 45171.816149591854,
+      "J_weight": 0.9983489884043091
     },
     {
       "J": 2,
       "F": 0.0,
       "parity": 1,
-      "energy_MHz": 45602.77653939584,
-      "J_weight": 0.9998400783061465
+      "energy_MHz": 45586.91414492812,
+      "J_weight": 0.9998404284406472
     },
     {
       "J": 2,
-      "F": 0.9999999999999998,
+      "F": 1.0000000000000007,
       "parity": 1,
-      "energy_MHz": 45606.92254469123,
-      "J_weight": 0.9998324831109321
+      "energy_MHz": 45591.0605114157,
+      "J_weight": 0.9998328499337004
     },
     {
       "J": 2,
       "F": 0.0,
       "parity": -1,
-      "energy_MHz": 45735.09539797804,
-      "J_weight": 0.9998674087371118
+      "energy_MHz": 45750.95907833833,
+      "J_weight": 0.9998671157944329
     },
     {
       "J": 2,
-      "F": 1.000000000000001,
+      "F": 1.0000000000000002,
       "parity": -1,
-      "energy_MHz": 45739.26559209527,
-      "J_weight": 0.9998604611155635
+      "energy_MHz": 45755.12894132526,
+      "J_weight": 0.999860152769972
+    },
+    {
+      "J": 3,
+      "F": 6.0000000000000036,
+      "parity": -1,
+      "energy_MHz": 86375.19825771918,
+      "J_weight": 0.9986423150971592
+    },
+    {
+      "J": 3,
+      "F": 5.000000000000002,
+      "parity": -1,
+      "energy_MHz": 86380.93362493101,
+      "J_weight": 0.9986478060384418
     },
     {
       "J": 3,
       "F": 6.000000000000001,
-      "parity": -1,
-      "energy_MHz": 86406.82490196689,
-      "J_weight": 0.9986384397059068
-    },
-    {
-      "J": 3,
-      "F": 5.000000000000006,
-      "parity": -1,
-      "energy_MHz": 86412.56073217551,
-      "J_weight": 0.9986439462870045
-    },
-    {
-      "J": 3,
-      "F": 5.9999999999999964,
       "parity": 1,
-      "energy_MHz": 86430.98282669108,
-      "J_weight": 0.9985480600575003
-    },
-    {
-      "J": 3,
-      "F": 5.000000000000001,
-      "parity": 1,
-      "energy_MHz": 86436.72768879624,
-      "J_weight": 0.998553748872536
-    },
-    {
-      "J": 3,
-      "F": 5.0,
-      "parity": 1,
-      "energy_MHz": 86814.31922006408,
-      "J_weight": 0.9959846005068507
-    },
-    {
-      "J": 3,
-      "F": 4.000000000000001,
-      "parity": 1,
-      "energy_MHz": 86818.90694994079,
-      "J_weight": 0.9960042798824156
+      "energy_MHz": 86462.60125417479,
+      "J_weight": 0.9985439078480359
     },
     {
       "J": 3,
       "F": 5.000000000000004,
-      "parity": -1,
-      "energy_MHz": 86926.61636592686,
-      "J_weight": 0.9958224324462188
-    },
-    {
-      "J": 3,
-      "F": 4.0000000000000036,
-      "parity": -1,
-      "energy_MHz": 86931.19062059034,
-      "J_weight": 0.9958424654350452
-    },
-    {
-      "J": 3,
-      "F": 4.0,
       "parity": 1,
-      "energy_MHz": 87402.170317206,
-      "J_weight": 0.9965836292599236
+      "energy_MHz": 86468.34659610238,
+      "J_weight": 0.9985496128512956
     },
     {
       "J": 3,
-      "F": 2.999999999999999,
+      "F": 4.999999999999999,
       "parity": 1,
-      "energy_MHz": 87405.89489085872,
-      "J_weight": 0.9966071421831069
+      "energy_MHz": 86845.81551358731,
+      "J_weight": 0.9959857886963402
+    },
+    {
+      "J": 3,
+      "F": 3.999999999999999,
+      "parity": 1,
+      "energy_MHz": 86850.40446345019,
+      "J_weight": 0.9960054654730794
+    },
+    {
+      "J": 3,
+      "F": 4.999999999999999,
+      "parity": -1,
+      "energy_MHz": 86895.12768444399,
+      "J_weight": 0.9958209133134228
+    },
+    {
+      "J": 3,
+      "F": 3.9999999999999956,
+      "parity": -1,
+      "energy_MHz": 86899.70070169527,
+      "J_weight": 0.995840949488527
+    },
+    {
+      "J": 3,
+      "F": 4.000000000000004,
+      "parity": 1,
+      "energy_MHz": 87433.71035930418,
+      "J_weight": 0.9965856779658097
+    },
+    {
+      "J": 3,
+      "F": 3.0000000000000013,
+      "parity": 1,
+      "energy_MHz": 87437.43633299785,
+      "J_weight": 0.9966091791580258
     },
     {
       "J": 3,
       "F": 4.000000000000003,
       "parity": -1,
-      "energy_MHz": 87502.27174124272,
-      "J_weight": 0.9965581405380068
+      "energy_MHz": 87470.735224391,
+      "J_weight": 0.9965563875947829
     },
     {
       "J": 3,
-      "F": 3.0,
+      "F": 3.000000000000001,
       "parity": -1,
-      "energy_MHz": 87506.01723246295,
-      "J_weight": 0.9965816867149399
+      "energy_MHz": 87474.47930386283,
+      "J_weight": 0.9965799442034479
     },
     {
       "J": 3,
-      "F": 2.9999999999999996,
-      "parity": 1,
-      "energy_MHz": 88050.21666128666,
-      "J_weight": 0.9979318306828155
-    },
-    {
-      "J": 3,
-      "F": 1.9999999999999991,
-      "parity": 1,
-      "energy_MHz": 88053.3108265991,
-      "J_weight": 0.9979530304142681
-    },
-    {
-      "J": 3,
-      "F": 3.0000000000000013,
+      "F": 3.0000000000000053,
       "parity": -1,
-      "energy_MHz": 88077.67478482239,
-      "J_weight": 0.9979849244541507
-    },
-    {
-      "J": 3,
-      "F": 1.9999999999999996,
-      "parity": -1,
-      "energy_MHz": 88080.81661544558,
-      "J_weight": 0.9980058192509393
+      "energy_MHz": 88046.05402852623,
+      "J_weight": 0.9979838622295993
     },
     {
       "J": 3,
       "F": 2.0000000000000004,
       "parity": -1,
-      "energy_MHz": 88567.33873450979,
-      "J_weight": 0.9991617271863388
+      "energy_MHz": 88049.19462040991,
+      "J_weight": 0.9980047688782075
     },
     {
       "J": 3,
-      "F": 0.9999999999999998,
+      "F": 3.0000000000000004,
+      "parity": 1,
+      "energy_MHz": 88081.83736485528,
+      "J_weight": 0.9979333529579855
+    },
+    {
+      "J": 3,
+      "F": 2.0000000000000018,
+      "parity": 1,
+      "energy_MHz": 88084.93276928956,
+      "J_weight": 0.9979545384163229
+    },
+    {
+      "J": 3,
+      "F": 2.0,
       "parity": -1,
-      "energy_MHz": 88570.17876128115,
-      "J_weight": 0.999176686266485
+      "energy_MHz": 88535.64792438035,
+      "J_weight": 0.9991611871261399
+    },
+    {
+      "J": 3,
+      "F": 1.0000000000000002,
+      "parity": -1,
+      "energy_MHz": 88538.48708219352,
+      "J_weight": 0.999176157540206
     },
     {
       "J": 3,
       "F": 1.9999999999999991,
       "parity": 1,
-      "energy_MHz": 88622.47401683276,
-      "J_weight": 0.9991075249730776
+      "energy_MHz": 88654.16356109639,
+      "J_weight": 0.9991083542405548
     },
     {
       "J": 3,
       "F": 1.0,
       "parity": 1,
-      "energy_MHz": 88625.26504683212,
-      "J_weight": 0.9991229524754586
+      "energy_MHz": 88656.95547044672,
+      "J_weight": 0.9991237680094052
     },
     {
       "J": 3,
-      "F": 1.0000000000000009,
+      "F": 0.9999999999999993,
       "parity": -1,
-      "energy_MHz": 88894.99123483745,
-      "J_weight": 0.9998604360509402
+      "energy_MHz": 88863.25788929872,
+      "J_weight": 0.9998601279720223
     },
     {
       "J": 3,
       "F": 0.0,
       "parity": -1,
-      "energy_MHz": 88899.09314202201,
-      "J_weight": 0.9998674087371129
+      "energy_MHz": 88867.35946166141,
+      "J_weight": 0.9998671157944329
     },
     {
       "J": 3,
-      "F": 1.0000000000000004,
+      "F": 0.9999999999999991,
       "parity": 1,
-      "energy_MHz": 89011.46638120538,
-      "J_weight": 0.9998324919166716
+      "energy_MHz": 89043.19841281678,
+      "J_weight": 0.999832858455516
     },
     {
       "J": 3,
       "F": 0.0,
       "parity": 1,
-      "energy_MHz": 89015.54200060449,
-      "J_weight": 0.9998400783061452
+      "energy_MHz": 89047.274395072,
+      "J_weight": 0.9998404284406506
     }
   ]
 }

@@ -63,15 +63,35 @@
       "convention": "center_of_mass",
       "note": "ORIGIN-DEPENDENT for an ion: 2.74 D w.r.t. the Th nucleus (Skripnikov & Titov 2015 Table II) = 3.46 D at c.m."
     },
-    "G_par": {
-      "value": 0.04756,
+    "G_zz": {
+      "value": 0.046532,
       "unit": "",
       "uncertainty": 0.002,
-      "source": "Ng thesis p.87 (0.048(2) for g_F < 0); reproduces |g_F=3/2| = 0.0149 exactly -- [HAM] S3",
+      "source": "Ng thesis p.87 (0.048(2) for g_F < 0) as the measured sum: G_zz = 0.04756 - G_perp, which keeps |g_F=3/2| = 0.0149 (Ng 2022) exact -- [HAM] S3",
       "status": "derived",
       "isotopologue": null,
       "convention": null,
-      "note": "sign of g_F is NOT measured; theory forces g_F < 0. OPEN-4"
+      "note": "G_zz IS Ng's G_par. sign of g_F is NOT measured; theory forces g_F < 0. OPEN-4. The datum constrains G_zz + G_perp only, so the split between this value and G_xx/G_yy is Petrov's, not measured; the 0.6 % difference from the old G_par = 0.04756 sits well inside the +-0.002"
+    },
+    "G_xx": {
+      "value": 0.00082211,
+      "unit": "",
+      "uncertainty": null,
+      "source": "G_perp + G_Delta with G_perp = 1.02769e-3 and G_Delta = -2.0558e-4 from the second-order sums of Petrov & Skripnikov arXiv:2503.02840 Eqs. (3)-(15); docs/lit/lookup-effective-zeeman-tensor.md S2, S4",
+      "status": "estimate",
+      "isotopologue": null,
+      "convention": null,
+      "note": "ESTIMATE, not a measurement: second-order perturbation theory, ~20 % on G_Delta. G_Delta = (G_xx - G_yy)/2 < 0 is the parity-dependent part; it ADDS to the e level's g-factor, the component that mixes with the Omega = 0+ states (1Sigma+, 3Pi_0+). OPEN-10"
+    },
+    "G_yy": {
+      "value": 0.00123327,
+      "unit": "",
+      "uncertainty": null,
+      "source": "G_perp - G_Delta with G_perp = 1.02769e-3 and G_Delta = -2.0558e-4 from the second-order sums of Petrov & Skripnikov arXiv:2503.02840 Eqs. (3)-(15); docs/lit/lookup-effective-zeeman-tensor.md S2, S4",
+      "status": "estimate",
+      "isotopologue": null,
+      "convention": null,
+      "note": "ESTIMATE, not a measurement: second-order perturbation theory, ~20 % on G_Delta. See G_xx"
     },
     "g_N": {
       "value": 5.25773,
@@ -144,9 +164,9 @@
       "dimension": 32,
       "parents": 12,
       "min_zero_J_weight": 0.999999910523759,
-      "min_stark_step_overlap": 0.984195765299456,
-      "max_J7_to_J8_error_MHz": 1.3722456060349941e-08,
-      "min_cutoff_overlap": 0.9999999999999682,
+      "min_stark_step_overlap": 0.984195765301278,
+      "max_J7_to_J8_error_MHz": 1.3766111806035042e-08,
+      "min_cutoff_overlap": 0.9999999999999687,
       "adaptive_tracking_bisections": 0,
       "convergence_E_V_cm": [
         0.0,
@@ -185,9 +205,9 @@
       "dimension": 30,
       "parents": 10,
       "min_zero_J_weight": 0.999999910523759,
-      "min_stark_step_overlap": 0.9916576265882322,
+      "min_stark_step_overlap": 0.9916576265866921,
       "max_J7_to_J8_error_MHz": 1.2034433893859386e-08,
-      "min_cutoff_overlap": 0.9999999999999727,
+      "min_cutoff_overlap": 0.999999999999972,
       "adaptive_tracking_bisections": 0,
       "convergence_E_V_cm": [
         0.0,
@@ -225,10 +245,10 @@
       "mF": 2.5,
       "dimension": 26,
       "parents": 6,
-      "min_zero_J_weight": 0.9999999528327246,
-      "min_stark_step_overlap": 0.9944259041300487,
-      "max_J7_to_J8_error_MHz": 7.203198038041592e-09,
-      "min_cutoff_overlap": 0.9999999999999829,
+      "min_zero_J_weight": 0.9999999528327248,
+      "min_stark_step_overlap": 0.9944259041310752,
+      "max_J7_to_J8_error_MHz": 7.188646122813225e-09,
+      "min_cutoff_overlap": 0.9999999999999838,
       "adaptive_tracking_bisections": 0,
       "convergence_E_V_cm": [
         0.0,
@@ -266,10 +286,10 @@
       "mF": 3.5,
       "dimension": 22,
       "parents": 2,
-      "min_zero_J_weight": 0.9999999720030956,
+      "min_zero_J_weight": 0.9999999720030951,
       "min_stark_step_overlap": 0.9988717686514326,
       "max_J7_to_J8_error_MHz": 2.2846506908535957e-09,
-      "min_cutoff_overlap": 0.9999999999999931,
+      "min_cutoff_overlap": 0.999999999999994,
       "adaptive_tracking_bisections": 0,
       "convergence_E_V_cm": [
         0.0,
@@ -304,91 +324,91 @@
       ]
     }
   ],
-  "time_reversal_error_MHz": 6.402842700481415e-10,
+  "time_reversal_error_MHz": 4.656612873077393e-10,
   "levels": [
     {
       "J": 1,
-      "F": 1.5,
-      "parity": 1,
-      "energy_MHz": 14540.98681043393,
-      "J_weight": 0.9999999106537575
+      "F": 1.4999999999999998,
+      "parity": -1,
+      "energy_MHz": 14540.986810433928,
+      "J_weight": 0.9999999106537574
     },
     {
       "J": 1,
-      "F": 1.5,
-      "parity": -1,
-      "energy_MHz": 14546.276808541988,
-      "J_weight": 0.9999999105237595
+      "F": 1.5000000000000004,
+      "parity": 1,
+      "energy_MHz": 14546.276808541987,
+      "J_weight": 0.9999999105237598
     },
     {
       "J": 1,
       "F": 0.4999999999999999,
-      "parity": 1,
+      "parity": -1,
       "energy_MHz": 14556.034412,
       "J_weight": 0.9999999999999998
     },
     {
       "J": 1,
       "F": 0.4999999999999999,
-      "parity": -1,
+      "parity": 1,
       "energy_MHz": 14561.324412000002,
       "J_weight": 0.9999999999999998
     },
     {
       "J": 2,
-      "F": 2.4999999999999996,
-      "parity": -1,
-      "energy_MHz": 43634.58765240983,
-      "J_weight": 0.9999999529355003
+      "F": 2.5,
+      "parity": 1,
+      "energy_MHz": 43634.58765240984,
+      "J_weight": 0.9999999529355006
     },
     {
       "J": 2,
       "F": 1.4999999999999998,
-      "parity": -1,
+      "parity": 1,
       "energy_MHz": 43642.91731145801,
       "J_weight": 0.999999910523759
     },
     {
       "J": 2,
-      "F": 2.4999999999999996,
-      "parity": 1,
-      "energy_MHz": 43650.45765016663,
-      "J_weight": 0.9999999528327246
-    },
-    {
-      "J": 2,
-      "F": 1.5,
-      "parity": 1,
-      "energy_MHz": 43658.78730956607,
-      "J_weight": 0.9999999106537574
-    },
-    {
-      "J": 3,
-      "F": 3.5,
-      "parity": 1,
-      "energy_MHz": 87273.07470617013,
-      "J_weight": 0.9999999720844106
-    },
-    {
-      "J": 3,
       "F": 2.5000000000000004,
-      "parity": 1,
-      "energy_MHz": 87278.87088983337,
+      "parity": -1,
+      "energy_MHz": 43650.457650166645,
       "J_weight": 0.9999999528327252
     },
     {
-      "J": 3,
-      "F": 3.5,
+      "J": 2,
+      "F": 1.4999999999999998,
       "parity": -1,
-      "energy_MHz": 87304.81470380392,
-      "J_weight": 0.9999999720030956
+      "energy_MHz": 43658.78730956607,
+      "J_weight": 0.9999999106537572
     },
     {
       "J": 3,
-      "F": 2.5000000000000004,
+      "F": 3.4999999999999996,
       "parity": -1,
+      "energy_MHz": 87273.07470617013,
+      "J_weight": 0.9999999720844105
+    },
+    {
+      "J": 3,
+      "F": 2.4999999999999996,
+      "parity": -1,
+      "energy_MHz": 87278.87088983339,
+      "J_weight": 0.9999999528327248
+    },
+    {
+      "J": 3,
+      "F": 3.499999999999999,
+      "parity": 1,
+      "energy_MHz": 87304.81470380392,
+      "J_weight": 0.9999999720030951
+    },
+    {
+      "J": 3,
+      "F": 2.4999999999999996,
+      "parity": 1,
       "energy_MHz": 87310.6108875902,
-      "J_weight": 0.9999999529355008
+      "J_weight": 0.9999999529354999
     }
   ]
 }

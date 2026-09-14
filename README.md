@@ -40,7 +40,7 @@ see [getting started](docs/getting-started.md).
 
 | Model | What you can calculate | Physical scope |
 |---|---|---|
-| 232Th19F+ X 3Delta1 | Rotation, hyperfine/parity structure, Stark/Zeeman shifts, E1 transitions, selected observables | Effective Omega=±1 manifold; measured and adopted inputs with stated approximations |
+| 232Th19F+ X 3Delta1 | Rotation, hyperfine/parity structure, Stark shifts, Zeeman shifts from the body-frame G tensor including the parity-dependent Δg, E1 transitions, selected observables | Effective Omega=±1 manifold; measured and adopted inputs with stated approximations |
 | 229Th19F+ and 227Th19F+ | Two coupled nuclear spins, Th hyperfine, applicable quadrupole operators, field shifts | Exploratory isotope models; several inputs are transferred estimates or placeholders |
 | Equivalent-proton amides | Asymmetric rotation, electron/nuclear spin interactions, exchange-filtered proton pair, optional metal spin | Restricted `amide_c2v` backend; the provided coefficients are synthetic |
 

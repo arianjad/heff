@@ -2,48 +2,48 @@
   {
     "isotope": "232",
     "states": 60,
-    "max_cutoff_error_Hz": 0.013722456060349941,
+    "max_cutoff_error_Hz": 0.013766111806035042,
     "min_zero_J_weight": 0.999999910523759,
-    "min_tracking_overlap": 0.984195765299456,
+    "min_tracking_overlap": 0.984195765301278,
     "stark_10kV_cm_range_GHz": [
-      -9.705845941529692,
-      6.708566517238261
+      -9.70584594152966,
+      6.708566517238263
     ],
     "zeeman_100G_range_MHz": [
-      -3.1288374589857995,
-      3.1283805974180723
+      -3.157529770891415,
+      3.157119375269758
     ],
-    "time_reversal_error_MHz": 6.402842700481415e-10
+    "time_reversal_error_MHz": 4.656612873077393e-10
   },
   {
     "isotope": "229",
     "states": 360,
-    "max_cutoff_error_Hz": 0.09612995199859142,
-    "min_zero_J_weight": 0.9935192382996713,
-    "min_tracking_overlap": 0.9005995609670248,
+    "max_cutoff_error_Hz": 0.09596988093107939,
+    "min_zero_J_weight": 0.9935192382996707,
+    "min_tracking_overlap": 0.9005995609656443,
     "stark_10kV_cm_range_GHz": [
-      -10.157500596249413,
-      7.50476370255992
+      -10.157500596249266,
+      7.504763702559912
     ],
     "zeeman_100G_range_MHz": [
-      -3.5453963771251438,
-      3.5799856971862027
+      -3.560908328909136,
+      3.5957700473318255
     ],
-    "time_reversal_error_MHz": 9.313225746154785e-10
+    "time_reversal_error_MHz": 8.731149137020111e-10
   },
   {
     "isotope": "227",
     "states": 120,
-    "max_cutoff_error_Hz": 0.020081643015146255,
-    "min_zero_J_weight": 0.9992397553776673,
-    "min_tracking_overlap": 0.9120169022849945,
+    "max_cutoff_error_Hz": 0.019703293219208717,
+    "min_zero_J_weight": 0.9992397553776675,
+    "min_tracking_overlap": 0.9120169022844167,
     "stark_10kV_cm_range_GHz": [
-      -9.582431290852753,
-      6.500774531204401
+      -9.582431290852718,
+      6.5007745312043985
     ],
     "zeeman_100G_range_MHz": [
-      -3.071148472596178,
-      3.070677685243936
+      -3.1031906388870993,
+      3.1027671008178004
     ],
     "time_reversal_error_MHz": 1.1641532182693481e-09
   }

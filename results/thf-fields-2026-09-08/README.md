@@ -1,6 +1,8 @@
 # ThF+ isotope level and field plots
 
-Calculations from 2026-09-08. [Open the five-page PDF](thf-isotopes-levels-stark-zeeman.pdf).
+Calculations from 2026-09-14, using the body-frame Zeeman tensor
+(G_zz, G_xx, G_yy) and the e-below-f Ω-doublet ordering at every J.
+[Open the five-page PDF](thf-isotopes-levels-stark-zeeman.pdf).
 
 The figures show the zero-field structure and shifts of every state
 correlated with J=1–3: 60 states for 232Th, 360 for 229Th, and 120 for 227Th,
@@ -84,8 +86,8 @@ matrices at three field endpoints, including simultaneous E and B.
 The basis includes J=1–8. For each plotted mF block, embedded J<=7 eigenvectors
 were overlap matched against the actual tracked J<=8 subspace at 23 electric
 fields spanning the range and at B=0,1,10,100 G. Maximum energy differences:
-0.0138 Hz (232), 0.0962 Hz (229 baseline), 0.0201 Hz (227); the unvalidated
-quadrupole scenario remains below 0.93 Hz. These are sampled cutoff differences,
+0.0138 Hz (232), 0.0960 Hz (229 baseline), 0.0197 Hz (227), and 0.9237 Hz for
+the unvalidated quadrupole scenario. These are sampled cutoff differences,
 not certified bounds between samples or physical error bars. Time-reversal
 spectral residuals are below 0.002 Hz. Parity commutation and Stark
 anticommutation checks passed. See `validation.json` and per-block JSON records.
