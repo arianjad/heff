@@ -133,16 +133,30 @@ def spin_rotation_cI(bra, ket, ctx):
 
 
 
-def dipole_geometry(bra, ket, I, p):
-    """Dimensionless rank-1 axial geometry (Ng C.5; B&C 5.172, 5.174, 5.186).
+def inner_axial(J_bra, Om_bra, J_ket, Om_ket):
+    """<J',Om'||T1(n^)||J,Om> = delta_{Om Om'} (-1)^(J'-Om) [(2J+1)(2J'+1)]^(1/2)
+    (J' 1 J; -Om 0 Om) -- B&C Eq. (5.186) PDF p.207 / book p.175.
 
-    Primed labels are bra; the operator is Omega-diagonal. See [HAM] S2.7.
+    The Omega-diagonal early return lives HERE and not in dipole_geometry, so
+    that a non-axial `inner` (the Delta-Omega = +-2 Zeeman channel) reaches the
+    same spectator recoupling. [HAM] S2.7.
     """
-    if bra["Om"] != ket["Om"]:
+    if Om_bra != Om_ket:
         return 0.0
+    return (_ph(J_bra - Om_ket) * np.sqrt((2 * J_ket + 1.0) * (2 * J_bra + 1.0))
+            * w3j(J_bra, 1, J_ket, -Om_ket, 0, Om_ket))
+
+
+def dipole_geometry(bra, ket, I, p, *, inner=inner_axial):
+    """Dimensionless rank-1 geometry (Ng C.5; B&C 5.172, 5.174, 5.186).
+
+    Primed labels are bra. `inner(J_bra, Om_bra, J_ket, Om_ket)` is the J-space
+    reduced element; the spectator recoupling in front of it is the SAME for
+    every lab rank-1 operator, which is why the Zeeman tensor's three terms
+    differ only in this argument. See [HAM] S2.7.
+    """
     J1, F1, m1 = float(ket["J"]), float(ket["F"]), float(ket["mF"])
     J2, F2, m2 = float(bra["J"]), float(bra["F"]), float(bra["mF"])
-    Om = float(ket["Om"])
     if abs(m2 - m1 - p) > 1e-9:
         return 0.0
     six = w6j(J1, F1, I, F2, J2, 1)
@@ -151,8 +165,7 @@ def dipole_geometry(bra, ket, I, p):
     a = _ph(F1 + J2 + 1.0 + I) * six
     b = (_ph(F2 - m2) * np.sqrt((2 * F1 + 1.0) * (2 * F2 + 1.0))
          * w3j(F2, 1, F1, -m2, p, m1))
-    c = (_ph(J2 - Om) * np.sqrt((2 * J1 + 1.0) * (2 * J2 + 1.0))
-         * w3j(J2, 1, J1, -Om, 0, Om))
+    c = inner(J2, float(bra["Om"]), J1, float(ket["Om"]))
     return a * b * c
 
 

@@ -37,19 +37,27 @@ def _spins(ctx):
 
 
 
-def axial_geometry(bra, ket, ctx, *, k, q=None, p):
+def axial_geometry(bra, ket, ctx, *, k, q=None, p, inner=None):
     """Two-spectator axial tensor from B&C 5.172, 5.174, and 5.186 ([HAM] S9.1).
 
     ``q`` defaults to Om_bra-Om_ket and must satisfy |q|≤k; at I_Th=0, k=1,
     q=0 it exactly reduces to ``elements_c.dipole_geometry``.
+
+    ``inner(J_bra, Om_bra, J_ket, Om_ket)`` replaces the J-space reduced element
+    (line 4) for an operator that is lab rank ``k`` but is not the body-frame
+    rank-k tensor component -- the Delta-Omega = +-2 Zeeman channel, which is a
+    lab rank-1 product of a D1 matrix element and a body-frame ladder operator.
+    ``q`` is then unused: the supplied ``inner`` owns the Omega algebra, while
+    ``k`` still fixes the spectator recoupling in lines 1-3.
     """
     Om1, Om2 = float(ket["Om"]), float(bra["Om"])
-    if q is None:
-        q = Om2 - Om1
-    if abs(float(q)) > float(k) + 1e-9:
-        raise ValueError(
-            f"|q| = {abs(float(q))} exceeds the operator rank k = {k}; a rank-k "
-            "molecule-frame tensor has no such component")
+    if inner is None:
+        if q is None:
+            q = Om2 - Om1
+        if abs(float(q)) > float(k) + 1e-9:
+            raise ValueError(
+                f"|q| = {abs(float(q))} exceeds the operator rank k = {k}; a rank-k "
+                "molecule-frame tensor has no such component")
     I_Th, I_F = _spins(ctx)
     # F1/F2 are ket/bra total F; G1/G2 are ket/bra intermediate F1.
     J1, G1, F1, m1 = (float(ket["J"]), float(ket["F1"]), float(ket["F"]),
@@ -69,8 +77,11 @@ def axial_geometry(bra, ket, ctx, *, k, q=None, p):
              * np.sqrt((2 * F2 + 1.0) * (2 * F1 + 1.0)) * six_F)
     line3 = (_ph(G1 + J2 + k + I_Th)
              * np.sqrt((2 * G2 + 1.0) * (2 * G1 + 1.0)) * six_Th)
-    line4 = (_ph(J2 - Om2) * np.sqrt((2 * J2 + 1.0) * (2 * J1 + 1.0))
-             * w3j(J2, k, J1, -Om2, q, Om1))
+    if inner is None:
+        line4 = (_ph(J2 - Om2) * np.sqrt((2 * J2 + 1.0) * (2 * J1 + 1.0))
+                 * w3j(J2, k, J1, -Om2, q, Om1))
+    else:
+        line4 = inner(J2, Om2, J1, Om1)
     return line1 * line2 * line3 * line4
 
 
