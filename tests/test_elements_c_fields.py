@@ -96,51 +96,51 @@ def test_dipole_geometry_supports_p_plus_minus_one_for_spectra(basis, ctx):
 # --------------------------------------------------------------------- Zeeman
 
 def test_V5_zeeman_Gpar_diagonal_gives_minus_Gpar_gamma_F(basis, ctx):
-    """[HAM] V5, G_par half. With E = -g mu_B B m_F the G_par term alone gives
-    g = -G_par gamma_F, and g(1, 3/2) mu_B = -20.853 kHz/G once g_N is added --
-    the number [HAM] S2.8 confirms numerically at G_par = 0.04756.
+    """[HAM] V5, G_zz half. With E = -g mu_B B m_F the G_zz term alone gives
+    g = -G_zz gamma_F, and g(1, 3/2) mu_B = -20.853 kHz/G once g_N is added --
+    the number [HAM] S2.8 confirms numerically at G_zz = 0.04756.
 
     Uniquely catches the Ng Eq. C.6 printed sign ([HAM] S2.8, OPEN-3): the
-    minus sign gives g = +G_par gamma_F, i.e. 23.5 kHz/G rather than the
+    minus sign gives g = +G_zz gamma_F, i.e. 23.5 kHz/G rather than the
     measured-consistent 20.85 kHz/G. Both outcomes are reachable from the
     conventions block -- the 'minus_Gpar' branch is exercised below.
     """
-    G, B = thf_v1().value("G_par"), 1.0
+    G, B = thf_v1().value("G_zz"), 1.0
     for J in (1, 2, 3, 4):
         for F in (J - 0.5, J + 0.5):
             i = _find(basis, J, 1.0, F, F)
-            shift = G * B * _elem("zeeman_Gpar", basis, ctx, i, i)
+            shift = G * B * _elem("zeeman_Gzz", basis, ctx, i, i)
             g = -shift / (MU_B * B * F)
             assert g == pytest.approx(-G * _gamma(J, F, I=0.5), abs=1e-12)
     flipped = _reconvention(ctx, zeeman_sign="minus_Gpar")
     i = _find(basis, 1, 1.0, 1.5, 1.5)
-    assert _elem("zeeman_Gpar", basis, flipped, i, i) == pytest.approx(
-        -_elem("zeeman_Gpar", basis, ctx, i, i), abs=1e-12)
+    assert _elem("zeeman_Gzz", basis, flipped, i, i) == pytest.approx(
+        -_elem("zeeman_Gzz", basis, ctx, i, i), abs=1e-12)
 
 
 def test_V5_total_g_factor_closed_form(basis, ctx):
     """[HAM] V5 in full: both Zeeman terms together give
-    g_F = -G_par gamma_F + g_N (mu_N/mu_B) kappa_F.
+    g_F = -G_zz gamma_F + g_N (mu_N/mu_B) kappa_F.
 
     Uniquely catches a RELATIVE sign or scale error between the two Zeeman
     terms, which the two single-term checks around it cannot see: they are the
     same 10 % of g_F that [HAM] S2.8 calls "the cleanest experimental handle on
     the nuclear contribution" (the ratio g(1,1/2)/g(1,3/2) is 2.19, not the
-    G_par-only 2 of Leanhardt Eq. 24). FAIL is reachable and was measured:
+    G_zz-only 2 of Leanhardt Eq. 24). FAIL is reachable and was measured:
     flipping the relative sign of the two terms moves the ratio to 1.830, and
     dropping the nuclear term moves it to exactly 2.
 
-    Gated against the closed form at the parameter set's own G_par (0.04756),
+    Gated against the closed form at the parameter set's own G_zz (0.04756),
     NOT against [HAM] S2.8's printed g_F table -- that table is a known
-    erratum (it reproduces only at G_par = 0.048, not its own printed header
+    erratum (it reproduces only at G_zz = 0.048, not its own printed header
     value); see docs/open-questions.md "Erratum -- [HAM] S2.8 g_F table".
     """
     ps = thf_v1()
-    G, gN, B = ps.value("G_par"), ps.value("g_N"), 1.0
+    G, gN, B = ps.value("G_zz"), ps.value("g_N"), 1.0
 
     def g_of(J, F):
         i = _find(basis, J, 1.0, F, F)
-        shift = B * (G * _elem("zeeman_Gpar", basis, ctx, i, i)
+        shift = B * (G * _elem("zeeman_Gzz", basis, ctx, i, i)
                      + gN * _elem("zeeman_nuclear", basis, ctx, i, i))
         return -shift / (MU_B * B * F)
 
@@ -193,7 +193,7 @@ def test_nuclear_zeeman_decouples_to_g_N_mu_N_per_gauss(basis, ctx):
 def test_field_elements_are_hermitian(basis, ctx):
     """[HAM] V1 for the five field terms: a bra/ket swap in a spectator-theorem
     phase or a transposed 3j argument order shows up here and nowhere else."""
-    for name in ("stark_z", "zeeman_Gpar", "zeeman_nuclear",
+    for name in ("stark_z", "zeeman_Gzz", "zeeman_nuclear",
                  "pt_odd_edm", "pt_odd_scalar_pseudoscalar"):
         for i in range(0, len(basis), 7):
             for j in range(0, len(basis), 5):
@@ -206,14 +206,14 @@ def test_stark_diagonal_block_is_odd_in_omega_and_zeeman_is_even(basis, ctx):
     """The structural fact behind [HAM] V6 and V8.
 
     Delta-J = 0: the Stark element is odd under Omega -> -Omega (it is
-    -Omega m_F gamma_F d), while the G_par Zeeman element is EVEN (quadratic in
+    -Omega m_F gamma_F d), while the G_zz Zeeman element is EVEN (quadratic in
     n_hat: the explicit Omega and the geometry's Omega multiply out). That is
     exactly why the Zeeman gives g^u = g^l at leading order and the eEDM term,
     which is odd, does not.
 
     Uniquely catches an odd-in-Omega contamination of the Zeeman operator,
     which would fake an eEDM in the four-way chop; FAIL is reachable by
-    dropping the explicit Omega factor from zeeman_Gpar, which makes it odd.
+    dropping the explicit Omega factor from zeeman_Gzz, which makes it odd.
     """
     for J in (1, 2, 3):
         for F in (J - 0.5, J + 0.5):
@@ -222,8 +222,8 @@ def test_stark_diagonal_block_is_odd_in_omega_and_zeeman_is_even(basis, ctx):
                 m = _find(basis, J, -1.0, F, mF)
                 assert _elem("stark_z", basis, ctx, p, p) == pytest.approx(
                     -_elem("stark_z", basis, ctx, m, m), abs=1e-12)
-                assert _elem("zeeman_Gpar", basis, ctx, p, p) == pytest.approx(
-                    _elem("zeeman_Gpar", basis, ctx, m, m), abs=1e-12)
+                assert _elem("zeeman_Gzz", basis, ctx, p, p) == pytest.approx(
+                    _elem("zeeman_Gzz", basis, ctx, m, m), abs=1e-12)
 
 
 def test_pt_odd_is_exactly_odd_in_omega_and_diagonal(basis, ctx):
@@ -254,7 +254,7 @@ def test_leanhardt_half_convention_halves_the_pt_odd_element(basis, ctx):
 
 def test_n_hat_convention_flips_the_omega_odd_terms_only(basis, ctx):
     """[HAM] OPEN-11: n_hat from Th to F flips the signed dipole and E_eff,
-    hence every Stark and PT-odd element. The G_par Zeeman is quadratic in
+    hence every Stark and PT-odd element. The G_zz Zeeman is quadratic in
     n_hat and does not move."""
     flipped = _reconvention(ctx, n_hat="Th_to_F")
     i = _find(basis, 1, 1.0, 1.5, 1.5)
@@ -262,8 +262,8 @@ def test_n_hat_convention_flips_the_omega_odd_terms_only(basis, ctx):
         -_elem("stark_z", basis, ctx, i, i))
     assert _elem("pt_odd_edm", basis, flipped, i, i) == pytest.approx(
         -_elem("pt_odd_edm", basis, ctx, i, i))
-    assert _elem("zeeman_Gpar", basis, flipped, i, i) == pytest.approx(
-        _elem("zeeman_Gpar", basis, ctx, i, i))
+    assert _elem("zeeman_Gzz", basis, flipped, i, i) == pytest.approx(
+        _elem("zeeman_Gzz", basis, ctx, i, i))
 
 
 def test_a_dipole_tagged_with_the_wrong_origin_is_refused():

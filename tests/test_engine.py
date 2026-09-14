@@ -91,7 +91,7 @@ def test_sweep_result_carries_the_label_convention_and_the_active_terms(tm):
     """The sweep manifest carries the label convention used to produce it."""
     res = sweep(tm, thf_v1(), {"E_z": np.zeros(3), "B_z": np.linspace(0.5, 1.0, 3)})
     assert res.order == "energy" and res.gauge == "none"
-    assert "zeeman_Gpar" in res.active_terms and "stark_z" not in res.active_terms
+    assert "zeeman_Gzz" in res.active_terms and "stark_z" not in res.active_terms
     assert res.manifest["conventions"]["zeeman_sign"] == "plus_Gpar"
 
 

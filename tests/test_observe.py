@@ -160,7 +160,7 @@ def _g_by_JF(tm, ctx, pset, knobs):
 
 
 def test_V5_g_factor_closed_form_is_exact_in_a_single_J_basis():
-    """[HAM] V5: g(J,F) = -G_par gamma_F + g_N (mu_N/mu_B) kappa_F.
+    """[HAM] V5: g(J,F) = -G_zz gamma_F + g_N (mu_N/mu_B) kappa_F.
 
     Exact only when the basis holds one J -- the B&C 9.51 hyperfine term mixes
     J by ~3e-4, and the Delta-J = +-1 Zeeman cross term that mixing opens up
@@ -173,7 +173,7 @@ def test_V5_g_factor_closed_form_is_exact_in_a_single_J_basis():
     test_V5_the_wrong_zeeman_sign_gives_the_wrong_g below.
     """
     pset = thf_v1()
-    G, gN = pset.value("G_par"), pset.value("g_N")
+    G, gN = pset.value("G_zz"), pset.value("g_N")
     checked = 0
     for mF, J in ((1.5, 1), (0.5, 1), (2.5, 2), (1.5, 2)):
         tm, ctx = _block(mF, J_range=(J, J))
@@ -204,7 +204,7 @@ def test_V5_holds_in_the_full_basis_to_the_dJ1_hyperfine_level():
     whose residual is 0.03 in g.
     """
     pset = thf_v1()
-    G, gN = pset.value("G_par"), pset.value("g_N")
+    G, gN = pset.value("G_zz"), pset.value("g_N")
     tm, ctx = _block(1.5)
     for (Jd, Fd), gs in _g_by_JF(tm, ctx, pset, {"E_z": 0.0, "B_z": 0.0}).items():
         want = (-G * _gamma(Jd, Fd, I=I_F)
@@ -217,14 +217,14 @@ def test_V5_the_wrong_zeeman_sign_gives_the_wrong_g():
     """The fabricated failure that makes V5 non-vacuous: with Ng's printed
     minus_Gpar operator the same block returns ~23.5 kHz/G, not ~20.85.
 
-    The wrong value is the SAME closed form with the G_par term's sign flipped,
+    The wrong value is the SAME closed form with the G_zz term's sign flipped,
     computed from the ParamSet rather than transcribed -- it is a prediction of
     the convention block, not a measurement.
     """
     bad = replace(thf_v1(), conventions=Conventions(zeeman_sign="minus_Gpar"))
     tm, ctx = _block(1.5, pset=bad)
     g = g_factors(tm, bad, {"E_z": 0.0, "B_z": 0.0}, ctx=ctx)["g"][0]
-    G, gN = bad.value("G_par"), bad.value("g_N")
+    G, gN = bad.value("G_zz"), bad.value("g_N")
     want_bad = MU_B * (G * _gamma(1, 1.5, I=I_F)
                        + gN * (MU_N / MU_B) * _kappa(1, 1.5, I=I_F))
     assert abs(g * MU_B) == pytest.approx(abs(want_bad), abs=1e-4)
@@ -253,7 +253,7 @@ def test_V6_the_zeeman_vertex_is_even_under_omega_reversal_and_the_stark_one_is_
 
     Under the Omega-flip permutation pi the Zeeman vertex dH/dB_z must satisfy
     V_B[pi][:, pi] == V_B and the Stark vertex dH/dE_z must satisfy
-    V_E[pi][:, pi] == -V_E: the G_par Zeeman is quadratic in n_hat (the explicit
+    V_E[pi][:, pi] == -V_E: the G_zz Zeeman is quadratic in n_hat (the explicit
     Omega and the geometry's Omega multiply out) while the Stark operator is
     linear in it.
 

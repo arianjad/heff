@@ -4,7 +4,7 @@
 nonzero in a basis, and makes declared selection rules available for validation.
 
 A term's `param` is a TUPLE of knob symbols whose PRODUCT is the coefficient --
-('d_mf', 'E_z') for the Stark term, ('G_par', 'B_z') for the Zeeman one. Fields
+('d_mf', 'E_z') for the Stark term, ('G_zz', 'B_z') for the Zeeman one. Fields
 and Hamiltonian parameters form one flat catalogue, allowing
 ``heff.assemble.vertex`` to evaluate derivatives with respect to a knob.
 """

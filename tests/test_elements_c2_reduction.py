@@ -28,7 +28,7 @@ V2_TO_V1 = {
     "hyperfine_A_par_F_dJ1": "hyperfine_A_par_dJ1",
     "spin_rotation_cI_F": "spin_rotation_cI",
     "stark_z": "stark_z",
-    "zeeman_Gpar": "zeeman_Gpar",
+    "zeeman_Gzz": "zeeman_Gzz",
     "zeeman_nuclear_F": "zeeman_nuclear",
     "pt_odd_edm": "pt_odd_edm",
     "pt_odd_scalar_pseudoscalar": "pt_odd_scalar_pseudoscalar",

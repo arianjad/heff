@@ -110,8 +110,12 @@ def test_apply_gauge_global_on_the_real_mF_three_halves_sweep():
 
     # res.evecs is (n_points, d, d) with eigenvector k in COLUMN k (engine.py
     # convention); reconstruct the same ground-reference index apply_gauge used.
+    # It must be the TIE-ROBUST index, not plain argmax: at E = 0 the ground
+    # state is a parity eigenstate, so its two Omega components are equal in
+    # magnitude to rounding and the two rules pick different ones -- which is
+    # then a claim about the wrong component's sign, not about the gauge.
     ground = res.evecs[:, :, 0]                          # (n_points, d): state 0 at every point
-    ref_index = int(np.argmax(np.abs(ground[0])))
+    ref_index = int(track._dominant_index(ground[0]))
     ref_amp = ground[:, ref_index]
     assert np.all(ref_amp >= 0)                          # PASS: the real check
 

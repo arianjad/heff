@@ -56,12 +56,12 @@ def test_thf_v1_carries_the_documented_values_and_statuses():
     assert ps.value("omega_ef") == pytest.approx(5.29)
     assert ps.value("A_par") == pytest.approx(-20.1)
     assert ps.value("d_mf") == pytest.approx(1.6964978, abs=1e-7)
-    assert ps.value("G_par") == pytest.approx(0.04756)
+    assert ps.value("G_zz") == pytest.approx(0.04756)
     assert ps.value("g_N") == pytest.approx(5.25773)
     assert ps.value("c_I") == pytest.approx(0.020)
     assert ps.params["c_I"].status == "estimate"
     assert ps.params["A_par"].status == "measured"
-    assert ps.params["G_par"].status == "derived"
+    assert ps.params["G_zz"].status == "derived"
     assert ps.value("d_e") == 0.0 and ps.value("k_TP") == 0.0
 
 
@@ -90,7 +90,7 @@ def test_missing_symbol_returns_the_default_not_a_keyerror():
 
 def test_table_names_every_symbol_with_its_status():
     text = thf_v1().table()
-    for sym in ("B0", "D0", "omega_ef", "A_par", "d_mf", "G_par", "g_N", "c_I"):
+    for sym in ("B0", "D0", "omega_ef", "A_par", "d_mf", "G_zz", "g_N", "c_I"):
         assert sym in text
     assert "estimate" in text and "measured" in text
 
@@ -168,7 +168,7 @@ def test_odd_thorium_transfers_do_not_claim_target_isotope_measurements():
     # A source-isotope error bar cannot be used as a transfer error bar.
     for isotope in ('229', '227'):
         ps = thf_v2(isotope)
-        for name in ('B0', 'D0', 'omega_ef', 'A_par', 'd_mf', 'G_par'):
+        for name in ('B0', 'D0', 'omega_ef', 'A_par', 'd_mf', 'G_zz'):
             p = ps.params[name]
             assert p.status == 'estimate'
             assert p.uncertainty is None

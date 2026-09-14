@@ -9,7 +9,7 @@ without C2V's positional-7-tuple opacity.
 v1 basis (docs/thf-plus-x3delta1-effective-hamiltonian.md S1.1): Hund's case (c),
 |J, Omega = +-1, F, m_F>, F = J + I with I(19F) = 1/2, J = 1..4. Lambda and Sigma
 never appear; the electronic structure enters only through the effective
-constants A_par, omega_ef, d_mf, G_par, E_eff.
+constants A_par, omega_ef, d_mf, G_zz, E_eff.
 """
 from dataclasses import dataclass
 from typing import Mapping

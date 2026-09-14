@@ -416,7 +416,7 @@ the fully polarised `γ_F m_F d_mf`.
     code("""
 gam_ = gam(1, 1.5)
 kap = lambda J, F, I=0.5: (F * (F + 1) - J * (J + 1) + I * (I + 1)) / (2 * F * (F + 1))
-closed = -pset.value('G_par') * gam_ + pset.value('g_N') * (heff.MU_N / heff.MU_B) * kap(1, 1.5)
+closed = -pset.value('G_zz') * gam_ + pset.value('g_N') * (heff.MU_N / heff.MU_B) * kap(1, 1.5)
 
 res_g0 = g_factors(tm, pset, {'E_z': 0.0, 'B_z': 0.0}, ctx=ctx)
 res_g60 = g_factors(tm, pset, {'E_z': 60.0, 'B_z': 0.0}, ctx=ctx)

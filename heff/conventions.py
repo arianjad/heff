@@ -35,9 +35,9 @@ class Conventions:
                  +(-1)^(J-1/2) for half-integer J. 'thesis_S_half' = the thesis
                  rule P = (-1)^(J-S-l), which is the S = 1/2 specialisation and
                  INVERTS every label at S = 1. [HAM] OPEN-2.
-    zeeman_sign  'plus_Gpar' = +G_par mu_B (J.n)(n.B) - g_N mu_N I.B. Ng thesis
+    zeeman_sign  'plus_Gpar' = +G_zz mu_B (J.n)(n.B) - g_N mu_N I.B. Ng thesis
                  Eq. C.6 prints a minus; the minus contradicts the g_F formula
-                 three lines below it, his own G_par = 0.048(2), and the measured
+                 three lines below it, his own G_zz = 0.048(2), and the measured
                  |g| = 0.0149. [HAM] S2.8, OPEN-3.
     dg_def       'Delta' = g^u - g^l (Petrov, Ng 2022 paper); 'delta' = half that
                  (Ng thesis App. C.4). [HAM] OPEN-12.

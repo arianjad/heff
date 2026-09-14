@@ -124,9 +124,9 @@ def test_inactive_terms_are_reported_not_hidden(block):
     names = active(tm, thf_v1(), {"E_z": 0.0, "B_z": 0.0})
     assert "rotation" in names and "omega_doubling" in names
     assert "stark_z" not in names and "pt_odd_edm" not in names
-    assert "zeeman_Gpar" not in names
+    assert "zeeman_Gzz" not in names
     names_on = active(tm, thf_v1(), {"E_z": 10.0, "B_z": 1.0})
-    assert "stark_z" in names_on and "zeeman_Gpar" in names_on
+    assert "stark_z" in names_on and "zeeman_Gzz" in names_on
 
 
 def test_vertex_is_the_exact_derivative_of_H(block):
@@ -137,8 +137,8 @@ def test_vertex_is_the_exact_derivative_of_H(block):
     pset = thf_v1()
     knobs = {"E_z": 7.0, "B_z": 0.0}
     V = vertex(tm, pset, knobs, "B_z")
-    k1, k2 = tm.names.index("zeeman_Gpar"), tm.names.index("zeeman_nuclear")
-    assert np.allclose(V, pset.value("G_par") * tm.mats[k1]
+    k1, k2 = tm.names.index("zeeman_Gzz"), tm.names.index("zeeman_nuclear")
+    assert np.allclose(V, pset.value("G_zz") * tm.mats[k1]
                        + pset.value("g_N") * tm.mats[k2], atol=1e-13)
 
 
@@ -274,8 +274,8 @@ def test_spec_hash_distinguishes_opposite_mF_blocks():
     assert up.manifest["terms"] == dn.manifest["terms"]
     assert up.manifest["conventions"] == dn.manifest["conventions"]
     # ... but the matrices differ (an m_F-odd term, e.g. Zeeman, flips sign)
-    assert not np.allclose(up.mats[up.names.index("zeeman_Gpar")],
-                           dn.mats[dn.names.index("zeeman_Gpar")])
+    assert not np.allclose(up.mats[up.names.index("zeeman_Gzz")],
+                           dn.mats[dn.names.index("zeeman_Gzz")])
     assert up.manifest["spec_hash"] != dn.manifest["spec_hash"]
 
 

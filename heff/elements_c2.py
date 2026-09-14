@@ -147,7 +147,8 @@ omega_doubling = _term_c2(
          "operator acts inside F1, so it is diagonal in F1, F, m_F and equal to "
          "the v1 element, elements_c.omega_doubling -- Ng thesis Eq. C.3 p.319 "
          "transposed to heff's ket phase (-1)^(J-S+s), giving the J-INDEPENDENT "
-         "off-diagonal -omega_ef J(J+1)/4. [HAM] S2.3, docs/open-questions.md OQ-A"
+         "off-diagonal +omega_ef J(J+1)/4, i.e. e (parity +(-1)^J) BELOW f at "
+         "every J. [HAM] S2.3, docs/open-questions.md OQ-A"
 )(_delegate(_v1_omega_doubling))
 
 pt_odd_edm = _term_c2(
@@ -281,16 +282,16 @@ def stark_z(bra, ket, ctx):
     return -n_hat_sign(ctx.conventions) * axial_geometry(bra, ket, ctx, k=1, q=0, p=0)
 
 
-@_term_c2(name="zeeman_Gpar", param=("G_par", "B_z"), rules=_FIELD,
+@_term_c2(name="zeeman_Gzz", param=("G_zz", "B_z"), rules=_FIELD,
           hermitian=True, real=True,
-          cite="Ng thesis Eq. C.6 p.321 with the sign CORRECTED to +G_par mu_B "
+          cite="Ng thesis Eq. C.6 p.321 with the sign CORRECTED to +G_zz mu_B "
                "(J.n^)(n^.B) ([HAM] S2.8, OPEN-3), evaluated with the [HAM] S9.1 "
                "two-spectator geometry at k = 1, q = 0, p = 0 -- same four cited "
-               "B&C equations as stark_z with -d_mf E_p -> +G_par mu_B B_p "
+               "B&C equations as stark_z with -d_mf E_p -> +G_zz mu_B B_p "
                "Omega. PARITY-EVEN and EVEN in n^ (quadratic), so unlike the "
                "Stark and PT-odd terms it does NOT carry n_hat_sign. Delta F1 = "
                "0, +-1 from the I_Th 6j's triangle. [HAM] S2.8, S9.1")
-def zeeman_Gpar(bra, ket, ctx):
+def zeeman_Gzz(bra, ket, ctx):
     if bra["Om"] != ket["Om"]:
         return 0.0
     sign = 1.0 if ctx.conventions.zeeman_sign == "plus_Gpar" else -1.0

@@ -142,19 +142,22 @@ def test_omega_doubling_is_hermitian_and_only_connects_the_doublet(basis, ctx):
     assert _elem("omega_doubling", basis, ctx, p, other) == 0.0
 
 
-def test_V4_upper_doublet_parity_alternates_as_minus_one_to_the_J(basis, ctx):
-    """[HAM] V4 (parity half): the UPPER Omega-doublet component has parity (-1)^J.
+def test_V4_upper_doublet_parity_alternates_as_minus_one_to_the_J_minus_one(basis, ctx):
+    """[HAM] V4 (parity half): the UPPER Omega-doublet component has parity
+    -(-1)^J at every J, i.e. f above e uniformly.
 
-    This is the convention-free statement, read off Ng 2022 Fig. 2 as an image
-    ([HAM] S2.3): negative parity above at J = 1, positive parity above at J = 2;
-    equivalently e above f uniformly, which is Gresh's k'' < 0.
+    The ordering is Petrov & Skripnikov arXiv:2503.02840's: the 1Sigma+ state
+    314 cm-1 above mixes with the e component alone and pushes it down. Gresh
+    2016 Table 1's k'' > 0 on the Omega = 0+ bands says the same. Ng did not
+    measure it (Ng thesis Fig. 1.4 caption p.30), so his schematics are not
+    evidence either way.
 
     Uniquely catches a J-DEPENDENT phase on the Omega-doubling element in a
     package whose parity operator is E*|J,Om> = (-1)^(J-S+s)|J,-Om>: Ng Eq. C.3's
     (-1)^J prefactor, transcribed literally, passes at J = 1 and 3 and FAILS at
-    J = 2 and 4 (the two alternations cancel, leaving upper parity -1 at every
-    J). A globally flipped sign fails at odd J instead. Both outcomes reachable;
-    see docs/open-questions.md OQ-A.
+    J = 2 and 4 (the two alternations cancel, leaving one fixed upper parity at
+    every J). A globally flipped sign fails at odd J instead. Both outcomes
+    reachable; see docs/open-questions.md OQ-A.
     """
     from heff.conventions import superposition_parity
 
@@ -166,7 +169,7 @@ def test_V4_upper_doublet_parity_alternates_as_minus_one_to_the_J(basis, ctx):
         sym_is_upper = c > 0                       # eigenvalues of c*sigma_x are +-c
         upper = superposition_parity(J, +1 if sym_is_upper else -1, S=ctx.S,
                                      ell=0.0, s=0.0)
-        assert upper == int((-1) ** J), f"J={J}: upper parity {upper}"
+        assert upper == -int((-1) ** J), f"J={J}: upper parity {upper}"
 
 
 def test_hyperfine_dJ1_does_not_connect_F_equal_J_minus_half_to_the_next_J(basis, ctx):

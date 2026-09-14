@@ -5,7 +5,7 @@ a dipole is canonically MHz/(V/cm) and E_eff is canonically MHz per (e.cm), so
 that every coefficient in the term catalogue is a plain product of canonical
 values and every assembled Hamiltonian is in MHz.
 
-`status` exists because Arian already needs it -- c_I is an estimate, G_par is
+`status` exists because Arian already needs it -- c_I is an estimate, G_zz is
 derived from a measurement, A_par is measured. The report layer surfaces
 statuses; NOTHING gates on them.
 """
@@ -177,7 +177,7 @@ def thf_v1():
                   source="Ng 2022 Table I p.5",
                   note="ORIGIN-DEPENDENT for an ion: 2.74 D w.r.t. the Th nucleus "
                        "(Skripnikov & Titov 2015 Table II) = 3.46 D at c.m."),
-        "G_par": P(0.04756, "", uncertainty=0.002, status="derived",
+        "G_zz": P(0.04756, "", uncertainty=0.002, status="derived",
                    source="Ng thesis p.87 (0.048(2) for g_F < 0); reproduces "
                           "|g_F=3/2| = 0.0149 exactly -- [HAM] S3",
                    note="sign of g_F is NOT measured; theory forces g_F < 0. OPEN-4"),
@@ -311,7 +311,7 @@ def thf_v2(isotopologue, *, a_par_th_sign="negative"):
                      "See docs/superpowers/reports/2026-09-08-thf-quadrupole-estimate-audit.md"),
             "eQq2_Th": P(300, "MHz", status="placeholder",
                 source="Petrov 2018 Eqs. (24)-(25) route with w(ThF+) = "
-                       "G_par + 0.002319 = 0.0499 against w(HfF+) = 0.014 "
+                       "G_zz + 0.002319 = 0.0499 against w(HfF+) = 0.014 "
                        "=> ~200-400 MHz ([TH] S4.4)",
                 note="Sensitivity placeholder only; the former +/-100 MHz range is not "
                      "source-calibrated and the signed value is not a validated B&C input. "
@@ -379,7 +379,7 @@ def thf_v2(isotopologue, *, a_par_th_sign="negative"):
 
     shared = dict(thf_v1().params)
     if isotopologue != "232":
-        for name in ("B0", "D0", "omega_ef", "A_par", "d_mf", "G_par"):
+        for name in ("B0", "D0", "omega_ef", "A_par", "d_mf", "G_zz"):
             p = shared[name]
             note = (f"Transferred unchanged from 232Th19F+ to {isotopologue}Th19F+; "
                     "not measured for the target isotope and not mass-scaled. "

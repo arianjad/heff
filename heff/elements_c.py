@@ -1,6 +1,6 @@
 """Case-(c) elements for |J, Omega, F, m_F>; see the cited decorators and [HAM].
 
-Defaults use F→Th n_hat, +G_par mu_B (J.n)(n.B), Ng's eEDM normalization, and
+Defaults use F→Th n_hat, +G_zz mu_B (J.n)(n.B), Ng's eEDM normalization, and
 E*|J,Omega> = (-1)^(J-S+s)|J,-Omega>.
 """
 import numpy as np
@@ -59,12 +59,16 @@ def centrifugal(bra, ket, ctx):
            "H = ((-1)^J / 2) hbar omega_ef Omega_x^(J) with "
            "Omega_x^(J) = [J(J+1)/2](|+1><-1| + |-1><+1|). In heff's convention "
            "the parity operator is E*|J,Om> = (-1)^(J-S+s)|J,-Om> = (-1)^(J-1)|J,-Om> "
-           "for a 3Delta, and the physical invariant -- upper doublet component "
-           "of parity (-1)^J at every J, i.e. e above f uniformly under Brown's "
-           "1975 rule (Ng 2022 Fig. 2 read as an image, [HAM] S2.3; Gresh k'' < 0) "
-           "-- requires the J-INDEPENDENT off-diagonal -omega_ef J(J+1)/4. Ng's "
-           "(-1)^J is the same physics in a ket phase where E*|J,Om> = |J,-Om>. "
-           "The splitting law omega_ef J(J+1)/2 is identical either way and is "
+           "for a 3Delta, so the ORDERING -- e (parity +(-1)^J) BELOW f at every "
+           "J -- requires the J-INDEPENDENT off-diagonal +omega_ef J(J+1)/4. That "
+           "ordering is Petrov & Skripnikov arXiv:2503.02840's model: the 1Sigma+ "
+           "state 314 cm-1 above mixes with the e component alone (0+ states carry "
+           "only e levels) and pushes it down, the same mixing Petrov fits the "
+           "Omega-doubling to. It is consistent with Gresh 2016 Table 1's k'' > 0 "
+           "on the Omega = 0+ <- 3Delta1 bands. Ng's schematics assume an ordering "
+           "his experiment did not determine (Ng thesis Fig. 1.4 caption p.30: 'We "
+           "did not determine the energy ordering of the parity states'). The "
+           "splitting law omega_ef J(J+1)/2 is identical either way and is "
            "hard-gated. [HAM] S2.3")
 def omega_doubling(bra, ket, ctx):
     if not _same(bra, ket, "J", "F", "mF"):
@@ -72,7 +76,7 @@ def omega_doubling(bra, ket, ctx):
     if bra["Om"] != -ket["Om"]:
         return 0.0
     J = float(ket["J"])
-    return -J * (J + 1.0) / 4.0
+    return J * (J + 1.0) / 4.0
 
 
 
@@ -168,18 +172,18 @@ def stark_z(bra, ket, ctx):
 
 
 
-@term(name="zeeman_Gpar", param=("G_par", "B_z"), cases=("c",),
+@term(name="zeeman_Gzz", param=("G_zz", "B_z"), cases=("c",),
       rules=Rules(dJ=(-1, 0, 1), dOm=(0.0,), dF=(-1, 0, 1), dmF=(0,)),
       hermitian=True, real=True,
       cite="Ng thesis Eq. C.6 p.321 with the sign CORRECTED to "
-           "+G_par mu_B (J.n_hat)(n_hat.B): the printed minus contradicts the "
-           "g_F formula three lines below it, Ng's own G_par = 0.048(2) / "
+           "+G_zz mu_B (J.n_hat)(n_hat.B): the printed minus contradicts the "
+           "g_F formula three lines below it, Ng's own G_zz = 0.048(2) / "
            "-0.042(2) pair, and the measured |g_F=3/2| = 0.0149(3). "
            "[HAM] S2.8, OPEN-3. Same geometry as the Stark term with "
-           "-d_mf E_p -> +G_par mu_B B_p Omega, as Ng notes himself. "
+           "-d_mf E_p -> +G_zz mu_B B_p Omega, as Ng notes himself. "
            "PARITY-EVEN and EVEN in n_hat (quadratic in n_hat), so unlike the "
            "Stark and PT-odd terms it does NOT carry n_hat_sign.")
-def zeeman_Gpar(bra, ket, ctx):
+def zeeman_Gzz(bra, ket, ctx):
     sign = 1.0 if ctx.conventions.zeeman_sign == "plus_Gpar" else -1.0
     return sign * ctx.mu_B * float(ket["Om"]) * dipole_geometry(bra, ket, ctx.I, 0)
 
