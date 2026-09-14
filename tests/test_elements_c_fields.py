@@ -134,12 +134,10 @@ def test_V5_total_g_factor_closed_form(basis, ctx):
     flipping the relative sign of the nuclear term moves the ratio to 1.830,
     and dropping it moves the ratio to exactly 2.
 
-    Gated against the closed form at the parameter set's own values, NOT
-    against [HAM] S2.8's printed g_F table -- that table is a known erratum (it
-    reproduces only at G_par = 0.048, not its own printed header value); see
-    docs/open-questions.md "Erratum -- [HAM] S2.8 g_F table". The -20.853 kHz/G
-    anchor survives the tensor split because the parametrisation keeps the one
-    measured combination, G_zz + G_perp = 0.04756, fixed.
+    Gated against the closed form at the parameter set's own values, computed
+    from the ParamSet rather than transcribed from any table. The -20.853 kHz/G
+    anchor holds because the parametrisation keeps the one measured
+    combination, G_zz + G_perp = 0.04756, fixed.
     """
     ps = thf_v1()
     gN, B = ps.value("g_N"), 1.0

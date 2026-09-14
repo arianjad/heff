@@ -180,7 +180,8 @@ def inner_flip(J_bra, Om_bra, J_ket, Om_ket):
 
     C is a lab rank-1 tensor times a lab scalar, so the k = 1 spectator chain in
     front of it is unchanged -- a lab rank-2 geometry would be quadrupolar in
-    m_F and is the wrong operator, see the 2026-09-14 handoff audit S2.1. The
+    m_F and is the wrong operator; docs/lit/lookup-effective-zeeman-tensor.md
+    S5.0 ranks the channels. The
     overall sqrt(2) is the normalisation that makes <J,-/+1,M|C|J,+/-1,M> = +M
     exactly and J-independently, which is what fixes the meaning of G_Delta.
     """
@@ -284,8 +285,10 @@ _PERP_CITE = (
     "Skripnikov arXiv:2503.02840 Eqs. (3)-(15) second-order estimates; "
     "G_Delta = (G_xx - G_yy)/2 < 0 is what splits g_e from g_f and it ADDS to "
     "the e level (the component that mixes with the Omega = 0+ states). "
-    "docs/superpowers/reports/2026-09-14-zeeman-tensor-handoff-audit.md S2.2, "
-    "S3; [HAM] S2.8, OPEN-10.")
+    "docs/lit/lookup-effective-zeeman-tensor.md S5.0 (operator ranks), S5.2 "
+    "(the term-C derivation and its matrix elements), S5.3 (the numerical "
+    "check), S5.5 (the closed form), S1.2 (the doublet ordering); "
+    "[HAM] S2.8, OPEN-10.")
 
 _PERP_RULES = Rules(dJ=(-1, 0, 1), dOm=(-2.0, 0.0, 2.0), dF=(-1, 0, 1), dmF=(0,))
 

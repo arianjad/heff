@@ -338,8 +338,9 @@ _PERP_CITE_C2 = (
     "stark_z declares. Delta Omega = 0 from P and +-2 from C. PARITY-EVEN and "
     "even in n^ (quadratic), so no n_hat_sign. At I_Th = 0 it reduces to the "
     "v1 elements_c.zeeman_G{c} element (gate V16). "
-    "docs/superpowers/reports/2026-09-14-zeeman-tensor-handoff-audit.md S2.2; "
-    "[HAM] S2.8, S9.1, OPEN-10.")
+    "docs/lit/lookup-effective-zeeman-tensor.md S5.2 (the term-C derivation and "
+    "its matrix elements), S5.3 (the numerical check); [HAM] S2.8, S9.1, "
+    "OPEN-10.")
 
 _PERP_FIELD = Rules(dJ=(-1, 0, 1), dOm=(-2.0, 0.0, 2.0), dF1=(-1, 0, 1),
                     dF=(-1, 0, 1), dmF=(0,))

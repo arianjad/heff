@@ -255,7 +255,8 @@ def test_V5_parity_split_g_factors_at_the_shipped_parameters():
     of every Omega doublet now have DIFFERENT g-factors, g_e - g_f = 2 G_Delta
     projected onto F, and G_Delta < 0 makes |g_e| the larger. Only the e level
     mixes with the Omega = 0+ states, which is what fixes which sign goes where
-    (2026-09-14 handoff audit S2.3); with the shipped ordering (e below f) the
+    (docs/lit/lookup-effective-zeeman-tensor.md S1.2); with the shipped ordering
+    (e below f) the
     prediction is Delta g = g^u - g^l = -2 G_Delta (2/3) = +2.74e-4 at
     J = 1, F = 3/2, the sign Petrov prints.
 
