@@ -1,7 +1,8 @@
 """Case-(c) elements for |J, Omega, F, m_F>; see the cited decorators and [HAM].
 
-Defaults use F→Th n_hat, +G_zz mu_B (J.n)(n.B), Ng's eEDM normalization, and
-E*|J,Omega> = (-1)^(J-S+s)|J,-Omega>.
+Defaults use F→Th n_hat, the Zeeman operator mu_B B.G.J with the body-frame
+tensor G = diag(G_xx, G_yy, G_zz) entered with a plus sign, Ng's eEDM
+normalization, and E*|J,Omega> = (-1)^(J-S+s)|J,-Omega>.
 """
 import numpy as np
 
@@ -55,7 +56,7 @@ def centrifugal(bra, ket, ctx):
       rules=Rules(dJ=(0,), dOm=(-2.0, 2.0), dF=(0,), dmF=(0,)),
       hermitian=True, real=True,
       cite="Ng thesis Eq. C.3 p.319, sign transposed to the heff ket phase "
-           "(-1)^(J-S+s); see docs/open-questions.md OQ-A. Ng writes "
+           "(-1)^(J-S+s); see docs/open-questions.md OPEN-2. Ng writes "
            "H = ((-1)^J / 2) hbar omega_ef Omega_x^(J) with "
            "Omega_x^(J) = [J(J+1)/2](|+1><-1| + |-1><+1|). In heff's convention "
            "the parity operator is E*|J,Om> = (-1)^(J-S+s)|J,-Om> = (-1)^(J-1)|J,-Om> "

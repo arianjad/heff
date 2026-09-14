@@ -157,7 +157,7 @@ def test_V4_upper_doublet_parity_alternates_as_minus_one_to_the_J_minus_one(basi
     (-1)^J prefactor, transcribed literally, passes at J = 1 and 3 and FAILS at
     J = 2 and 4 (the two alternations cancel, leaving one fixed upper parity at
     every J). A globally flipped sign fails at odd J instead. Both outcomes
-    reachable; see docs/open-questions.md OQ-A.
+    reachable; see docs/open-questions.md OPEN-2.
     """
     from heff.conventions import superposition_parity
 

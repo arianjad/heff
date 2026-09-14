@@ -78,7 +78,7 @@ Per-M_F blocking is exact for a collinear (E ∥ B ∥ ẑ) static problem; it i
 
 | tier | basis | dim (J = 1–4) | what it buys | what it costs |
 |---|---|---|---|---|
-| **implemented** | Ω = ±1, effective ω_ef, A∥, G∥, d_mf | 96 | every energy in §4 to ≪ 1 kHz; δg to 15 % | ω_ef and G∥ are inputs, not outputs |
+| **implemented** | Ω = ±1, effective ω_ef, A∥, the Zeeman tensor (G_xx, G_yy, G_zz), d_mf | 96 | every energy in §4 to ≪ 1 kHz; δg/g to 2.4 % of the measurement; a zero-field Δg | ω_ef and the measured Zeeman combination are inputs, not outputs; G⊥ and G_Δ are Petrov estimates |
 | T2 | + ³Δ₂ (Ω = ±2), + ³Δ₃ (Ω = ±3) | 244 | δg to the measurement; the A_SO/λ fine structure | needs A_SO, λ, and the ³Δ₁–³Δ₂ off-diagonal element |
 | T3 | + Ω = 0 perturbers (a ¹Σ⁺, ³Π₀₋, ³Π₀₊) as in Petrov 2025 Eq. 3 | ~500+ | ω_ef **generated**, not fitted (see §2.3) | six ab initio electronic matrix elements |
 
@@ -147,9 +147,11 @@ So the off-diagonal element between the two Ω components at fixed J, F, m_F is 
 
 **Selection rules**: ΔJ = ΔF = Δm_F = 0, Ω → −Ω. Diagonal in parity (it is the operator that *splits* parity).
 
-**Which component is upper — settled from the primary figure.** I rendered Ng 2022 p. 3 and read Fig. 2 as an image. Caption: "The energy levels with positive (negative) parity are denoted by black (grey) lines." In the zero-field panel: at **J = 1** the grey (negative-parity) line is above the black in both F = 3/2 and F = 1/2; at **J = 2** the black (positive-parity) line is above the grey in both F = 5/2 and F = 3/2. So the parity of the upper component is `(−1)^J`, i.e. the **physical parity ordering alternates with J**, exactly as Ng's `(−1)^J` prefactor encodes. This is also what the case-(a) parity phase `(−1)^{J−S} = (−1)^{J−1}` for S = 1 requires: the symmetric combination `(|Ω=+1⟩+|Ω=−1⟩)/√2` is the positive-parity state only for odd J. `[derived, cross-checked two ways]`
+**Which component is upper — from the perturber, not from a figure.** The same ¹Σ⁺ state that generates most of ω_ef also fixes the ordering. An Ω = 0⁺ state carries only e levels (Brown's rule), so it mixes with the ³Δ₁ **e** component and with nothing else, and a perturber 314 cm⁻¹ *above* pushes that component **down**. Hence **e lies `ω_ef J(J+1)/2` below f, uniformly in J** `[derived; the second-order model of the 2026-09-14 handoff audit §3 measures the ratio of the Zeeman and Ω-doubling Ω-flip elements as −1.92 per cm⁻¹ for both reflection signs, so this is physics and not a phase choice]`. Gresh 2016 Table 1 gives `k″ > 0` on the Ω = 0⁺ ← ³Δ₁ bands, which says the same thing if `s` there labels the P/R-connected component.
 
-In the **B&C e/f convention** — "For integral J values, levels with parities (−1)^J or (−1)^{J+1} are designated as e or f respectively" (B&C PDF p. 283 / book p. 251) — upper parity `(−1)^J` means **the e component lies `ω_ef J(J+1)/2` above the f component, uniformly in J**. That is the J-independent statement to code against.
+Ng did not measure the ordering. The thesis says so in as many words (Fig. 1.4 caption, PDF p. 30: "We did not determine the energy ordering of the parity states"), so the level schematics in Ng 2022 Fig. 2 record an assumption, not a result, and are not evidence against the perturber argument.
+
+In the **B&C e/f convention** — "For integral J values, levels with parities (−1)^J or (−1)^{J+1} are designated as e or f respectively" (B&C PDF p. 283 / book p. 251) — e is the component of parity `(−1)^J`, so the upper component has parity `−(−1)^J`. That is the J-independent statement to code against. In heff's ket phase `E*|J,Ω⟩ = (−1)^{J−S+s}|J,−Ω⟩`, which for a ³Δ is `(−1)^{J−1}`, it requires the J-independent off-diagonal `+ω_ef J(J+1)/4`. The ordering fixes the sign of every predicted parity-doublet differential, `Δg` included; the splitting law is the same either way.
 
 > **TRAP (OPEN-2).** Arian's thesis defines e by `P = (−1)^{J−S−ℓ}` (thesis Fig. 4.14 caption). At S = ½ that is `(−1)^{J−1/2}` and agrees with B&C. At **S = 1 it is `(−1)^{J−1} = −(−1)^J`, the opposite of B&C.** Applying the thesis rule verbatim to ³Δ₁ inverts every e/f label in this molecule. Use B&C's J-only rule here.
 
@@ -339,33 +341,81 @@ with the Zeeman shift defined as `E = −g μ_B B m_F` (Petrov arXiv:2503.02840 
 - Ng's quoted numbers settle it. He writes: "converting |g_{F=3/2}| into G∥, we get −0.042(2) if g_{F=3/2} > 0 and 0.048(2) otherwise" (thesis p. 87). Solving `g = −G∥/3 + g_N(μ_N/μ_B)/3` gives G∥ = −0.0418 for g = +0.0149 and G∥ = +0.0476 for g = −0.0149 `[derived]` — reproducing both of his printed values. The formula, not the operator, is what he used.
 - Numerical confirmation: with `H = +G∥ μ_B (J·n̂)(n̂·B) − g_N μ_N I·B` and G∥ = 0.04756, diagonalising the J = 1 block at B = 1 G gives adjacent-m_F spacings of **20.85 kHz**, matching the closed form `|(1/3)(−G∥ + g_N μ_N/μ_B)| μ_B = 20.853 kHz/G` to 4 digits. With Ng's printed sign the model gives 23.52 kHz and |g| = 0.0168 — irreconcilable with the measurement.
 
-**Adopt: `H_Zeeman = +G∥ μ_B (J·n̂)(n̂·B) − g_N μ_N I·B`, with `G∥ = (1/Ω)⟨Ψ| L̂ᵉ_n̂ − g_S Ŝᵉ_n̂ |Ψ⟩`, `g_S = −2.0023`** (Skripnikov & Titov 2015 Eq. 11, p. 3; identically arXiv:2302.02856 Eq. 10). Skripnikov notes G∥ "is close to zero for the ³Δ₁ state (and equal to zero when both the scalar-relativistic approximation is applied and the radiation corrections to the free-electron g-factor are ignored)" — for Λ = 2, Σ = −1 the naive value is `2 − 2.0023 = −0.0023`, twenty times smaller than the measured 0.048 and of the opposite sign. G∥ is a small difference of large numbers; treat it as a fitted parameter, not a derived one. **OPEN-3** records the alternative reading (that Ng's operator is right and his formula's relative sign is wrong), which the measurement excludes but which someone should confirm with the JILA authors.
+**Adopt: `H_Zeeman = +μ_B B·G·J − g_N μ_N I·B`**, with `G` the Cartesian body-frame tensor and `G∥ ≡ G_zz = (1/Ω)⟨Ψ| L̂ᵉ_n̂ − g_S Ŝᵉ_n̂ |Ψ⟩`, `g_S = −2.0023` (Skripnikov & Titov 2015 Eq. 11, p. 3; identically arXiv:2302.02856 Eq. 10). Skripnikov notes G∥ "is close to zero for the ³Δ₁ state (and equal to zero when both the scalar-relativistic approximation is applied and the radiation corrections to the free-electron g-factor are ignored)" — for Λ = 2, Σ = −1 the naive value is `2 − 2.0023 = −0.0023`, twenty times smaller than the measured 0.048 and of the opposite sign. G_zz is a small difference of large numbers; treat it as a fitted parameter, not a derived one. **OPEN-3** records the alternative reading (that Ng's operator is right and his formula's relative sign is wrong), which the measurement excludes but which someone should confirm with the JILA authors.
 
-**Matrix elements.** The G∥ term has exactly the Stark structure of §2.7 with `−d_mf E_p → +G∥ μ_B B_p Ω`; Ng writes both out and notes the similarity himself. The nuclear term uses B&C's spectator theorem (5.175) on the I part:
+**The tensor, and why one parameter is not enough.** The Zeeman interaction of a ³Δ₁ state is not axial. Writing `z` along n̂ and `x`, `y` perpendicular to it,
+
+```
+H_Z = μ_B B·G·J,   G = diag(G_xx, G_yy, G_zz)      (molecule frame)
+B·G·J = G_zz (B·n̂)(J·n̂) + G_xx B_x J_x + G_yy B_y J_y
+B_x J_x = ½ [P + C],   B_y J_y = ½ [P − C]
+P ≡ B·J − (B·n̂)(J·n̂)     lab T¹₀(J) minus the axial piece      B&C (9.60), (9.57) PDF p. 638
+C ≡ B_x J_x − B_y J_y     ΔΩ = ±2, parity-dependent              B&C (9.70) term (vii), (9.71) PDF pp. 652–653
+```
+
+so the three Cartesian components carry three physically distinct pieces:
+
+| combination | operator | what it does |
+|---|---|---|
+| `G_zz` | `(B·n̂)(J·n̂)` | the axial g-factor, Ω-diagonal |
+| `G⊥ = (G_xx + G_yy)/2` | `P` | the perpendicular, ΔΩ = 0 piece; its `B·J` half **is** a rotational g-factor (§2.10) |
+| `G_Δ = (G_xx − G_yy)/2` | `C` | the ΔΩ = ±2, parity-dependent piece that splits e from f (§2.9) |
+
+`G_Δ` is what an axial model cannot produce. Petrov & Skripnikov's second-order sums (arXiv:2503.02840 Eqs. 3–15) give `G⊥ = 1.02769 × 10⁻³` and `G_Δ = −2.0558 × 10⁻⁴`, both ESTIMATES at roughly 20 % `[derived from their tabulated Δ^(i), T_i; docs/lit/lookup-effective-zeeman-tensor.md §2, §4]`.
+
+**Only one combination is measured.** Ng's datum fixes `G_zz + G⊥ = 0.04756`, not `G_zz` alone (the measured g at J = 1, F = 3/2 depends on the two only through that sum). The parametrisation keeps that identity exact: `G_zz = 0.04756 − G⊥ = 0.046532`, `G_xx = G⊥ + G_Δ = 8.2211 × 10⁻⁴`, `G_yy = G⊥ − G_Δ = 1.23327 × 10⁻³`. The 0.6 % difference between this `G_zz` and the older axial-only `0.04756` sits well inside the ±0.002 on it. The genuine predictions are then the J dependence of g and the parity splitting, not the J = 1 value, which is a regression identity by construction.
+
+**Matrix elements.** Every Zeeman term is linear in B, hence a **lab rank-1** operator: ΔJ = 0, ±1 and ΔF = 0, ±1, with a diagonal element linear in m_F. All three therefore share the spectator recoupling of the Stark term in §2.7, B&C (5.172) + (5.174) + (5.186), and differ only in the J-space reduced element that sits at the end of it:
+
+```
+inner_axial(J′,Ω′,J,Ω) = δ_ΩΩ′ (−1)^{J′−Ω} √[(2J+1)(2J′+1)] (J′ 1 J; −Ω 0 Ω)
+inner_J(J′,Ω′,J,Ω)     = δ_JJ′ δ_ΩΩ′ √[J(J+1)(2J+1)]
+inner_flip(J′,Ω′,J,Ω)  = −sign(q) √2 √[J(J+1) − Ω(Ω+s)] (−1)^{J′−Ω′} √[(2J+1)(2J′+1)] (J′ 1 J; −Ω′ s Ω+s)
+                          q = Ω′ − Ω = ±2, s = q/2; zero otherwise
+```
+
+`inner_flip` follows from writing C in body spherical components and closing over the intermediate Ω. Body components of J have the anomalous commutation of B&C (5.152)–(5.153) (PDF p. 200), so `J^b_±` LOWERS Ω and C is evaluated Brown–Howard style, (5.155)–(5.162) pp. 201–202:
+
+```
+C = (1/√2) [ D¹*₀,₋₁ J^b₊ − D¹*₀,₊₁ J^b₋ ] × μ_B B
+```
+
+The relative minus is forced by Hermiticity, `(D¹*₀,₋₁)† = −D¹*₀,₊₁`; without it the operator is anti-Hermitian. The two factors in each product commute, so ladder-on-bra and ladder-on-ket orderings agree. The overall √2 is the normalisation that makes `⟨J,∓1,M|C|J,±1,M⟩ = +M` exactly and J-independently, which is what fixes the meaning of `G_Δ` `[derived; verified numerically for J = 1–5]`.
+
+**C is NOT a rank-2 geometry.** A lab rank-2, p = 0 element is quadrupolar in m_F and would open ΔJ = ±2 and ΔF = ±2 channels; using one for C produces a "g-factor" whose sign flips between m_F = 1 and 2 `[measured: the ratio of ⟨J=2,Ω=−1,M|D²*₀,₋₂|J=2,Ω=+1,M⟩ at M = 1 and M = 2 is −2, not +2]`. C is a lab rank-1 tensor times a lab scalar, so the k = 1 chain applies unchanged.
+
+The nuclear term uses B&C's spectator theorem (5.175) on the I part:
 
 ```
 ⟨…|T¹_{p}(I)|…⟩ = (−1)^{F′+J+I+1} √(I(I+1)(2I+1)) { I  F′ J ;  F  I  1 }
                     × (−1)^{F′−m′_F} √((2F+1)(2F′+1)) ( F′ 1 F ; −m′_F  p  m_F )
 ```
 
-**Selection rules**: G∥ term — ΔΩ = 0, ΔJ = 0, ±1, ΔF = 0, ±1, Δm_F = 0 for B ∥ ẑ, **parity-even** (it is quadratic in n̂). Nuclear term — ΔJ = 0, ΔΩ = 0, ΔF = 0, ±1, Δm_F = 0, parity-even.
+**Selection rules**: G_zz term — ΔΩ = 0, ΔJ = 0, ±1, ΔF = 0, ±1, Δm_F = 0 for B ∥ ẑ, **parity-even** (it is quadratic in n̂). G_xx and G_yy terms — the same, plus ΔΩ = ±2 from the C piece. Nuclear term — ΔJ = 0, ΔΩ = 0, ΔF = 0, ±1, Δm_F = 0, parity-even.
 
-**Structural consequence worth a test (§6, V6): at leading order the Zeeman shift is even in Ω** (the two factors of Ω multiply out), so `g^u = g^ℓ` exactly in this term. All of δg comes from higher order. This is precisely why the eEDM term (odd in Ω) separates from the Zeeman background in the four-way chop.
+**Structural consequence worth a test (§6, V6): the whole Zeeman vertex is even under Ω → −Ω**, while the Stark and eEDM operators are odd. That is why the eEDM term separates from the Zeeman background in the four-way chop. Evenness does **not** make the two parity components' g-factors equal: an Ω-even operator with a ΔΩ = ±2 element contributes `±Re⟨+Ω|C|−Ω⟩` to the two parity eigenstates, with opposite signs. That is the `G_Δ` splitting, and it is why V6 has to be checked on the operator rather than on eigenstates.
 
-**g_F values and sizes** `[derived, G∥ = 0.04756, g_N = 5.25773, μ_N/μ_B = 1/1836.15267, μ_B = 1.3996245 MHz/G]`:
+**g_F values and sizes** `[derived, G_zz = 0.046532, G⊥ = 1.02769e−3, G_Δ = −2.0558e−4, g_N = 5.25773, μ_N/μ_B = 1/1836.15267, μ_B = 1.3996245 MHz/G]`. The closed form, with the `+G_Δ` on the e component:
 
-| J | F | γ_F | κ_F | g_F | g_F μ_B (kHz/G) |
-|---|---|---|---|---|---|
-| 1 | 3/2 | 1/3 | 1/3 | −0.014899 | −20.85 |
-| 1 | 1/2 | 2/3 | −1/3 | −0.032661 | −45.71 |
-| 2 | 5/2 | 2/15 | 1/5 | −0.005769 | −8.07 |
-| 2 | 3/2 | 1/5 | −1/5 | −0.010085 | −14.11 |
-| 3 | 7/2 | 1/14 | 1/7 | −0.002988 | −4.18 |
-| 3 | 5/2 | 2/21 | −1/7 | −0.004939 | −6.91 |
-| 4 | 9/2 | 2/45 | 1/9 | −0.001796 | −2.51 |
-| 4 | 7/2 | 1/18 | −1/9 | −0.002960 | −4.14 |
+```
+g_J(e/f) = −G⊥ − (G_zz − G⊥)/[J(J+1)] ± G_Δ
+g_F      = g_J [F(F+1) + J(J+1) − I(I+1)] / [2F(F+1)]  +  g_N (μ_N/μ_B) κ_F
+```
 
-`g_{F=1/2} = 2 g_{F=3/2}` holds exactly in the G∥-only limit (Leanhardt Eq. 24, since γ_{1/2} = 2γ_{3/2}); the nuclear term breaks it — the actual ratio is 2.19, a 10 % deviation `[derived]`. That deviation is the cleanest experimental handle on the nuclear contribution, if the F = 1/2 g-factor is ever measured.
+| J | F | γ_F | κ_F | g_F(e) | g_F(f) | ⟨g_F⟩ μ_B (kHz/G) | Δg = g^u − g^ℓ (×10⁻⁴) |
+|---|---|---|---|---|---|---|---|
+| 1 | 3/2 | 1/3 | 1/3 | −0.015036 | −0.014762 | −20.85 | +2.74 |
+| 1 | 1/2 | 2/3 | −1/3 | −0.032935 | −0.032387 | −45.71 | +5.48 |
+| 2 | 5/2 | 2/15 | 1/5 | −0.006481 | −0.006152 | −8.84 | +3.29 |
+| 2 | 3/2 | 1/5 | −1/5 | −0.011153 | −0.010660 | −15.27 | +4.93 |
+| 3 | 7/2 | 1/14 | 1/7 | −0.003898 | −0.003546 | −5.21 | +3.52 |
+| 3 | 5/2 | 2/21 | −1/7 | −0.006152 | −0.005682 | −8.28 | +4.70 |
+| 4 | 9/2 | 2/45 | 1/9 | −0.002800 | −0.002435 | −3.66 | +3.65 |
+| 4 | 7/2 | 1/18 | −1/9 | −0.004216 | −0.003760 | −5.58 | +4.57 |
+
+`Δg = g^u − g^ℓ = g_f − g_e = −2 G_Δ × [projection]` is positive because `G_Δ < 0` and e lies lower (§2.3); at J = 1, F = 3/2 that is **+2.74 × 10⁻⁴**, the same sign as Petrov's printed +2.3 × 10⁻⁴. The ⟨g_F⟩ column is the parity average, which is `G_Δ`-free; only its J = 1, F = 3/2 entry is anchored to the measurement, the rest are predictions and they carry `G⊥`'s J(J+1) dependence.
+
+`g_{F=1/2} = 2 g_{F=3/2}` holds exactly in the G_zz-only limit (Leanhardt Eq. 24, since γ_{1/2} = 2γ_{3/2}); the nuclear term breaks it — the actual ratio of the parity averages is 2.19, a 10 % deviation `[derived]`. That deviation is the cleanest experimental handle on the nuclear contribution, if the F = 1/2 g-factor is ever measured.
 
 Sanity checks at the JILA operating point: `3 g_{F=3/2} μ_B B_rot` at B_rot = 799 µG = **50.0 Hz**, against Ng Table B.2's "2π × 50 Hz" ✓. Nuclear Zeeman alone: `g_N μ_N = 4.008 kHz/G` — the ¹⁹F nuclear moment is a **kHz-scale effect at 1 G** and must be kept.
 
@@ -380,7 +430,7 @@ Sanity checks at the JILA operating point: `3 g_{F=3/2} μ_B B_rot` at B_rot = 7
 **Three physical contributions, in the order they dominate:**
 
 1. **E-field-induced (dominant at the operating field).** Stark J-mixing gives the J = 1 upper and lower Stark doublets slightly different admixtures of J = 2, whose γ_F is smaller. Leanhardt Eq. 66 (the full 3j/6j sum, p. 24) reduces for J = 1, F = 3/2 to Eq. 67: `|δg_{F=3/2}/g_{F=3/2}| = 9 d_mf E_rot / (40 B_e)` = 0.00315 at 60 V/cm `[derived]`, against a measured 0.00255(6). The sign is negative in the JILA data and in every model.
-2. **Zero-field parity-dependent Zeeman.** Leanhardt Eq. 64 (p. 24), from Brown et al. and Nelis et al., is the ³Δ analogue of the parity-dependent terms (vi) and (vii) of B&C's complete Zeeman Hamiltonian Eq. (9.70) (PDF p. 652 / book p. 620): `H_ZeemanDist = −½ g_rS μ_B (B₊J₋S₊S₋ + B₋J₊S₋S₊)` (parity-independent) and `H_ZeemanDoub = +½ g′_rS μ_B (B₊J₊S₊² + B₋J₋S₋²)` (parity-dependent), with `|g′_rS| ≈ ω_ef/(2B_e)` (Eq. 65) = 3.6 × 10⁻⁴ and a zero-field g-difference "twice the value in Eq. 65" ≈ 7.3 × 10⁻⁴ `[derived]`. Petrov's ab initio zero-field value for ThF⁺ is `Δg(E=0) = 2.3 × 10⁻⁴` (arXiv:2503.02840 p. 4), the same order, 3× smaller. This term is **absent from Ng's Appendix C** and from any Ω = ±1 effective model that lacks it.
+2. **Zero-field parity-dependent Zeeman — the `G_Δ` term of §2.8.** Leanhardt Eq. 64 (p. 24), from Brown et al. and Nelis et al., is the ³Δ analogue of the parity-dependent terms (vi) and (vii) of B&C's complete Zeeman Hamiltonian Eq. (9.70) (PDF p. 652 / book p. 620): `H_ZeemanDist = −½ g_rS μ_B (B₊J₋S₊S₋ + B₋J₊S₋S₊)` (parity-independent) and `H_ZeemanDoub = +½ g′_rS μ_B (B₊J₊S₊² + B₋J₋S₋²)` (parity-dependent), with `|g′_rS| ≈ ω_ef/(2B_e)` (Eq. 65) = 3.6 × 10⁻⁴ and a zero-field g-difference "twice the value in Eq. 65" ≈ 7.3 × 10⁻⁴ `[derived]`. With the electronic factor absorbed into the constant this is the `C = B_x J_x − B_y J_y` operator, carried here as `G_Δ`; at the shipped `G_Δ = −2.0558 × 10⁻⁴` it gives `Δg(E=0) = +2.74 × 10⁻⁴` at J = 1, F = 3/2, against Petrov's ab initio +2.3 × 10⁻⁴ (arXiv:2503.02840 p. 4). It is **absent from Ng's Appendix C**, so any comparison with a number from that model has to switch `G_Δ` off first.
 3. **Rotating-field contribution** from finite ω_rot/(d_mf E_rot): Leanhardt Eq. 68, `δg/g = √6 γ²_{F=3/2} ω²_rot/(d_mf E_rot E_hf)` — a few 10⁻⁴; only relevant with a rotating field.
 
 **Measured and modelled values, all at E = 60 V/cm:**
@@ -389,7 +439,8 @@ Sanity checks at the JILA operating point: `3 g_{F=3/2} μ_B B_rot` at B_rot = 7
 |---|---|---|
 | δg/g (measured) | −0.00255(6) | Ng thesis Table 4.1 p. 87, Fig. 4.9b |
 | δg/g (Ng 32-level model) | −0.00223 | Ng thesis p. 85 |
-| δg/g (this document's 96-state model) | **−0.00223** | `[derived]`, §6 V7 |
+| δg/g (this document's 96-state model, `G_Δ = 0`) | −0.00213 | `[derived]`, §6 V7 — the axial-only comparison against Ng |
+| δg/g (this document's 96-state model, full tensor) | **−0.00261** | `[derived]`, §6 V7 — 2.4 % from the measurement |
 | Δg = g^u − g^ℓ (Petrov, ³Δ₂ included) | +7.56 × 10⁻⁵ ⟹ δg/g = −0.00254 | arXiv:2503.02840 Table I |
 | \|δg\| (Ng 2022 paper, Table I) | 0.0003(3) | Ng 2022 p. 5 — note the *paper* uses the unhalved convention, so this is Petrov's Δg |
 
@@ -411,9 +462,9 @@ Not measured or computed for ThF⁺. Ng 2022 (p. 5): "It might be of interest to
 
 ⟹ contribution to g_{J=1,F=3/2} of `−8.5 × 10⁻⁵`, i.e. **0.6 % of |g_F| = 0.0149**. Energy: 0.36 kHz at 1 G (m_F = ±3/2 splitting), 0.29 Hz at B_rot.
 
-**Uncertainty is large and one-sided.** The electronic (paramagnetic) contribution has the opposite sign and in light molecules largely cancels the nuclear part; in heavy molecules with low-lying states of the right symmetry it can dominate and exceed it. Treat 2.6 × 10⁻⁴ μ_B as an order-of-magnitude floor, not a value. The ThO comparison (6 %) is against a much smaller total g, so it is consistent with this estimate. **OPEN-7.**
+**Uncertainty is large and one-sided.** The electronic (paramagnetic) contribution has the opposite sign and in light molecules largely cancels the nuclear part; in heavy molecules with low-lying states of the right symmetry it can dominate and exceed it. Treat 2.6 × 10⁻⁴ μ_B as an order-of-magnitude floor, not a value. The ThO comparison (6 %) is against a much smaller total g, so it is consistent with this estimate.
 
-The practical consequence: fitting G∥ to reproduce the measured g at J = 1, F = 3/2 gives the right answer there by construction, but g_r has a different (J, F) dependence, so the **predicted g at J = 2, 3, 4 carries an unquantified ~1 % error.** Say so wherever the code reports a J > 1 g-factor.
+**There is no separate `g_r` knob, because `G⊥` already is one. OPEN-7.** The perpendicular part of `μ_B B·G·J` contains `B·J` (§2.8), which is exactly the operator B&C (9.70) term (iii) writes with `−g_r`, so a rotational g-factor entered alongside `G⊥` would be counted twice. The value carried is Petrov & Skripnikov's second-order `G⊥ = 1.02769 × 10⁻³`, four times the rigid-rotor nuclear estimate above and of the opposite sign in its effect on g — consistent with the electronic contribution dominating, as the paragraph above warns it can. It is an ESTIMATE, so the J dependence of g remains the model's least-constrained prediction: fitting the measured sum reproduces J = 1, F = 3/2 by construction, while `G⊥`'s `J(J+1)` term is what moves J = 2, 3, 4. Say so wherever the code reports a J > 1 g-factor.
 
 ---
 
@@ -491,7 +542,9 @@ Isotopologue ²³²Th¹⁹F⁺, X ³Δ₁, v = 0 throughout. Conversion factors 
 | d_mf (theory, Denis) | 4.03 | D (c.m.) | — | Denis 2015 abstract, Table 10 — 16 % above experiment | ab initio |
 | D (Petrov's signed body-frame dipole) | −0.133 **[probable typo for −1.33]** | a.u. | −1.33 a.u. = −3.381 D `[×2.541746]` matches d_mf; −0.133 would be 8× too small | arXiv:2503.02840 p. 3; sign is Petrov's n̂ (Th→F) | ab initio input |
 | **\|g_{F=3/2}\|** | 0.0149(3) | — | \|g\|μ_B = 20.85 kHz/G | Ng 2022 Table I p. 5 — **sign not measured** | measured |
-| **G∥** | 0.048(2) if g_F < 0; −0.042(2) if g_F > 0 | — | 0.04756 reproduces \|g\| = 0.0149 exactly `[derived]` | Ng 2022 §II E p. 5; Ng thesis p. 87; rotational contribution neglected | derived from measurement |
+| **G∥ = G_zz** | 0.048(2) if g_F < 0; −0.042(2) if g_F > 0 | — | the measurement fixes the SUM `G_zz + G⊥ = 0.04756`, which reproduces \|g\| = 0.0149 exactly `[derived]`; the package carries `G_zz = 0.046532` | Ng 2022 §II E p. 5; Ng thesis p. 87; rotational contribution neglected — which is why it is a sum | derived from measurement |
+| **G⊥ = (G_xx+G_yy)/2** | 1.02769 × 10⁻³ | — | second-order sum over the Ω = 0 and Ω = ±2 perturbers; contains the rotational g-factor (§2.10) | Petrov & Skripnikov arXiv:2503.02840 Eqs. 3–15 | estimate, ~20 % |
+| **G_Δ = (G_xx−G_yy)/2** | −2.0558 × 10⁻⁴ | — | the ΔΩ = ±2, parity-dependent component; `G_xx = 8.2211e−4`, `G_yy = 1.23327e−3` | Petrov & Skripnikov arXiv:2503.02840 Eqs. 3–15 | estimate, ~20 % |
 | G∥ (theory) | 0.034 / 0.035 / 0.047 | — | — | Skripnikov & Titov 2015 Table II / Cheng in Ng 2022 / Petrov 2025 p. 3 (with non-adiabatic mixing) | ab initio |
 | g_N(¹⁹F) | 5.25773 | — | g_N μ_N = 4.008 kHz/G; g_N μ_N/μ_B = 2.8634 × 10⁻³ | Petrov et al. arXiv:1704.06631 Eq. 3 discussion | constant |
 | δg/g at E_rot = 60 V/cm | −0.00255(6) | — | δg = (g^u−g^ℓ)/2 = +3.80 × 10⁻⁵ | Ng thesis §4.1.3 p. 85, Table 4.1 p. 87 | measured |
@@ -562,7 +615,7 @@ Note the ordering is field-dependent and crosses over: at 60 V/cm the Stark shif
 
 **Basis**: Ω = ±1, J = 1–4, F = J ± ½, all m_F. 96 states; block-diagonal in M_F (16/14/10/6/2 per signed block) for collinear static fields.
 
-**Include (8 operators):**
+**Include (9 operators):**
 
 | # | Term | Form | Parameters | Why |
 |---|---|---|---|---|
@@ -571,9 +624,10 @@ Note the ordering is field-dependent and crosses over: at 60 V/cm the Stark shif
 | 3 | Axial hyperfine, ΔJ = 0 | Ng Eq. C.2 = B&C 9.50 | A∥ | MHz |
 | 4 | Axial hyperfine, ΔJ = ±1 | B&C 9.51 | A∥ (same parameter) | 1.6–2.6 kHz; free once (3) is coded |
 | 5 | Stark | Ng Eq. C.5 | d_mf | MHz; also generates δg via J-mixing |
-| 6 | Zeeman, G∥ | `+G∥ μ_B (J·n̂)(n̂·B)` — **sign per §2.8, not as Ng prints it** | G∥ | tens of kHz/G |
-| 7 | Nuclear Zeeman | `−g_N μ_N I·B` | g_N (fixed) | 4 kHz/G |
-| 8 | Nuclear spin–rotation | `c_I T¹(J)·T¹(I)`, B&C 8.7 / 8.20 | c_I (**estimate**) | 30–90 kHz; must be a knob, default 20 kHz, and it biases A∥ |
+| 6 | Zeeman, axial | `+G_zz μ_B (J·n̂)(n̂·B)` — **sign per §2.8, not as Ng prints it** | G_zz | tens of kHz/G |
+| 7 | Zeeman, perpendicular | `μ_B B·G·J` with `G = diag(G_xx, G_yy, G_zz)`, one term per Cartesian component (§2.8) | G_xx, G_yy | ~1 kHz/G on levels; sets the zero-field Δg |
+| 8 | Nuclear Zeeman | `−g_N μ_N I·B` | g_N (fixed) | 4 kHz/G |
+| 9 | Nuclear spin–rotation | `c_I T¹(J)·T¹(I)`, B&C 8.7 / 8.20 | c_I (**estimate**) | 30–90 kHz; must be a knob, default 20 kHz, and it biases A∥ |
 
 **Add as an opt-in PT-odd block** (not part of the structural Hamiltonian): `H_PT = −(d_e E_eff + W_{T,P} k_{T,P}) Ω/|Ω|`, following Ng Eq. C.8 (no Leanhardt ½).
 
@@ -587,9 +641,7 @@ Note the ordering is field-dependent and crosses over: at 60 V/cm the Stark shif
 | ²³²Th hyperfine, ²³²Th quadrupole, ¹⁹F quadrupole | identically 0 | I(²³²Th) = 0, I(¹⁹F) = ½ |
 | Off-diagonal-in-Ω hyperfine | ~10⁻⁵ Hz | ratio hyperfine/spin-orbit = 6 × 10⁻⁷ |
 | e_Δ hyperfine Ω-doubling | ~1–10 kHz **estimate** | **borderline** — omitted, flagged OPEN-8; the only omitted term above the kHz line |
-| Parity-dependent Zeeman (g_rS, g′_rS) | Δg(E=0) = 2.3 × 10⁻⁴ ⟹ ≈ 1 kHz at 1 G | **borderline** — dropped for level energies, required for a zero-field Δg. OPEN-10 |
-| Rotational g_r | ≤ 0.6 % of g_F, 0.36 kHz at 1 G **estimate** | absorbed into the fitted G∥ at J = 1; introduces ~1 % error at J > 1 |
-| Perpendicular / 2nd-order Zeeman | 7 × 10⁻⁹ Hz at B⊥ = 1 mG | Leanhardt Eq. 72 |
+| Transverse-B and 2nd-order Zeeman | 7 × 10⁻⁹ Hz at B⊥ = 1 mG | Leanhardt Eq. 72. Distinct from the PERPENDICULAR COMPONENTS of the body-frame G tensor, which are included (row 7) |
 | Electronic polarizability | ~10⁻⁸ Hz | §2.7 |
 | Rotating-frame `ℏω_rot F_x` | not a static-field term | §2.13; add when Berry phase or Δ^{u,ℓ} is wanted |
 | Vibrational structure | 653 cm⁻¹ | v = 0 only |
@@ -606,10 +658,10 @@ Each check names its distinct failure mode. The package implements the stable st
 | **V1** | Hermiticity and reality: `H = Hᵀ` for real E, B; eigenvalues real | exact | a transposed 3j/6j argument order, or a bra/ket swap in the spectator-theorem phase |
 | **V2** | **Stark closed form.** For every (J ≤ 4, F, m_F, Ω), the ΔJ = 0, ΔF = 0, p = 0 Stark element equals `−Ω m_F γ_F d_mf E` with `γ_F = [J(J+1)+F(F+1)−I(I+1)]/[2F(F+1)J(J+1)]` | to machine precision | a wrong 6j column order or a wrong `(−1)^{J′−Ω′}` phase — both leave the *magnitude* right and only the (J,F)-dependence wrong. **I ran this; it passes.** |
 | **V3** | **Hyperfine J-scaling.** Splitting = `A∥(2J+1)/(2J(J+1))`; J=1 : J=2 = 9/5 exactly | exact | using `F² − I² − J²` over `2J(J+1)` vs `2J²`, or mis-coupling I to J |
-| **V4** | **Ω-doubling J-scaling.** Splitting = `ω_ef J(J+1)/2`; J=2 : J=1 = 3 exactly. And the **upper** component has parity `(−1)^J` (e in the B&C convention) at every J | exact | a missing `(−1)^J` — invisible at J = 1, wrong at every even J. Catches the S = 1 e/f trap (OPEN-2) |
-| **V5** | **g-factor closed form.** With B alone, `g(J,F) = −G∥ γ_F + g_N(μ_N/μ_B) κ_F`; specifically `g(1,3/2) = (1/3)(−G∥ + g_N μ_N/μ_B)` and, with g_N set to 0, `g(1,1/2) = 2 g(1,3/2)` | to machine precision | **the Ng Eq. C.6 sign error of §2.8.** With the wrong sign the model gives 23.5 kHz/G instead of 20.85 kHz/G — a 13 % error that no other check sees |
-| **V6** | **Zeeman is even in Ω.** At E = 0, B ≠ 0, and with the parity-dependent Zeeman terms off, `g^{Ω=+1} = g^{Ω=−1}` exactly; equivalently δg = 0 | exact | an odd-in-Ω contamination of the Zeeman operator, which would fake an eEDM signal in the four-way chop |
-| **V7** | **δg from Stark J-mixing** *(opt-in)*. At E = 60 V/cm the Ω = ±1, J = 1–2 model gives δg/g = −0.0022 | within 5 % | Stark ΔJ = ±1 elements wrong in magnitude or relative phase. **I ran this: −0.00223, identical to Ng thesis p. 85's 32-level value.** Measurement is −0.00255(6); the 15 % gap is the known missing ³Δ₂ |
+| **V4** | **Ω-doubling J-scaling.** Splitting = `ω_ef J(J+1)/2`; J=2 : J=1 = 3 exactly. And the **upper** component has parity `−(−1)^J` (f in the B&C convention) at every J, i.e. e lies below f (§2.3) | exact | a missing `(−1)^J` — invisible at J = 1, wrong at every even J. Catches the S = 1 e/f trap (OPEN-2) |
+| **V5** | **g-factor closed form, parity-resolved.** With B alone and levels grouped by (J, F, parity), `g_F(e/f)` equals the §2.8 closed form `g_J = −G⊥ − (G_zz−G⊥)/[J(J+1)] ± G_Δ` projected onto F, plus `g_N(μ_N/μ_B) κ_F`. The parity average at J = 1, F = 3/2 is −20.85 kHz/G and `g(1,1/2)/g(1,3/2) = 2.19` | to machine precision in a single-J basis | **the Ng Eq. C.6 sign error of §2.8** (wrong sign ⟹ 23.5 kHz/G, a 13 % error nothing else sees) and a wrong sign or normalisation in the ΔΩ = ±2 channel, which swaps `g_e` and `g_f` |
+| **V6** | **Zeeman is even in Ω.** Under the Ω-reversal permutation π the Zeeman vertex satisfies `V_B[π][:,π] = V_B` while the Stark vertex satisfies `V_E[π][:,π] = −V_E`. Stated on the OPERATOR, since at E = 0 every eigenstate is a parity eigenstate and an odd operator has identically zero diagonal expectation there | exact | an odd-in-Ω contamination of the Zeeman operator, which would fake an eEDM signal in the four-way chop |
+| **V7** | **δg at 60 V/cm** *(opt-in)*. Two comparisons, because Ng's 32-level model is axial-only: with `G_Δ = 0` this model gives δg/g = −0.00213 against his −0.00223, and with the full tensor it gives −0.00261 against the measured −0.00255(6) | within 10 % and 5 % respectively | Stark ΔJ = ±1 elements wrong in magnitude or relative phase, and a `G_Δ` of the wrong size |
 | **V8** | **Parity block structure.** At E = 0 and with the PT-odd block off, H commutes with `E* = σ_xz R_y(π)` and splits into two blocks of equal dimension | exact | a parity-odd term (Stark, eEDM) leaking into the field-free Hamiltonian |
 | **V9** | **Kramers/time-reversal degeneracy.** At B = 0 (any E, no eEDM), `E(F, m_F, Ω) = E(F, −m_F, −Ω)` — Leanhardt Eq. 34, which he derives as exact | exact | a sign error in an m_F-odd term. This is the degeneracy the whole experiment measures against |
 | **V10** | **eEDM parity.** Turning on d_e splits each Kramers pair by `2 d_e E_eff` with **opposite** sign for the upper and lower Stark doublets, and the Zeeman splitting is unchanged; `f^BD = 2 d_e E_eff` | exact | the Leanhardt ½ (§2.12) — a factor-2 error in the extracted d_e that nothing else catches |
@@ -635,12 +687,14 @@ the equations and citations elsewhere in the document.
 package uses the Ω = ±1 effective model. A larger model should use separate
 case-(c) origins or include the nearby perturbers explicitly.
 
-**`OPEN-2` — resolved parity convention.** The package uses B&C's J-only e/f
-rule. The upper component has parity `(−1)^J` and is e. The thesis expression
-`P=(−1)^{J−S−ℓ}` is an S = 1/2 specialization and cannot be applied here.
+**`OPEN-2` — resolved parity convention and ordering.** The package uses
+B&C's J-only e/f rule, under which e is the component of parity `(−1)^J`, and
+it places e BELOW f at every J, following the ¹Σ⁺ mixing argument of §2.3. The
+thesis expression `P=(−1)^{J−S−ℓ}` is an S = 1/2 specialization and cannot be
+applied here.
 
 **`OPEN-3` — resolved implementation sign.** The package uses
-`+G∥ μ_B (J·n̂)(n̂·B) − g_N μ_N I·B`. This branch reproduces Ng's printed
+`+G_zz μ_B (J·n̂)(n̂·B) − g_N μ_N I·B` for the axial component. This branch reproduces Ng's printed
 g-factor relation and the measured magnitude; Ng's Eq. C.6 prints the
 opposite G∥ sign. The discrepancy in the source remains unconfirmed by its
 authors.
@@ -657,9 +711,11 @@ sensitivity estimate with unknown sign and unquantified transfer error. The
 40–120 kHz bias examples are sensitivity calculations, not a confidence
 interval for the existing A∥ fit.
 
-**`OPEN-7` — g_r.** The rotational g-factor is omitted. It is neither measured
-nor computed for ThF⁺, leaving an unquantified error of order 1 percent in the
-predicted J = 2–4 g-factors.
+**`OPEN-7` — g_r.** There is no separate rotational g-factor knob: its
+operator `B·J` is part of the perpendicular Zeeman term, so it is absorbed into
+`G⊥` (§2.10). `G⊥` is a Petrov second-order estimate rather than a measured or
+fitted number, so the predicted J = 2–4 g-factors carry that estimate's
+uncertainty.
 
 **`OPEN-8` — hyperfine-dependent Ω doubling.** The package omits `e_Δ`. The
 1–10 kHz estimate is only an order-of-magnitude scale.
@@ -667,8 +723,11 @@ predicted J = 2–4 g-factors.
 **`OPEN-9` — NSD-PV.** No ThF⁺ `W_a` or `W_P` value was found in the sources
 reviewed. A model of this interaction needs a new electronic-structure input.
 
-**`OPEN-10` — parity-dependent Zeeman terms.** These terms are omitted, so the
-model does not generate the reported zero-field differential g-factor.
+**`OPEN-10` — resolved parity-dependent Zeeman.** The full body-frame tensor
+`G = diag(G_xx, G_yy, G_zz)` is implemented, and its `G_Δ` component generates
+the zero-field differential g-factor, `+2.74 × 10⁻⁴` at J = 1, F = 3/2. Its
+magnitude inherits ~20 percent from Petrov's second-order estimate; its sign
+follows from the doublet ordering of `OPEN-2`.
 
 **`OPEN-11` — resolved axis convention.** The default is the JILA direction
 `n̂: F→Th`. The alternative `Th→F` convention is explicit and reverses signed
@@ -678,8 +737,9 @@ model does not generate the reported zero-field differential g-factor.
 `Δg = g^u − g^ℓ`; the thesis half-difference remains an explicit convention.
 
 **`OPEN-13` — Gresh k″ sign.** The printed sign follows upper-state branch
-bookkeeping. The package takes the lower-state magnitude and ordering from the
-microwave measurement.
+bookkeeping. The package takes the lower-state splitting from the microwave
+measurement and the ordering from the ¹Σ⁺ mixing argument of §2.3, with
+Gresh's `k″ > 0` as an independent but branch-dependent agreement.
 
 **`OPEN-14` — E_eff.** The package adopts 35.0 GV/cm with a 7 percent scale;
 published calculations give 35.2 and 37.3 GV/cm.
@@ -703,7 +763,7 @@ For `OPEN-16` through `OPEN-23`, §9 remains the equation-level source and
 | `ng-thesis-JILA_p35-40.txt` | Ch. 2.4: Hund's-case summary Fig. 2.4, Eq. 2.2a case (c) `E(J) = BJ(J+1)`, Ω = J_a·n̂ definition, Eqs. 2.3–2.5 |
 | `ng-thesis-JILA_p76-96.txt` | §4.1.3 (Ramsey g-factor, δg/g global fit Fig. 4.9b), §4.1.4 Table 4.1 and the G∥ sign paragraph (pp. 84–87) |
 | `ng2022-…txt` (arXiv:2202.01346) | pp. 1–5 in full: §II A–E, Table I, the "six distinct resonant frequencies" fit statement |
-| `ng2022-…_p3.png` | **rendered and read as an image**: Fig. 2 parity colouring and the J = 1 / J = 2 doublet ordering — the load-bearing parity check of §2.3 |
+| `ng2022-…_p3.png` | **rendered and read as an image**: Fig. 2 parity colouring and the J = 1 / J = 2 doublet ordering. The figure records an assumption, not a measurement (§2.3), so it is context rather than evidence |
 | `leanhardt2011-arXiv1008.2997.txt` | Sec. IV A–B (PDF pp. 13–16): Eqs. 10–35; Sec. IV G–I (pp. 24–25): Eqs. 64–73 |
 | `gresh2016-…txt` | §2.2 and §3 (PDF p. 3): Eqs. 1–3 including the `s = +1 for e` convention |
 | `gresh2016-…_p10.png` | **rendered and read as an image**: Table 1, all X ³Δ₁ rows — B″, D″, k″, k_D″ and the sign pattern of §OPEN-13 |

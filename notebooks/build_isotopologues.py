@@ -281,7 +281,7 @@ ax.set_ylabel('E - B0 J(J+1)  (MHz)')
 ax.set_title('232ThF+ field-free, m_F=+1/2 (A_par measured, omega_ef measured)')
 plt.tight_layout()
 plt.show()
-print("blue = e, red = f -- upper component is e at every J (OQ-A, closed).")
+print("blue = e, red = f -- e lies BELOW f at every J (OPEN-2, resolved).")
 """),
 
     # ------------------------------------------------------------- 5 -----

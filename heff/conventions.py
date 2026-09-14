@@ -34,11 +34,16 @@ class Conventions:
     ef_rule      'brown1975' = B&C PDF p.283: e <=> parity +(-1)^J for integer J,
                  +(-1)^(J-1/2) for half-integer J. 'thesis_S_half' = the thesis
                  rule P = (-1)^(J-S-l), which is the S = 1/2 specialisation and
-                 INVERTS every label at S = 1. [HAM] OPEN-2.
-    zeeman_sign  'plus_Gpar' = +G_zz mu_B (J.n)(n.B) - g_N mu_N I.B. Ng thesis
-                 Eq. C.6 prints a minus; the minus contradicts the g_F formula
-                 three lines below it, his own G_zz = 0.048(2), and the measured
-                 |g| = 0.0149. [HAM] S2.8, OPEN-3.
+                 INVERTS every label at S = 1. The e component lies BELOW f at
+                 every J (Petrov & Skripnikov arXiv:2503.02840's model, Gresh
+                 2016 k'' > 0); that ordering is carried by the sign of
+                 elements_c.omega_doubling, not by this switch. [HAM] OPEN-2.
+    zeeman_sign  'plus_Gpar' = +G_zz mu_B (J.n)(n.B) - g_N mu_N I.B, the sign of
+                 the AXIAL component of mu_B B.G.J; the perpendicular
+                 components G_xx and G_yy do not carry it. Ng thesis Eq. C.6
+                 prints a minus; the minus contradicts the g_F formula three
+                 lines below it, his own G_par = G_zz = 0.048(2), and the
+                 measured |g| = 0.0149. [HAM] S2.8, OPEN-3.
     dg_def       'Delta' = g^u - g^l (Petrov, Ng 2022 paper); 'delta' = half that
                  (Ng thesis App. C.4). [HAM] OPEN-12.
     edm_factor   'ng' = -(d_e E_eff + W_TP k_TP) Omega/|Omega| (Ng Eq. C.8, no

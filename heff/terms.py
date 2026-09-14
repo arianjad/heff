@@ -4,9 +4,13 @@
 nonzero in a basis, and makes declared selection rules available for validation.
 
 A term's `param` is a TUPLE of knob symbols whose PRODUCT is the coefficient --
-('d_mf', 'E_z') for the Stark term, ('G_zz', 'B_z') for the Zeeman one. Fields
-and Hamiltonian parameters form one flat catalogue, allowing
-``heff.assemble.vertex`` to evaluate derivatives with respect to a knob.
+('d_mf', 'E_z') for the Stark term, ('G_zz', 'B_z') for the axial Zeeman one.
+Because it is a product, a coefficient that is a SUM or DIFFERENCE of knobs
+needs one term per knob: the body-frame Zeeman tensor is three terms carrying
+('G_xx', 'B_z'), ('G_yy', 'B_z') and ('G_zz', 'B_z'), not one term carrying a
+combination of them. Fields and Hamiltonian parameters form one flat catalogue,
+allowing ``heff.assemble.vertex`` to evaluate derivatives with respect to a
+knob.
 """
 from dataclasses import dataclass
 from typing import Callable

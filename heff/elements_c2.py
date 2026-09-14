@@ -159,7 +159,7 @@ omega_doubling = _term_c2(
          "the v1 element, elements_c.omega_doubling -- Ng thesis Eq. C.3 p.319 "
          "transposed to heff's ket phase (-1)^(J-S+s), giving the J-INDEPENDENT "
          "off-diagonal +omega_ef J(J+1)/4, i.e. e (parity +(-1)^J) BELOW f at "
-         "every J. [HAM] S2.3, docs/open-questions.md OQ-A"
+         "every J. [HAM] S2.3, docs/open-questions.md OPEN-2"
 )(_delegate(_v1_omega_doubling))
 
 pt_odd_edm = _term_c2(
