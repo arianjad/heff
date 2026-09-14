@@ -7,6 +7,7 @@ the basis and Hamiltonian terms to the level structure and field shifts.
 
 | If you want to… | Read |
 |---|---|
+| See the Hamiltonian and its shipped values on one page | [ThF+ Hamiltonian summary](thf-plus-heff-summary.md) |
 | Install, diagonalize, and plot your first spectrum | [Getting started](getting-started.md) |
 | Choose an isotope/backend and understand its inputs | [Models, units, and conventions](models.md) |
 | Learn how model files become matrices and spectra | [Architecture and API map](architecture.md) |
