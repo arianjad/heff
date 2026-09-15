@@ -144,8 +144,11 @@ def rank_geometry(X, ctx):
 
 
 def rank_amplitude(X, G, eps1, eps2, Ks=(0, 1, 2), alpha=closure_alpha):
-    """sum_{K in Ks} sum_P w^K_P alpha^K(Om_f, Om_g) G_K(f, g, P)."""
-    w = dyad_weights(eps1, eps2)
+    """sum_{K in Ks} sum_P w^K_P alpha^K(Om_f, Om_g) G_K(f, g, P).
+
+    reading="raman" to match `resolved`'s hardcoded eps2-conjugated convention.
+    """
+    w = dyad_weights(eps1, eps2, reading="raman")
     A = np.zeros((len(X), len(X)), dtype=complex)
     for K in Ks:
         al = np.zeros((len(X), len(X)))
@@ -201,7 +204,7 @@ def test_V27_registered_channels_alone_carry_the_sigma_pair(fix):
     not asserted against ([HAM] S9.5.3: this fixture's manifold is
     restricted in Omega, so K = 1 survives at O(1)).
     """
-    w1 = dyad_weights(V.SIGMA_P, V.SIGMA_M)
+    w1 = dyad_weights(V.SIGMA_P, V.SIGMA_M, reading="raman")
     assert max(abs(w1[(1, P)]) for P in (-1, 0, 1)) == 0.0
     report = {}
     for name, e1, e2 in POLS:

@@ -64,8 +64,7 @@ def test_two_photon_operator_commutes_with_parity_at_zero_field(basis2, mats):
 
     The dOmega = +-2 channel is ONE channel: the q = +2 and q = -2 components
     share one alpha (alpha_K2_dOm2) and parity maps each into the other, so
-    splitting them would make this identity false by construction -- which is
-    exactly what test_..._fails_if_the_q_plus_2_component_changes_sign shows.
+    splitting them would make this identity false by construction.
     """
     kets, ctx = basis2
     Par = parity_operator(kets, ctx.S, ell=0.0, s=0.0)
@@ -78,6 +77,18 @@ def test_two_photon_operator_commutes_with_parity_at_zero_field(basis2, mats):
             worst = max(worst, float(np.max(np.abs(T @ Par - Par @ T))))
     assert worst < 1e-12, f"max|[T,P]| = {worst:.3e} (max|T| = {biggest:.3f})"
     assert biggest > 0.1                      # non-vacuous: the operator is real
+
+
+def test_V24_fails_if_the_q_plus_2_component_changes_sign(basis2):
+    """Negative control for the shared alpha of q = +2 and q = -2."""
+    kets, ctx = basis2
+    P_op = parity_operator(kets, S=ctx.S, ell=0.0, s=0.0)
+    for P in range(-2, 3):
+        T = two_photon_matrix(kets, kets, ctx, K=2, dOmega=2, P=P)
+        good = np.max(np.abs(T @ P_op - P_op @ T))
+        flip = np.where((kets["Om"][:, None] - kets["Om"][None, :]) > 0, -1.0, 1.0)
+        bad = np.max(np.abs((T * flip) @ P_op - P_op @ (T * flip)))
+        assert good < 1e-12 and bad > 0.5, (P, good, bad)
 
 
 # ------------------------------------------------------------------ V25
@@ -145,7 +156,7 @@ def test_rank_K_sum_rule_and_reciprocity():
     over P, is independent of m_F -- sum_P T^K+_P T^K_P is a rotational scalar,
     so its expectation cannot depend on the orientation of the initial state.
     In heff's normalisation (conventions.two_photon_norm = 'bc_5p142_reduced',
-    unit one-photon reduced elements) the closed form is exactly 1.0 per
+    unit rank-K reduced element per channel) the closed form is exactly 1.0 per
     channel, by 3j/6j completeness -- but only while the basis holds every J'
     the operator can reach, |dJ| <= K = 2, hence J_max = 3 and J = 1 initial
     states here.
@@ -246,21 +257,11 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
     """The polarisation dyad of [HAM] S9.5.1(3), against limits derived from
     its own printed formula.
 
-    THE READING IS RAMAN, ep_2 CONJUGATED: T_eff = (d.eps2*)|i><i|(d.eps1)/D,
-    so slot 1 (bra-side) carries eps2* and slot 2 (ket-side) carries eps1, and
-    c[p] = (-1)^p eps_{-p}. Conjugating eps2 flips the sign of its helicity
-    label, so the beam-pair -> Delta m_F map is INVERTED relative to the ladder
-    reading where both photons are absorbed. Derived from S9.5.1(3) and
-    reproduced verbatim in its table (rows d):
-
-        eps1 = sigma+, eps2 = sigma+  ->  legs (p_a, p_b) = (-1, +1)  ->  P = 0
-        eps1 = sigma+, eps2 = sigma-  ->  legs (p_a, p_b) = (+1, +1)  ->  P = +2
-
-    The ladder reading (rows e of the same table,
-    and the [2g] S3.3 probe, whose rows are labelled by the LEG components
-    (p_a, p_b), not by the two beams). The reachable SET {0, +-2} is the same
-    either way -- only the labelling differs -- and [HAM] S9.5.1(3) is the
-    source this package follows.
+    THE READING IS LADDER (default): both photons absorbed,
+    T_eff = (d.eps2)|i><i|(d.eps1)/D, so slot a carries eps2 and slot b
+    carries eps1, and c[p] = (-1)^p eps_{-p}. (sigma+, sigma+) reaches
+    Delta m_F = +2. The reachable SET {0, +-2} is the same as the Raman
+    reading (`reading="raman"`) -- only the labelling differs.
 
     THE PER-COMPONENT WEIGHTS BELOW ARE FRAME-SPECIFIC (this test's coplanar
     frame, eps1 = x, eps2 = (cos theta, sin theta, 0)); the frame-INDEPENDENT
@@ -287,12 +288,9 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
     K = 1 survives at O(1).
     """
     # the anchor the whole convention rests on: c[+1] = +1 for sigma+, and
-    # nothing else ([HAM] S9.5.1(3))
-    # eps1 = sigma+ gives c_b[+1] = +1 (the anchor, "and nothing else");
-    # eps2 = sigma- conjugated gives c_a[+1] = -1; <1 +1 1 +1|2 +2> = 1.
-    w = dyad_weights(SIGMA_P, SIGMA_M)
-    assert w[(2, 2)] == pytest.approx(-1.0)
-    assert abs(dyad_weights(SIGMA_P, SIGMA_P)[(0, 0)]) == pytest.approx(1 / np.sqrt(3))
+    # nothing else ([HAM] S9.5.1(3)); ladder reading, no conjugation, so
+    # sigma+ sigma+ gives c_a[+1] = c_b[+1] = +1; <1 +1 1 +1|2 +2> = 1.
+    assert dyad_weights(SIGMA_P, SIGMA_P)[(2, 2)] == pytest.approx(1.0)
 
     reach = {}
     for n1, e1 in (("s+", SIGMA_P), ("s-", SIGMA_M), ("pi", PI_Z)):
@@ -300,13 +298,13 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
             got = sorted({P for (K, P), v in dyad_weights(e1, e2).items()
                           if abs(v) > 1e-12})
             reach[(n1, n2)] = got
-    assert reach[("s+", "s+")] == [0], reach          # RAMAN reading, S9.5.1(3)
-    assert reach[("s+", "s-")] == [2], reach
-    assert reach[("s-", "s+")] == [-2], reach
-    assert reach[("s-", "s-")] == [0], reach
+    assert reach[("s+", "s+")] == [2], reach          # ladder reading (default)
+    assert reach[("s+", "s-")] == [0], reach
+    assert reach[("s-", "s+")] == [0], reach
+    assert reach[("s-", "s-")] == [-2], reach
     assert reach[("pi", "pi")] == [0], reach
     assert reach[("s+", "pi")] == [1], reach          # negative control: +-1
-    assert reach[("pi", "s+")] == [-1], reach         # exists off the sigma pair
+    assert reach[("pi", "s+")] == [1], reach          # exists off the sigma pair
 
     for theta in (0.0, np.pi / 6, np.pi / 3, np.pi / 2):
         e1 = np.array([1.0, 0.0, 0.0])
@@ -344,13 +342,25 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
     assert abs(dyad_weights(np.array([1.0, 0, 0]), np.array([1.0, 0, 0]))[(1, 0)]) == 0.0
 
 
+def test_raman_reading_reproduces_the_previous_default():
+    reach = lambda e1, e2: sorted({P for (K, P), v in dyad_weights(e1, e2, reading="raman").items() if abs(v) > 1e-12})
+    assert reach(SIGMA_P, SIGMA_P) == [0] and reach(SIGMA_P, SIGMA_M) == [2]
+    assert dyad_weights(SIGMA_P, SIGMA_M, reading="raman")[(2, 2)] == pytest.approx(-1.0)
+
+
+def test_K0_is_identity(basis2):
+    kets, ctx = basis2
+    M0 = two_photon_matrix(kets, kets, ctx, K=0, dOmega=0, P=0)
+    assert np.allclose(M0, np.eye(len(kets)), atol=1e-12)
+
+
 def test_dyad_weights_reconstruct_the_ordered_polarization_product():
     """Signed completeness, [HAM] S9.5.1(3), detects tensor-slot reversal."""
-    from heff.twophoton import _cg, _leg
+    from heff.twophoton import _cg, leg_weights
 
     e1, e2 = SIGMA_P, np.array([1.0, 0.0, 0.0])
     good = dyad_weights(e1, e2)
-    ca, cb = _leg(np.conj(e2)), _leg(e1)
+    ca, cb = leg_weights(e2), leg_weights(e1)
 
     def rebuilt(w, pa, pb):
         return sum(_cg(1, pa, 1, pb, K, pa + pb) * w[(K, pa + pb)]

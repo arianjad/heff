@@ -1,9 +1,13 @@
 """Rank-K effective two-photon transition geometry; see [HAM] S9.5 and B&C 5.141–5.142.
 
 ``REGISTRY_2G`` holds transition operators, never Hamiltonian terms. Registered
-channels are (K, |ΔOmega|)=(0,0),(2,0),(2,2); K=1 has no exact-closure operator.
+channels are (K, |dOmega|) = (0, 0), (2, 0), (2, 2); K = 0 is exactly the
+identity on any basis (probe 2026-09-15, gate ``test_K0_is_identity``) --
+transitions live in K = 2; K = 1 has no exact-closure operator (OPEN-21).
 Geometry is dimensionless with ``two_photon_norm='bc_5p142_reduced'``. Closure
 requires Δ much larger than intermediate rotational structure ([HAM] S9.5.5).
+Ladder reading (both photons absorbed) is the default; ``reading='raman'``
+recovers the previous convention.
 """
 import numpy as np
 
@@ -23,10 +27,13 @@ def _spherical(v):
     return {1: -(vx + 1j * vy) / _SQ2, 0: vz, -1: (vx - 1j * vy) / _SQ2}
 
 
-def _leg(eps):
-    """Return c[p]=(-1)^p eps[-p]; conjugate the Raman bra-side vector first."""
+def leg_weights(eps):
+    """Return c[p] = (-1)^p eps_{-p}, so that d.eps = sum_p c[p] d_p (B&C 5.111)."""
     s = _spherical(eps)
     return {p: (-1.0) ** p * s[-p] for p in (-1, 0, 1)}
+
+
+_leg = leg_weights  # alias for one release
 
 
 def _cg(j1, m1, j2, m2, J, M):
@@ -34,14 +41,44 @@ def _cg(j1, m1, j2, m2, J, M):
     return (-1.0) ** (j1 - j2 + M) * np.sqrt(2 * J + 1) * w3j(j1, j2, J, m1, m2, -M)
 
 
-def dyad_weights(eps1, eps2):
-    """Return the Raman dyad weights for Cartesian Jones vectors ([HAM] S9.5.1).
+_SQ2 = np.sqrt(2.0)
+#: Cartesian Jones vectors relative to lab z (E and B axis), Condon-Shortley.
+POLARIZATIONS = {
+    "sigma+": np.array([-1.0, -1.0j, 0.0]) / _SQ2,
+    "sigma-": np.array([1.0, -1.0j, 0.0]) / _SQ2,
+    "pi": np.array([0.0, 0.0, 1.0]),
+    "x": np.array([1.0, 0.0, 0.0]),
+    "y": np.array([0.0, 1.0, 0.0]),
+}
 
-    The bra-side vector is conjugated and first. K=1 weights are returned but
-    have no registered exact-closure operator ([HAM] S9.5.3).
+
+def jones(x):
+    """Return a unit Cartesian Jones vector from a name in POLARIZATIONS or a 3-vector."""
+    v = POLARIZATIONS[x] if isinstance(x, str) else np.asarray(x, dtype=complex).reshape(3)
+    n = np.linalg.norm(v)
+    if n == 0.0:
+        raise ValueError("polarization vector must be non-zero")
+    return v / n
+
+
+def dyad_weights(eps1, eps2, *, reading="ladder"):
+    """Return w[(K, P)] with T_eff = sum_{K,P} w[(K,P)] alpha^K_P (B&C 5.141).
+
+    reading="ladder": both photons absorbed, T = (d.eps2)(d.eps1)/Delta, so
+    Delta m_F = p1 + p2 and (sigma+, sigma+) reaches Delta m_F = +2.
+    reading="raman": the second photon is emitted, T = (d.eps2*)(d.eps1)/Delta,
+    so (sigma+, sigma+) reaches Delta m_F = 0.
+    Slot a (left operator factor) carries eps2, slot b carries eps1; the
+    coupling is B&C 5.141 with k1 = k2 = 1. With the K = 1 part absent the
+    result is symmetric under eps1 <-> eps2.
     """
-    c_a = _leg(np.conj(np.asarray(eps2, dtype=complex)))
-    c_b = _leg(np.asarray(eps1, dtype=complex))
+    if reading not in ("ladder", "raman"):
+        raise ValueError(f"reading must be 'ladder' or 'raman', got {reading!r}")
+    e2 = np.asarray(jones(eps2), dtype=complex)
+    if reading == "raman":
+        e2 = np.conj(e2)
+    c_a = leg_weights(e2)
+    c_b = leg_weights(jones(eps1))
     return {(K, P): sum(_cg(1, p_a, 1, P - p_a, K, P) * c_a[p_a] * c_b[P - p_a]
                         for p_a in (-1, 0, 1) if abs(P - p_a) <= 1)
             for K in (0, 1, 2) for P in range(-K, K + 1)}
@@ -85,11 +122,9 @@ _CITE = (
     "two-spectator chain with k -> K: B&C (5.172) + (5.174) twice + (5.186), "
     "PDF pp.205-207 / book pp.173-175, i.e. elements_c2.axial_geometry at "
     "k = K -- no new algebra. Normalisation conventions.two_photon_norm = "
-    "'bc_5p142_reduced': the RANK-K reduced element is unity per channel, "
-    "<eta'||alpha^K||eta> = 1 for each (K, dOmega) -- not unit ONE-photon "
-    "reduced elements, which is a different (and unmade) claim: the "
-    "intermediate sum has already been closed away by (5.142). So a strength "
-    "comes "
+    "'bc_5p142_reduced': the rank-K reduced element is unity per (K, dOmega) "
+    "channel, <eta'||alpha^K||eta> = 1: the intermediate sum has already "
+    "been closed away by (5.142). So a strength comes "
     "out in units of alpha^2. K = 1 is NOT registered ([HAM] S9.5.3, OPEN-21: "
     "identically zero in exact closure). TRANSITION operator in REGISTRY_2G, "
     "never summable into a Hamiltonian ([SPEC-v2] S3.2). Validity "
@@ -117,7 +152,8 @@ two_photon_K0_dOm0 = term(
     rules=Rules(dJ=(0,), dOm=(0.0,), dF1=(0,), dF=(0,), dmF=(0,)),
     cite="The SCALAR channel, K = 0, dOmega = 0: alpha^0 is the isotropic "
          "polarisability eps2*.eps1. At K = 0 every 3j and 6j collapses to a "
-         "diagonal, so dJ = dOmega = dF1 = dF = dm_F = 0. " + _CITE
+         "diagonal, so dJ = dOmega = dF1 = dF = dm_F = 0. Exactly the identity "
+         "matrix: a state-independent light shift, never a transition. " + _CITE
 )(_channel(0, 0))
 
 two_photon_K2_dOm0 = term(
@@ -130,7 +166,9 @@ two_photon_K2_dOm0 = term(
          "triangle and projection (so NEVER +-3), |dJ| <= K from the "
          "molecule-frame 3j, |dF1| <= K from the I_Th spectator 6j, and parity "
          "EVEN -- at zero field it does not connect e to f ([2gamma] S3.3, "
-         "gate V24). " + _CITE
+         "gate V24). T^2_0 ~ (2 a_zz - a_xx - a_yy); for a case (c) Omega = "
+         "+-1 state the operator statement is the reduced element per q, the "
+         "Cartesian form is the interpretation. " + _CITE
 )(_channel(2, 0))
 
 two_photon_K2_dOm2 = term(
@@ -145,7 +183,9 @@ two_photon_K2_dOm2 = term(
          "they share this alpha and parity maps each into the other, so a "
          "relative sign between them would fake an e <-> f two-photon line "
          "(gate V24). Same |dF|, |dJ|, |dF1|, |dm_F| <= K rules as the "
-         "dOmega = 0 rank-2 channel. " + _CITE
+         "dOmega = 0 rank-2 channel. T^2_{+-2} ~ (a_xx - a_yy); for a case (c) "
+         "Omega = +-1 state the operator statement is the reduced element per "
+         "q, the Cartesian form is the interpretation. " + _CITE
 )(_channel(2, 2))
 
 #: The registered channels, (K, |dOmega|, alpha knob). [HAM] S9.5.2/S9.5.3.
@@ -154,7 +194,7 @@ CHANNELS = ((0, 0, "alpha_K0_dOm0"), (2, 0, "alpha_K2_dOm0"),
 
 
 def two_photon_line_strengths(evals_a, evecs_a, kets_a, evals_b, evecs_b, kets_b,
-                              ctx, *, eps1, eps2, alphas):
+                              ctx, *, eps1, eps2, alphas, reading="ladder"):
     """Line positions (MHz) and two-photon strengths between two separately
     diagonalised blocks. Mirrors heff.spectra.line_strengths.
 
@@ -172,8 +212,8 @@ def two_photon_line_strengths(evals_a, evecs_a, kets_a, evals_b, evecs_b, kets_b
     in units of alpha^2 (conventions.two_photon_norm = 'bc_5p142_reduced').
 
     eps1, eps2: the Cartesian Jones vectors of the ket-side and bra-side
-    photons. RAMAN reading -- eps2 is conjugated inside `dyad_weights`; see its
-    docstring for what that does to a "sigma+sigma+" label.
+    photons. Both photons absorbed by default; `reading='raman'` conjugates
+    eps2.
     """
     unknown = set(alphas) - {knob for _, _, knob in CHANNELS}
     if unknown:
@@ -181,7 +221,7 @@ def two_photon_line_strengths(evals_a, evecs_a, kets_a, evals_b, evecs_b, kets_b
             f"unknown two-photon scalars {sorted(unknown)}; the registered "
             f"channels are {sorted(k for _, _, k in CHANNELS)} "
             "(K = 1 is not one of them -- [HAM] S9.5.3, OPEN-21)")
-    w = dyad_weights(eps1, eps2)
+    w = dyad_weights(eps1, eps2, reading=reading)
     mats, weights = {}, {}
     for K, dOmega, knob in CHANNELS:
         alpha = complex(alphas.get(knob, 0.0))
