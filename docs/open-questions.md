@@ -77,7 +77,7 @@ Exact closure over a complete
 opposite-parity intermediate space makes the antisymmetric `K = 1` tensor
 zero. The registered closure operator therefore contains only `K = 0, 2`.
 `K = 1` can reappear for energy-resolved denominators or a restricted
-intermediate manifold; those are different operators and are not implemented.
+intermediate manifold; those are different operators and are not implemented. The transition-matrix pipeline (`heff/transition.py`) uses K = 2 only.
 
 ### `OPEN-22`: rotational truncation
 
@@ -95,4 +95,4 @@ relevant ThF+ states. The cited JILA detunings are 0.16--1.5 GHz. The package
 therefore supplies the closure operator's tensor structure and placeholder
 polarizabilities, not a quantitative model of those experiments. A resolved
 intermediate-state sum requires a selected ladder, energies, dipoles, and
-consistent phase and polarization conventions.
+consistent phase and polarization conventions. Every figure from `scripts/plot_thf_twophoton.py` carries this caveat in its README.

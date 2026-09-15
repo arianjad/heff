@@ -70,6 +70,8 @@ physics.
   observables, and one-photon spectroscopy on the assembled representation.
   `heff.twophoton` supplies the separate rank-K closure operator.
 
+`transition.py` is the operator-agnostic sandwich: an operator supplies field-free channel matrices and per-polarization complex weights; the module diagonalizes per signed m_F block with a pinned gauge, sums amplitudes over channels, then squares. `TwoPhotonOperator` and `DipoleOperator` are the two shipped operators; a new operator is a class with `channels(kets_a, kets_b, ctx)` and `weights(**pol)`.
+
 This example shows which work is reused during a scan:
 
 ```python
