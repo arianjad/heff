@@ -560,7 +560,7 @@ Commit: `git add heff/transition.py heff/__init__.py tests/test_transition.py &&
 Files: `heff/plot_transition.py` (new), `scripts/plot_thf_twophoton.py` (new), `results/thf-twophoton-2026-09-15/` (written by the script, committed).
 Interfaces consumed: Task 2 API verbatim.
 
-Numerical choices (approved by Arian reading this plan): 232ThF+, J_max = 7 for the basis so that J = 5 initial states reach J' = 7 (rank-2 closure), manifolds J = 1..5 both sides; E_z = 0; fixed-B panels at B = 0.001, 1, 3, 5, 10 G; sweep B = 0.001..20 G, 201 points; alphas = 1.0 placeholders; pairs = the six unordered {sigma+, sigma-, pi} pairs.
+Numerical choices (approved by Arian 2026-09-15): 232ThF+, basis J_max = 7. The plotted J = 1..5 to J = 1..5 matrix would be exact at J_max = 5 already (|Delta J| <= 2 keeps every final state inside the basis); J_max = 7 is so that the sum-rule gate stays exact for every initial J up to 5 (each row must see all its J' = J + 2 partners) and so that the Stark admixture of J = 6 into the J = 5 rows is converged. Manifolds J = 1..5 both sides; E_z = 0; fixed-B panels at B = 0.001, 1, 3, 5, 10 G; sweep B = 0.001..20 G, 201 points; alphas = 1.0 placeholders; pairs = the six unordered {sigma+, sigma-, pi} pairs.
 
 Steps:
 
@@ -737,13 +737,58 @@ Check: the nbconvert command above exits 0 with no `--allow-errors`; `rg -n -i '
 
 Commit: `git add docs/thf-plus-x3delta1-effective-hamiltonian.md docs/open-questions.md docs/architecture.md notebooks/build_isotopologues.py notebooks/ThF_plus_Isotopologues.ipynb && git commit -m "Docs and notebook: ladder reading, K0 identity, transition.py" -- docs/thf-plus-x3delta1-effective-hamiltonian.md docs/open-questions.md docs/architecture.md notebooks/build_isotopologues.py notebooks/ThF_plus_Isotopologues.ipynb`
 
-## Delegation
+## Orchestration
 
-| Task | Agent | Reason |
+The orchestrator is an opus-class agent. It never writes package code itself; it dispatches, verifies by rerunning every task's Check command in its own shell, and decides. Every piece of code a worker needs is in this file, so workers need no physics judgment: sonnet for anything that edits Python, haiku for text edits with an exact before/after and a grep check.
+
+### Split of Task 4 for delegation
+
+Task 4 above is two deliverables with different skill needs; dispatch them as:
+
+- **Task 4a (haiku): doc text edits.** Steps 1-3 of Task 4 only (`docs/thf-plus-x3delta1-effective-hamiltonian.md` S9.5, `docs/open-questions.md`, `docs/architecture.md`). The brief carries the exact sentences to delete and the exact sentences to insert, quoted from Task 4. Check: the `rg -n -i 'raman'` command from Task 4 plus `rg -n 'test_K0_is_identity' docs/` returning one hit. Commit those three files only.
+- **Task 4b (sonnet): notebook builder and rebuild.** Step 4 of Task 4. Check: the nbconvert command exits 0. Commit `notebooks/build_isotopologues.py` and `notebooks/ThF_plus_Isotopologues.ipynb` only.
+
+### Agent per task
+
+| Task | Model | Why this tier |
 |---|---|---|
-| 1 | miner-medium (sonnet-class coding) | mechanical convention flip with explicit tests |
-| 2 | opus, with this plan and the design doc as context files | physics-critical core and gates |
-| 3 | miner-medium | plotting against a fixed API |
-| 4 | miner-medium | text edits with a grep check |
+| 1 | sonnet | Python edits and test flips, code given verbatim |
+| 2 | sonnet | `transition.py` and `test_transition.py` are written out in full above; the work is transcription plus running the gates |
+| 3 | sonnet | plotting against Task 2's fixed API, code given |
+| 4a | haiku | exact-text replacements with a grep check |
+| 4b | sonnet | builder edits then a notebook execution that must not error |
 
-Orchestrator: run Task 1, verify its check yourself, then dispatch 2 and 4 in one message, then 3. Spot-check each returned claim by rerunning its Check command. Final: `conda run -n structure python -m pytest -q` full suite green, then report.
+### Order
+
+1. Dispatch Task 1. When it reports, rerun its Check yourself. Do not proceed on the worker's word.
+2. Dispatch Tasks 2, 4a and 4b in ONE message (independent: different files, no shared output). 4a and 4b depend on Task 1 only through the word "ladder"; they do not import anything.
+3. When Task 2 reports and its Check passes under your own rerun, dispatch Task 3.
+4. After Task 3: `conda run -n structure python -m pytest -q` (full suite) and open `results/thf-twophoton-2026-09-15/heatmaps_B1G.png` with the Read tool yourself. Confirm six panels and that the (sigma+, sigma+) panel is populated only off the m_F diagonal (Delta m_F = +2).
+5. Report to Arian: commits made, gates passed with the numbers printed, anything a worker could not make pass, the heatmap you looked at.
+
+### Brief template (copy per task, fill the brackets)
+
+```
+Task [N] of docs/plans/2026-09-15-transition-matrix-pipeline.md in /Users/arianjadbabaie/Code/heff.
+Read that task in full first; the design is docs/plans/2026-09-15-transition-matrix-pipeline-design.md.
+Env: conda run -n structure. Tests: conda run -n structure python -m pytest -q <file>.
+Write ONLY these files: [list from the task's Files line]. Do not edit any other file.
+No git push. No process kills. No edits to heff/elements_c2.py, heff/conventions.py,
+heff/models/thf_plus.toml, heff/params.py.
+Numerical constants: read them from the plan text, never from memory.
+Checkpoint: at the first green run of the task's Check, write
+docs/plans/checkpoints/2026-09-15-task[N].md with the command you ran and its last 20 lines.
+Update it if you change anything afterwards.
+Stop condition: the task's Check passes and the task's Commit command has been run
+(commit by the exact pathspec given). Then reply with: the Check command, its output tail,
+the commit hash, and any step you could not complete verbatim and why.
+If a gate fails after two honest attempts, stop, do not weaken the assertion, and report
+the failing values.
+```
+
+### Escalation to Arian (orchestrator stops and asks)
+
+- Any gate in Task 2 that fails after the worker's two attempts and your own rerun.
+- Gate 3 passing only at a looser tolerance than 1e-6 (report the number).
+- Gate 6 failing by an overall sign (the x = (sigma- - sigma+)/sqrt2 expansion): recompute from `POLARIZATIONS`, and if the operator would have to change, stop.
+- Any worker that touched a file outside its list (check with `git status` and `git diff --name-only` before accepting a commit).
