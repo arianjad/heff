@@ -745,16 +745,18 @@ Same two `m_F` blocks as §10, now driven by `two_photon_line_strengths` at
 ladder reading (both photons absorbed, `Δm_F = p1 + p2`, [HAM] §9.5.1(3)):
 `(σ⁺, σ⁺) → Δm_F = +2`, `(σ⁺, σ⁻) → Δm_F = 0`, `(σ⁻, σ⁻) → Δm_F = −2`.
 
-The frequency and `Δm_F` signs need care. `freqs[i, j]`
-below is `E_ket[j] − E_bra[i]` (`heff.spectra._strengths_from_matrices`'s own
-convention, reused unchanged by `two_photon_line_strengths`); in the ladder
-reading, where both photons are absorbed, this difference is the physical
-sum frequency `ω₁ + ω₂`. `Δm_F` is defined as `m_bra − m_ket`
-(`axial_geometry`'s `P = bra_mF − ket_mF`), so in the J = 1 → 2 panels
-below the bra-side block is the J = 1 states and the ket-side block reaches
-into J = 2. A positive `freq` there means the J = 2 (ket) state sits above
-the J = 1 (bra) state. The panel therefore reads left-to-right as the ket state
-climbing away from the bra state.
+The frequency and `Δm_F` signs need care. The amplitude is `⟨bra|T|ket⟩`
+with the ket the initial state and the bra the final one (`T_P` raises the
+ket's `m_F` by `P = p₁ + p₂`; gate 1 of `tests/test_transition.py`), and
+`Δm_F = m_bra − m_ket` (`axial_geometry`'s `P = bra_mF − ket_mF`).
+`freqs[i, j]` below is `E_ket[j] − E_bra[i]` (`heff.spectra._strengths_from_matrices`'s
+own convention, reused unchanged by `two_photon_line_strengths`), i.e.
+`E_initial − E_final = −(ω₁ + ω₂)`. In the J = 1 → 2 panels the bra-side
+block is the J = 1 states and the ket-side block reaches into J = 2, so the
+amplitude computed is literally `⟨J=1|T|J=2⟩`; at zero field this equals the
+J = 1 → 2 strength for the conjugate pair by `m_F → −m_F` symmetry, so the
+panels are direction-agnostic here. A positive `freq` means the J = 2 (ket)
+state sits above the J = 1 (bra) state.
 
 Ng discusses opposite helicities in his thesis (p. 102):
 "An alternative to the π-polarized microwaves is to use a two-photon Raman

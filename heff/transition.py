@@ -77,7 +77,7 @@ def diagonalize(kets, tm, pset, ctx, *, E_z, B_z, blockwise=True):
     """
     H = hamiltonian(tm, pset, {"E_z": E_z, "B_z": B_z})
     d = len(kets)
-    evals, evecs = np.zeros(d), np.zeros((d, d))
+    evals, evecs = np.zeros(d), np.zeros((d, d), dtype=H.dtype)
     groups = block_by_mF(kets).index.values() if blockwise else [np.arange(d)]
     col = 0
     for idx in groups:
@@ -201,7 +201,7 @@ def sweep_transition_matrix(op, kets, tm, pset, ctx, *, E_z, B_values, rows_at, 
         mref = np.array([l["mF"] for l in ref.labels]); m = np.array([l["mF"] for l in eig.labels])
         for mF in np.unique(mref):
             a, b = np.flatnonzero(mref == mF), np.flatnonzero(m == mF)
-            ov = ref.evecs[:, a].T @ eig.evecs[:, b]
+            ov = ref.evecs[:, a].conj().T @ eig.evecs[:, b]
             perm[a] = b[assign(ov, mode="overlap")]
         eig = Eigensystem(eig.kets, eig.evals[perm], eig.evecs[:, perm],
                           tuple(eig.labels[k] for k in perm), eig.field)
