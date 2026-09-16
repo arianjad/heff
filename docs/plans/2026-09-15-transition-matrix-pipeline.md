@@ -737,6 +737,20 @@ Check: the nbconvert command above exits 0 with no `--allow-errors`; `rg -n -i '
 
 Commit: `git add docs/thf-plus-x3delta1-effective-hamiltonian.md docs/open-questions.md docs/architecture.md notebooks/build_isotopologues.py notebooks/ThF_plus_Isotopologues.ipynb && git commit -m "Docs and notebook: ladder reading, K0 identity, transition.py" -- docs/thf-plus-x3delta1-effective-hamiltonian.md docs/open-questions.md docs/architecture.md notebooks/build_isotopologues.py notebooks/ThF_plus_Isotopologues.ipynb`
 
+## Execution log (2026-09-15)
+
+- Task 1: committed e5b4d4d; Check rerun by orchestrator, 17 passed.
+- Task 2 corrections to the plan's own code, found by the gates and verified by probe before editing:
+  1. `transition_matrix` sandwich was transposed. Channel matrices are indexed `[bra, ket]` (the `(2, 0, +2)` channel has `mF[row] = mF[col] + 2`), so the amplitude for initial `i` -> final `j` is `<j|T|i> = (V_final^H M V_initial)^T`. As written, `(sigma+, sigma+)` gave `Delta m_F = -2` and `DipoleOperator` with `sigma+` gave `-1`. Fixed by the transpose; the Delta m_F = p1 + p2 constraint is unchanged.
+  2. Gate 2 compared e/f labels across `Delta J = 1`, where e/f flips at fixed parity. The conserved quantity is parity (68/68 connected pairs at E = 0, B = 1 G). The gate now asserts parity equality (and e/f equality only at equal J), and parity mixing at E = 20 V/cm.
+  3. Gate 7 passed the initial block as `kets_a` of `two_photon_line_strengths`, whose `kets_a` is the bra (final) side; with the corrected sandwich that gave an all-zero comparison. The final block is now passed first.
+  Task 2 committed 87eb5ba; Check 23 passed (10 gates + 12 twophoton + import).
+- Task 4a (docs): committed 20aea77 by the haiku worker; rg checks rerun by orchestrator.
+- Task 4b (notebook): committed 2f1bc7c. S13 of the notebook still paired `(sigma+, sigma-)` with `Delta m_F = +2`; under the ladder reading that is `Delta m_F = 0`, so the S13 pair is now `(sigma+, sigma+)`. nbconvert exit 0, zero error outputs.
+- Task 3: committed b26d0bb. 140 states per side at J_max = 7; `heatmaps_B1G.png` inspected (six panels, J gridlines); `matrices_B1G.npz` checked numerically: each pair populated only at its `Delta m_F = p1 + p2`.
+- Full suite after Task 3: 385 passed, 2 skipped.
+- Process note: the sonnet/haiku workers died on the account spend limit mid-task; Tasks 2 (gate 7 fix, `__init__` export), 4b and 3 were finished in place by the orchestrator from the plan's verbatim code after Arian raised the cap.
+
 ## Orchestration
 
 The orchestrator is an opus-class agent. It never writes package code itself; it dispatches, verifies by rerunning every task's Check command in its own shell, and decides. Every piece of code a worker needs is in this file, so workers need no physics judgment: sonnet for anything that edits Python, haiku for text edits with an exact before/after and a grep check.
