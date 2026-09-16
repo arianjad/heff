@@ -143,7 +143,10 @@ def test_channel_reach(basis2, mats):
 # ------------------------------------------------------------------ V26
 
 def sum_rule(kets, ctx, i, K, dOm):
-    """Sum over every final basis state and every P of |<f|alpha^K_P|i>|^2."""
+    """Sum over every final basis state and every P of |<f|alpha^K_P|i>|^2.
+
+    Exactly 1.0 only if every J' the rank-K operator reaches is in the basis."""
+    assert kets["J"][i] + K <= kets["J"].max(), "basis truncates the sum rule"
     return sum(float(np.sum(two_photon_matrix(kets[i:i + 1], kets, ctx, K=K,
                                               dOmega=dOm, P=P) ** 2))
                for P in range(-K, K + 1))
@@ -351,7 +354,8 @@ def test_raman_reading_reproduces_the_previous_default():
 def test_K0_is_identity(basis2):
     kets, ctx = basis2
     M0 = two_photon_matrix(kets, kets, ctx, K=0, dOmega=0, P=0)
-    assert np.allclose(M0, np.eye(len(kets)), atol=1e-12)
+    # identity up to 3j/6j roundoff (observed 3e-16 on this basis, 2026-09-15)
+    assert np.allclose(M0, np.eye(len(kets)), atol=1e-14)
 
 
 def test_dyad_weights_reconstruct_the_ordered_polarization_product():

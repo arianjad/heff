@@ -26,7 +26,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 kets, ctx, tm, pset = padded_thf(ISO, J_max=J_MAX)
 op = TwoPhotonOperator()
 channels = op.channels(kets, kets, ctx)
-np.savez(OUT / "channels.npz", **{f"K{K}_dOm{d}_P{P:+d}": M for (K, d, P), M in channels.items()})
+np.savez_compressed(OUT / "channels.npz", **{f"K{K}_dOm{d}_P{P:+d}": M for (K, d, P), M in channels.items()})
 
 for B in B_PANELS:
     eig = diagonalize(kets, tm, pset, ctx, E_z=E_Z, B_z=B)
@@ -36,7 +36,7 @@ for B in B_PANELS:
             for pair in PAIRS}
     fig = heatmap_grid(mats, title=f"{ISO}ThF+ X3Delta1 two-photon |M|^2, J=1..5, E_z={E_Z} V/cm, B_z={B} G (alphas placeholder, closure form)")
     fig.savefig(OUT / f"heatmaps_B{B:g}G.png", dpi=200); matplotlib.pyplot.close(fig)
-    np.savez(OUT / f"matrices_B{B:g}G.npz", **{f"{a}_{b}": t.amp for (a, b), t in mats.items()},
+    np.savez_compressed(OUT / f"matrices_B{B:g}G.npz", **{f"{a}_{b}": t.amp for (a, b), t in mats.items()},
              evals=eig.evals, rows=rows, cols=cols)
     with open(OUT / f"labels_B{B:g}G.csv", "w") as f:
         f.write("index,J,F1,F,ef,mF,parity,purity,E_MHz\n")
@@ -55,7 +55,7 @@ for pair in PAIRS:
     picks = [tuple(x) for x in np.argwhere(S0 > 0.2 * S0.max())[:8]]
     fig = curves_vs_B(B_SWEEP, amps, la, lb, rows, cols, picks, title=f"{ISO}ThF+ ({pair[0]}, {pair[1]}) J=1 -> J=1,2 strongest elements vs B_z")
     fig.savefig(OUT / f"curves_{pair[0]}_{pair[1]}.png", dpi=200); matplotlib.pyplot.close(fig)
-    np.savez(OUT / f"sweep_{pair[0]}_{pair[1]}.npz", B=B_SWEEP, amps=amps, freqs=freqs, rows=rows, cols=cols)
+    np.savez_compressed(OUT / f"sweep_{pair[0]}_{pair[1]}.npz", B=B_SWEEP, amps=amps, freqs=freqs, rows=rows, cols=cols)
 
 (OUT / "README.md").write_text(f"""# 232ThF+ two-photon transition matrices, {OUT.name}
 

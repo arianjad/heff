@@ -19,3 +19,4 @@ docs/lit/**/*.txt
 !docs/lit/2026-09-14-thf-zeeman-second-order-summary.pdf
 docs/thesis-text/
 docs/briefs/
+.DS_Store
