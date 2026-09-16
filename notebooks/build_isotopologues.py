@@ -741,17 +741,15 @@ They do not predict physical rates.
 
 Same two `m_F` blocks as §10, now driven by `two_photon_line_strengths` at
 `alphas = 1` for every registered channel (`alpha_K0_dOm0`, `alpha_K2_dOm0`,
-`alpha_K2_dOm2`, all `placeholder`). We use three polarisation pairs in the Raman
-reading (`dyad_weights` conjugates `ε₂`, [HAM] §9.5.1(3)): `(σ⁺, σ⁺) →
-Δm_F = 0`, `(σ⁺, σ⁻) → Δm_F = +2`, `(σ⁻, σ⁺) → Δm_F = −2` (and `(σ⁻, σ⁻) → 0`
-likewise, not drawn separately since it repeats the `(σ⁺, σ⁺)` panel's
-`Δm_F = 0` physics).
+`alpha_K2_dOm2`, all `placeholder`). We use three polarisation pairs in the
+ladder reading (both photons absorbed, `Δm_F = p1 + p2`, [HAM] §9.5.1(3)):
+`(σ⁺, σ⁺) → Δm_F = +2`, `(σ⁺, σ⁻) → Δm_F = 0`, `(σ⁻, σ⁻) → Δm_F = −2`.
 
 The frequency and `Δm_F` signs need care. `freqs[i, j]`
 below is `E_ket[j] − E_bra[i]` (`heff.spectra._strengths_from_matrices`'s own
-convention, reused unchanged by `two_photon_line_strengths`); in the Raman
-reading, where `ε₂` is the *emitted* photon, this difference is the physical
-difference frequency `ω₁ − ω₂`. `Δm_F` is defined as `m_bra − m_ket`
+convention, reused unchanged by `two_photon_line_strengths`); in the ladder
+reading, where both photons are absorbed, this difference is the physical
+sum frequency `ω₁ + ω₂`. `Δm_F` is defined as `m_bra − m_ket`
 (`axial_geometry`'s `P = bra_mF − ket_mF`), so in the J = 1 → 2 panels
 below the bra-side block is the J = 1 states and the ket-side block reaches
 into J = 2. A positive `freq` there means the J = 2 (ket) state sits above
@@ -763,12 +761,9 @@ Ng discusses opposite helicities in his thesis (p. 102):
 process, using photons of opposite helicities. We would need to do some
 spectroscopy to make this happen." His stated target
 `|J=1,F=3/2,m_F=+3/2⟩ → |m_F=+1/2⟩` is `Δm_F = −1` and is out of reach
-with σ± alone. `m_F = +3/2 → −1/2` is `Δm_F = −2` and is reachable.
-[HAM] §9.5.4 gives the required pair: "with a same-helicity
-σ⁻σ⁻ pair in the ladder reading, or with ε₁ = σ⁻, ε₂ = σ⁺ in the Raman
-reading of §9.5.1(3)". `dyad_weights` implements the Raman reading, so
-the `(σ⁻, σ⁺)` pair below is the one that reaches it (`[2γ] §3.3`, marked
-there as derived, not something JILA has stated it intends).
+with σ± alone. `m_F = +3/2 → −1/2` is `Δm_F = −2`, reached by a
+same-helicity `σ⁻σ⁻` pair (`[2γ] §3.3`, marked there as derived, not
+something JILA has stated it intends).
 """),
 
     code("""
@@ -777,32 +772,22 @@ SIGMA_P = np.array([-1.0, -1.0j, 0.0]) / SQ2
 SIGMA_M = np.array([1.0, -1.0j, 0.0]) / SQ2
 ALPHAS = {'alpha_K0_dOm0': 1.0, 'alpha_K2_dOm0': 1.0, 'alpha_K2_dOm2': 1.0}
 
-# label -> (eps1, eps2, Delta m_F).  Raman reading (dyad_weights conjugates
-# eps2): (sig+,sig+) -> dmF=0; (sig+,sig-) -> dmF=+2; (sig-,sig+) -> dmF=-2
-# ([HAM] S9.5.1(3) row (d)). two_photon_spectrum's first block argument is
-# the BRA side and the second is the KET side (two_photon_matrix(kets_a,
-# kets_b, ...) evaluates two_photon_geometry(kets_a[i], kets_b[j], ...),
-# whose bra/ket order matches axial_geometry: Delta m_F = P = bra_mF -
-# ket_mF), so the bra-side block sits at ket_mF + Delta m_F. Picking the
-# wrong pair gives an all-zero spectrum, not an error, so this mapping is
-# the load-bearing part.
-TWOP_PAIRS = {'(sig+,sig+) dmF=0': (SIGMA_P, SIGMA_P, 0),
-             '(sig+,sig-) dmF=+2': (SIGMA_P, SIGMA_M, 2),
-             '(sig-,sig+) dmF=-2 [Ng p.102]': (SIGMA_M, SIGMA_P, -2)}
+# label -> (eps1, eps2, Delta m_F).  Ladder reading (both photons absorbed,
+# Delta m_F = p1 + p2, [HAM] S9.5.1(3) row (d)). two_photon_spectrum's first
+# block argument is the BRA side and the second is the KET side
+# (two_photon_matrix(kets_a, kets_b, ...) evaluates two_photon_geometry(
+# kets_a[i], kets_b[j], ...), whose bra/ket order matches axial_geometry:
+# Delta m_F = P = bra_mF - ket_mF), so the bra-side block sits at
+# ket_mF + Delta m_F. Picking the wrong pair gives an all-zero spectrum,
+# not an error, so this mapping is the load-bearing part.
+TWOP_PAIRS = {'(sig+,sig+) dmF=+2': (SIGMA_P, SIGMA_P, 2),
+             '(sig+,sig-) dmF=0': (SIGMA_P, SIGMA_M, 0),
+             '(sig-,sig-) dmF=-2': (SIGMA_M, SIGMA_M, -2)}
 
 
-def _v2_shaped_232(J_max=J_MAX):
-    \"\"\"232ThF+ padded into the KET_C2 dtype at I_Th=0 -- needed only here,
-    because the two-photon operator lives in REGISTRY_C2/axial_geometry,
-    which reads ctx.spins[0] and ket['F1'] unconditionally. V16 proves this
-    basis is ket-for-ket identical to the v1 basis at I_Th=0 (tests/
-    test_elements_c2_reduction.py), so this is not a second code path.
-    \"\"\"
-    v1spec = thf_spec('232', J_max=J_max)
-    return StateSpec(case='c', electronic=v1spec.electronic, I=0.5,
-                     J_range=v1spec.J_range, v=0, M='blocks', frame='rotating',
-                     spins=(Spin(label='232Th', I=0.0, couple_to='J'),
-                            Spin(label='19F', I=0.5, couple_to='F1')))
+# 232ThF+ padded into the KET_C2 dtype at I_Th=0 (V16: ket-for-ket identical
+# to the v1 basis, tests/test_elements_c2_reduction.py; gate 8 of test_transition.py).
+from heff.transition import padded_thf
 
 
 def two_photon_spectrum(iso, mF_a, mF_b, eps1, eps2):
@@ -813,10 +798,8 @@ def two_photon_spectrum(iso, mF_a, mF_b, eps1, eps2):
     The physical Delta m_F of the transition is mF_a - mF_b.
     \"\"\"
     if iso == '232':
-        spec2 = _v2_shaped_232()
-        kets2 = enumerate_kets(spec2)
+        kets2, ctx, _, _ = padded_thf('232', J_max=J_MAX)
         blocks2 = block_by_mF(kets2)
-        ctx = ctx_from(spec2, thf_v2('232'))
         kets_a, kets_b = kets2[blocks2.index[mF_a]], kets2[blocks2.index[mF_b]]
         tm_a = build_term_matrices(kets_a, ctx, case='c2', registry=REGISTRY_C2)
         tm_b = build_term_matrices(kets_b, ctx, case='c2', registry=REGISTRY_C2)
@@ -867,8 +850,8 @@ plt.show()
     md(f"""
 ## 13. Two-photon spectra, all three isotopologues
 
-Same `(σ⁺, σ⁻)`, `Δm_F = +2`, within-J = 1 panel, for ²³², ²²⁹ and ²²⁷.
-²³² needs the I_Th = 0 `KET_C2`-shaped basis (`_v2_shaped_232` above) since
+Same `(σ⁺, σ⁺)`, `Δm_F = +2`, within-J = 1 panel, for ²³², ²²⁹ and ²²⁷.
+²³² needs the I_Th = 0 `KET_C2`-shaped basis (`heff.transition.padded_thf`) since
 `axial_geometry`/`two_photon_geometry` require a two-spin `ctx`. The ²²⁹ and
 ²²⁷ panels are built on the same field-free Hamiltonian as every other
 ²²⁹/²²⁷ figure in this notebook, so the same status caveats apply here too:
@@ -886,7 +869,7 @@ for ax, iso in zip(axes, ('232', '229', '227')):
     # at Delta m_F=+2; 229/227 reach F=4 and F=2 respectively at J=1, so m_F=0
     # (bra at +2) already works.
     ket_mF = -0.5 if iso == '232' else 0.0
-    freqs, S, lab_a, lab_b = two_photon_spectrum(iso, ket_mF + 2, ket_mF, SIGMA_P, SIGMA_M)
+    freqs, S, lab_a, lab_b = two_photon_spectrum(iso, ket_mF + 2, ket_mF, SIGMA_P, SIGMA_P)
     mask = S > 1e-9 * max(S.max(), 1e-30)
     ia, ib = np.nonzero(mask)
     sel = [(i, j) for i, j in zip(ia, ib) if lab_a[i]['J'] == 1 and lab_b[j]['J'] == 1]
@@ -894,7 +877,7 @@ for ax, iso in zip(axes, ('232', '229', '227')):
         ax.stem([freqs[i, j] for i, j in sel], [S[i, j] for i, j in sel], basefmt=' ')
     ax.set_title(f'{iso}ThF+  ({len(sel)} lines)')
     ax.set_xlabel('freq (MHz)')
-    print(f"{iso}ThF+ within J=1, (sig+,sig-) dmF=+2: {len(sel)} lines")
+    print(f"{iso}ThF+ within J=1, (sig+,sig+) dmF=+2: {len(sel)} lines")
 axes[0].set_ylabel('strength (alpha^2, placeholder units)')
 plt.tight_layout()
 plt.show()
