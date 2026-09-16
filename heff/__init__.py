@@ -36,6 +36,8 @@ from .spectra import dipole_matrix, label_lines, line_strengths
 from .terms import Ctx, Rules, Term, ctx_from, term, terms_for_case
 from .twophoton import (REGISTRY_2G, dyad_weights, two_photon_geometry,
                         two_photon_line_strengths, two_photon_matrix)
+from .transition import (DipoleOperator, TwoPhotonOperator, diagonalize, padded_thf, select,
+                         transition_matrix)
 
 __all__ = ["wigner", "spec", "KET_C", "KET_C2", "Blocking", "ElecState",
            "Spin", "StateSpec",
@@ -57,4 +59,6 @@ __all__ = ["wigner", "spec", "KET_C", "KET_C2", "Blocking", "ElecState",
            "dipole_matrix", "label_lines", "line_strengths",
            "twophoton", "REGISTRY_2G", "dyad_weights", "two_photon_geometry",
            "two_photon_matrix", "two_photon_line_strengths",
+           "transition_matrix", "TwoPhotonOperator", "DipoleOperator", "padded_thf",
+           "diagonalize", "select",
            "load_model", "list_models", "MoleculeModel", "Problem"]
