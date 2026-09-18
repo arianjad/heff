@@ -4,6 +4,9 @@ Assembled 2026-09-17 for `heff`. Task: check the effective two-photon (2 × E1)
 notation in `heff/twophoton.py` and `docs/thf-plus-x3delta1-effective-hamiltonian.md`
 §9.5 against Anastasia Pipi's two arXiv papers and their appendices.
 
+**Addendum 2026-09-18:** the package default flipped to `reading='raman'`
+(commit 24ccf28); the caller instruction below is now the default behaviour.
+
 **Reading rules for this document** (same as `docs/digest-literature-two-photon.md`).
 Every factual claim about a paper carries an inline cite to an equation and a
 PDF page I read at source in this session, in true column order. Anything I

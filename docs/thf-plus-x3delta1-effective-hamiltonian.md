@@ -1359,11 +1359,13 @@ is **one scalar per (K, ΔΩ) channel times parameter-free geometry** ([2γ] §3
 
 **(3) The lab contraction and the polarisation dyad** `[derived from B&C (5.141)]`.
 
-**Which polarisation goes in which tensor slot.** The **default ladder reading** has the operator `T_eff = Σ_i (d·ε₂)|i⟩⟨i|(d·ε₁)/Δ_i`: the **bra-side** factor carries `ε₂` (unconjugated, both photons absorbed in the same rotational direction) and the **ket-side** factor carries `ε₁`. The **Raman reading** (available as `reading='raman'`) conjugates the bra-side polarization: `T_eff = Σ_i (d·ε₂*)|i⟩⟨i|(d·ε₁)/Δ_i`. B&C (5.142) writes the Raman form — `⟨j‖T^{k₁}(A₁)‖j″⟩⟨j″‖T^{k₂}(B₁)‖j′⟩`, bra-side leg first — so slot 1 is the bra-side leg (ε₂ for ladder, ε₂* for Raman) and slot 2 is the ket-side leg (ε₁ in both). Write
+**Default reading, and why.** With both endpoints of the transition inside X 3Delta1 and the two photons optical, driven through an electronic intermediate, energy conservation (`ω₁ − ω₂ = ` the splitting) forces the process to be Raman, not a two-absorbed-photon ladder; the package default is `reading='raman'` on this basis (agreed 2026-09-18). The ladder reading remains available as `reading='ladder'` for processes that do end at `ω₁ + ω₂`.
+
+**Which polarisation goes in which tensor slot.** The **default Raman reading** has the operator `T_eff = Σ_i (d·ε₂*)|i⟩⟨i|(d·ε₁)/Δ_i`: the **bra-side** factor carries `ε₂` conjugated (photon 2 emitted) and the **ket-side** factor carries `ε₁` (photon 1 absorbed). The **ladder reading** (available as `reading='ladder'`) leaves the bra-side polarization unconjugated: `T_eff = Σ_i (d·ε₂)|i⟩⟨i|(d·ε₁)/Δ_i`, both photons absorbed in the same rotational direction. B&C (5.142) writes the Raman form — `⟨j‖T^{k₁}(A₁)‖j″⟩⟨j″‖T^{k₂}(B₁)‖j′⟩`, bra-side leg first — so slot 1 is the bra-side leg (ε₂* for Raman, ε₂ for ladder) and slot 2 is the ket-side leg (ε₁ in both). Write
 
 ```
-ladder (default):    ε_a ≡ ε₂    (slot 1, bra-side leg)   ε_b ≡ ε₁   (slot 2, ket-side leg)
-Raman (reading='raman'): ε_a ≡ ε₂*   (slot 1, bra-side leg)   ε_b ≡ ε₁   (slot 2, ket-side leg)
+Raman (default):            ε_a ≡ ε₂*   (slot 1, bra-side leg)   ε_b ≡ ε₁   (slot 2, ket-side leg)
+ladder (reading='ladder'):  ε_a ≡ ε₂    (slot 1, bra-side leg)   ε_b ≡ ε₁   (slot 2, ket-side leg)
 ```
 
 **Neither the conjugation nor the ordering is cosmetic**: the ladder and Raman readings give different functions of the two Jones vectors (checked below: the two differ by up to `1.3 × 10¹` on random ε's, and they swap which physical polarisation pair reaches `Δm_F = ±2` — see row (d) for ladder, row (e) for Raman in §9.5.1(3)).
@@ -1424,7 +1426,7 @@ S9.5.1(3)  polarisation dyad: conjugate + slot order
       eps1=pi     eps2=sigma+ : legs (p_a,p_b)=-1,+0  Delta m_F = [-1]
 ```
 
-Rows (a) and (b) are identities to machine precision; row (c) shows the check is **not** vacuous — the pre-fix line fails it by `13`. Rows (d)/(e) reproduce the [2γ] §3.3 probe (`p₁ + p₂ = +1+1 → Δm_F = +2`, `+1−1 → 0`, `−1−1 → −2`) and pin down what "σ⁺σ⁺" means: the probe's rows are labelled by the **leg components** `(p_a, p_b)`, not by the two Jones vectors. In row (d), the **default ladder reading** (both photons absorbed, no conjugate), the leg components are the beam helicities, so `(+1, +1)` is `ε₁ = ε₂ = σ⁺`. In row (e), the **Raman reading** (available as `reading='raman'`), conjugating `ε₂` flips the sign of its helicity label, so `(+1, +1)` is `ε₁ = σ⁺` with `ε₂ = σ⁻`. `[derived]` The reachable **set** `Δm_F ∈ {0, ±2}` under σ± only (§9.5.4) is the same either way; only the mapping from beam polarisations to `Δm_F` differs, and it is inverted between the ladder reading (rows d, the default) and the Raman reading (rows e, available as `reading='raman'`). **Any polarization-labelled result must state which reading it uses.**
+Rows (a) and (b) are identities to machine precision; row (c) shows the check is **not** vacuous — the pre-fix line fails it by `13`. Rows (d)/(e) reproduce the [2γ] §3.3 probe (`p₁ + p₂ = +1+1 → Δm_F = +2`, `+1−1 → 0`, `−1−1 → −2`) and pin down what "σ⁺σ⁺" means: the probe's rows are labelled by the **leg components** `(p_a, p_b)`, not by the two Jones vectors. In row (d), the ladder reading (available as `reading='ladder'`, both photons absorbed, no conjugate), the leg components are the beam helicities, so `(+1, +1)` is `ε₁ = ε₂ = σ⁺`. In row (e), the **default Raman reading**, conjugating `ε₂` flips the sign of its helicity label, so `(+1, +1)` is `ε₁ = σ⁺` with `ε₂ = σ⁻`. `[derived]` The reachable **set** `Δm_F ∈ {0, ±2}` under σ± only (§9.5.4) is the same either way; only the mapping from beam polarisations to `Δm_F` differs, and it is inverted between the ladder reading (rows d, available as `reading='ladder'`) and the Raman reading (rows e, the default). **Any polarization-labelled result must state which reading it uses.**
 
 #### 9.5.2 Which (K, ΔΩ) channels exist — the algebra, not the assertion
 
@@ -1494,7 +1496,7 @@ From the lab Wigner–Eckart 3j `(F′ K F; −m′_F P m_F)` and `K ≤ 2` `[de
 
 `p_a, p_b` are the **leg** components of §9.5.1(3), not the beams' helicity labels: which pair of beam polarisations realises a given `(p_a, p_b)` depends on whether the second photon is conjugated (Raman) or not (ladder), and the two readings are inverted with respect to each other — see the table in §9.5.1(3). The reachable **set** `{0, ±2}` is the same in both.
 
-The narrowing to `{0, ±2}` is the operational statement: Ng's target `|J=1, F=3/2, m_F=+3/2⟩ → |m_F=+1/2⟩` is `Δm_F = −1` and genuinely out of reach with σ± only, exactly as he says; `m_F = +3/2 → −1/2` is `Δm_F = −2` and **is** reachable with a same-helicity σ⁻σ⁻ pair in the default ladder reading, or (with `reading='raman'`) with `ε₁ = σ⁻, ε₂ = σ⁺` in the Raman reading of §9.5.1(3) ([2γ] §3.3, `[derived]` there, not claimed to be JILA's intent).
+The narrowing to `{0, ±2}` is the operational statement: Ng's target `|J=1, F=3/2, m_F=+3/2⟩ → |m_F=+1/2⟩` is `Δm_F = −1` and genuinely out of reach with σ± only, exactly as he says; `m_F = +3/2 → −1/2` is `Δm_F = −2` and **is** reachable with `ε₁ = σ⁻, ε₂ = σ⁺` in the **default Raman reading** — an opposite-helicity pair, Ng's own phrase — or (with `reading='ladder'`) with a same-helicity σ⁻σ⁻ pair in the ladder reading of §9.5.1(3) ([2γ] §3.3, `[derived]` there, not claimed to be JILA's intent).
 
 #### 9.5.5 The validity condition, in one sentence the notebook can quote
 
