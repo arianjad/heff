@@ -16,7 +16,6 @@ inside float64 dust for these matrices (cancelled elements land at ~1e-13) and
 invents hundreds of spurious opened/closed cells; probe 2026-09-17.
 """
 import csv
-import itertools
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -28,13 +27,14 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from heff.plot_transition import heatmap
+from heff.plot_transition import delta_mF, heatmap
 
 OUT = ROOT / "results/thf-twophoton-2026-09-17-anisotropy"
-PAIRS = list(itertools.combinations_with_replacement(("sigma+", "sigma-", "pi"), 2))
+# same (absorbed, emitted) pairs as scripts/plot_thf_twophoton.py, Raman reading
+PAIRS = [("sigma+", "sigma-"), ("sigma-", "sigma+"), ("sigma+", "sigma+"),
+         ("sigma+", "pi"), ("sigma-", "pi"), ("pi", "pi")]
 B_PANELS = (0.001, 1.0, 3.0, 5.0, 10.0)
 TOL = 1e-10
-DM = {"sigma+": 1, "sigma-": -1, "pi": 0}
 
 
 def read_labels(path):
@@ -73,7 +73,7 @@ for B in B_PANELS:
                  f"closed by |dOmega|=2 ({int(closed.sum())})")):
             ij = np.argwhere(mask)
             ax.scatter(ij[:, 1], ij[:, 0], label=name, **kw)
-        ax.set_title(f"({e1}, {e2})  Delta m_F = {DM[e1] + DM[e2]:+d}")
+        ax.set_title(f"({e1}, {e2})  Delta m_F = {delta_mF(e1, e2):+d}")
         ax.legend(fontsize=5, loc="upper right", framealpha=0.85)
         fig.colorbar(im, ax=ax, label="log10 |M|^2 (alpha^2), xxyy_pos")
     fig.suptitle(

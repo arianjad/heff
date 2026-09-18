@@ -260,11 +260,12 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
     """The polarisation dyad of [HAM] S9.5.1(3), against limits derived from
     its own printed formula.
 
-    THE READING IS LADDER (default): both photons absorbed,
-    T_eff = (d.eps2)|i><i|(d.eps1)/D, so slot a carries eps2 and slot b
-    carries eps1, and c[p] = (-1)^p eps_{-p}. (sigma+, sigma+) reaches
-    Delta m_F = +2. The reachable SET {0, +-2} is the same as the Raman
-    reading (`reading="raman"`) -- only the labelling differs.
+    THE READING IS RAMAN (default since 2026-09-18): photon 1 absorbed,
+    photon 2 emitted, T_eff = (d.eps2*)|i><i|(d.eps1)/D, so slot a carries
+    eps2* and slot b carries eps1, and c[p] = (-1)^p eps_{-p}. (sigma+,
+    sigma-) reaches Delta m_F = +2 and (sigma+, sigma+) reaches 0. The
+    reachable SET {0, +-2} is the same as the ladder reading
+    (`reading="ladder"`, both absorbed) -- only the labelling differs.
 
     THE PER-COMPONENT WEIGHTS BELOW ARE FRAME-SPECIFIC (this test's coplanar
     frame, eps1 = x, eps2 = (cos theta, sin theta, 0)); the frame-INDEPENDENT
@@ -291,9 +292,10 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
     K = 1 survives at O(1).
     """
     # the anchor the whole convention rests on: c[+1] = +1 for sigma+, and
-    # nothing else ([HAM] S9.5.1(3)); ladder reading, no conjugation, so
-    # sigma+ sigma+ gives c_a[+1] = c_b[+1] = +1; <1 +1 1 +1|2 +2> = 1.
-    assert dyad_weights(SIGMA_P, SIGMA_P)[(2, 2)] == pytest.approx(1.0)
+    # nothing else ([HAM] S9.5.1(3)); Raman reading conjugates eps2, and
+    # sigma-* = -sigma+, so (sigma+, sigma-) gives c_a[+1] = -1, c_b[+1] = +1;
+    # <1 +1 1 +1|2 +2> = 1, hence w[(2, 2)] = -1.
+    assert dyad_weights(SIGMA_P, SIGMA_M)[(2, 2)] == pytest.approx(-1.0)
 
     reach = {}
     for n1, e1 in (("s+", SIGMA_P), ("s-", SIGMA_M), ("pi", PI_Z)):
@@ -301,13 +303,13 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
             got = sorted({P for (K, P), v in dyad_weights(e1, e2).items()
                           if abs(v) > 1e-12})
             reach[(n1, n2)] = got
-    assert reach[("s+", "s+")] == [2], reach          # ladder reading (default)
-    assert reach[("s+", "s-")] == [0], reach
-    assert reach[("s-", "s+")] == [0], reach
-    assert reach[("s-", "s-")] == [-2], reach
+    assert reach[("s+", "s-")] == [2], reach          # Raman reading (default)
+    assert reach[("s+", "s+")] == [0], reach
+    assert reach[("s-", "s-")] == [0], reach
+    assert reach[("s-", "s+")] == [-2], reach
     assert reach[("pi", "pi")] == [0], reach
     assert reach[("s+", "pi")] == [1], reach          # negative control: +-1
-    assert reach[("pi", "s+")] == [1], reach          # exists off the sigma pair
+    assert reach[("pi", "s+")] == [-1], reach         # emitted sigma+ lowers m_F
 
     for theta in (0.0, np.pi / 6, np.pi / 3, np.pi / 2):
         e1 = np.array([1.0, 0.0, 0.0])
@@ -345,10 +347,19 @@ def test_dyad_weights_reproduce_the_known_polarisation_limits():
     assert abs(dyad_weights(np.array([1.0, 0, 0]), np.array([1.0, 0, 0]))[(1, 0)]) == 0.0
 
 
-def test_raman_reading_reproduces_the_previous_default():
-    reach = lambda e1, e2: sorted({P for (K, P), v in dyad_weights(e1, e2, reading="raman").items() if abs(v) > 1e-12})
-    assert reach(SIGMA_P, SIGMA_P) == [0] and reach(SIGMA_P, SIGMA_M) == [2]
-    assert dyad_weights(SIGMA_P, SIGMA_M, reading="raman")[(2, 2)] == pytest.approx(-1.0)
+def test_default_reading_is_raman_and_ladder_is_both_absorbed():
+    # the default must equal the explicit Raman reading, element by element
+    for e1, e2 in ((SIGMA_P, SIGMA_M), (SIGMA_P, PI_Z), (np.array([1.0, 0, 0]), np.array([0, 1.0, 0]))):
+        d, r = dyad_weights(e1, e2), dyad_weights(e1, e2, reading="raman")
+        assert all(d[k] == pytest.approx(r[k]) for k in d)
+    # ladder: both absorbed, Delta m_F = p1 + p2; the two readings are inverted
+    reach = lambda e1, e2: sorted({P for (K, P), v in dyad_weights(e1, e2, reading="ladder").items() if abs(v) > 1e-12})
+    assert reach(SIGMA_P, SIGMA_P) == [2] and reach(SIGMA_P, SIGMA_M) == [0]
+    assert dyad_weights(SIGMA_P, SIGMA_P, reading="ladder")[(2, 2)] == pytest.approx(1.0)
+    # linear polarizations are real, so the reading cannot matter for them
+    x, y = np.array([1.0, 0, 0]), np.array([0, 1.0, 0])
+    assert all(dyad_weights(x, y, reading="ladder")[k] == pytest.approx(dyad_weights(x, y)[k])
+               for k in dyad_weights(x, y))
 
 
 def test_K0_is_identity(basis2):

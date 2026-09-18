@@ -6,8 +6,9 @@ identity on any basis (probe 2026-09-15, gate ``test_K0_is_identity``) --
 transitions live in K = 2; K = 1 has no exact-closure operator (OPEN-21).
 Geometry is dimensionless with ``two_photon_norm='bc_5p142_reduced'``. Closure
 requires Δ much larger than intermediate rotational structure ([HAM] S9.5.5).
-Ladder reading (both photons absorbed) is the default; ``reading='raman'``
-recovers the previous convention.
+Raman reading (first photon absorbed, second emitted; the only kinematics
+that keeps both endpoints inside X 3Delta1 with optical photons) is the
+default since 2026-09-18; ``reading='ladder'`` is both photons absorbed.
 """
 import numpy as np
 
@@ -61,13 +62,16 @@ def jones(x):
     return v / n
 
 
-def dyad_weights(eps1, eps2, *, reading="ladder"):
+def dyad_weights(eps1, eps2, *, reading="raman"):
     """Return w[(K, P)] with T_eff = sum_{K,P} w[(K,P)] alpha^K_P (B&C 5.141).
 
+    reading="raman" (default): photon 1 absorbed, photon 2 emitted,
+    T = (d.eps2*)(d.eps1)/Delta, so Delta m_F = p1 - p2: (sigma+, sigma+)
+    reaches Delta m_F = 0 and (sigma+, sigma-) reaches +2. A transition with
+    both endpoints in X 3Delta1 driven through an electronic intermediate is
+    Raman by energy conservation (omega1 - omega2 = the splitting).
     reading="ladder": both photons absorbed, T = (d.eps2)(d.eps1)/Delta, so
-    Delta m_F = p1 + p2 and (sigma+, sigma+) reaches Delta m_F = +2.
-    reading="raman": the second photon is emitted, T = (d.eps2*)(d.eps1)/Delta,
-    so (sigma+, sigma+) reaches Delta m_F = 0.
+    Delta m_F = p1 + p2 and (sigma+, sigma+) reaches +2.
     Slot a (left operator factor) carries eps2, slot b carries eps1; the
     coupling is B&C 5.141 with k1 = k2 = 1. With the K = 1 part absent the
     result is symmetric under eps1 <-> eps2.
@@ -194,7 +198,7 @@ CHANNELS = ((0, 0, "alpha_K0_dOm0"), (2, 0, "alpha_K2_dOm0"),
 
 
 def two_photon_line_strengths(evals_a, evecs_a, kets_a, evals_b, evecs_b, kets_b,
-                              ctx, *, eps1, eps2, alphas, reading="ladder"):
+                              ctx, *, eps1, eps2, alphas, reading="raman"):
     """Line positions (MHz) and two-photon strengths between two separately
     diagonalised blocks. Mirrors heff.spectra.line_strengths.
 
@@ -212,8 +216,8 @@ def two_photon_line_strengths(evals_a, evecs_a, kets_a, evals_b, evecs_b, kets_b
     in units of alpha^2 (conventions.two_photon_norm = 'bc_5p142_reduced').
 
     eps1, eps2: the Cartesian Jones vectors of the ket-side and bra-side
-    photons. Both photons absorbed by default; `reading='raman'` conjugates
-    eps2.
+    photons. Raman reading by default (photon 2 emitted, eps2 conjugated,
+    Delta m_F = p1 - p2); `reading='ladder'` absorbs both.
     """
     unknown = set(alphas) - {knob for _, _, knob in CHANNELS}
     if unknown:

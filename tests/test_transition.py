@@ -10,8 +10,9 @@ from heff.twophoton import POLARIZATIONS, two_photon_line_strengths
 from heff.wigner import w3j, w6j
 
 SP, SM, PI, X, Y = (POLARIZATIONS[k] for k in ("sigma+", "sigma-", "pi", "x", "y"))
-PAIRS = {("sigma+", "sigma+"): 2, ("sigma-", "sigma-"): -2, ("pi", "pi"): 0,
-         ("sigma+", "sigma-"): 0, ("sigma+", "pi"): 1, ("sigma-", "pi"): -1}
+# Raman reading (default): photon 1 absorbed, photon 2 emitted, Delta m_F = p1 - p2.
+PAIRS = {("sigma+", "sigma-"): 2, ("sigma-", "sigma+"): -2, ("pi", "pi"): 0,
+         ("sigma+", "sigma+"): 0, ("sigma+", "pi"): 1, ("pi", "sigma+"): -1}
 
 
 @pytest.fixture(scope="module")
@@ -26,7 +27,7 @@ def _eig(s, E_z=0.0, B_z=1.0, **kw):
     return diagonalize(kets, tm, pset, ctx, E_z=E_z, B_z=B_z, **kw)
 
 
-def test_gate1_delta_mF_equals_p1_plus_p2(sys232):
+def test_gate1_delta_mF_equals_p1_minus_p2(sys232):
     kets, ctx, tm, pset, op, ch = sys232
     eig = _eig(sys232)
     rows, cols = select(eig, J=1), select(eig, J=(1, 2, 3))
@@ -114,7 +115,8 @@ def test_gate7_matches_two_photon_line_strengths(sys232):
     kets, ctx, tm, pset, op, ch = sys232
     eig = _eig(sys232, E_z=0.0, B_z=0.0)
     ma, mb = select(eig, mF=0.5), select(eig, mF=2.5)
-    t = transition_matrix(op, eig, ma, mb, ctx, channels=ch, eps1="sigma+", eps2="sigma+")
+    # mF 0.5 -> 2.5 is Delta m_F = +2: (sigma+ absorbed, sigma- emitted) in the Raman reading
+    t = transition_matrix(op, eig, ma, mb, ctx, channels=ch, eps1="sigma+", eps2="sigma-")
     blk = block_by_mF(kets)
     ia, ib = blk.index[0.5], blk.index[2.5]
     H = hamiltonian(tm, pset, {"E_z": 0.0, "B_z": 0.0})
@@ -122,7 +124,7 @@ def test_gate7_matches_two_photon_line_strengths(sys232):
     wb, vb = np.linalg.eigh(H[np.ix_(ib, ib)])
     # kets_a is the bra (final) side of two_photon_matrix: pass the mF=2.5 block first
     _, S = two_photon_line_strengths(wb, vb, kets[ib], wa, va, kets[ia], ctx,
-                                     eps1=SP, eps2=SP, alphas=op.alphas)
+                                     eps1=SP, eps2=SM, alphas=op.alphas)
     assert np.allclose(np.sort(t.strength.ravel()), np.sort(S.ravel()), atol=1e-10)
 
 

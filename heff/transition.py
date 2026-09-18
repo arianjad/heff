@@ -115,7 +115,7 @@ def select(eig, **where):
 class TwoPhotonOperator:
     """Rank-2 effective polarizability, channels keyed (K, |dOmega|, P)."""
 
-    def __init__(self, alphas=None, *, reading="ladder"):
+    def __init__(self, alphas=None, *, reading="raman"):
         self.alphas = dict(alphas or {"alpha_K2_dOm0": 1.0, "alpha_K2_dOm2": 1.0})
         self.reading = reading
         bad = set(self.alphas) - {knob for _, _, knob in CHANNELS}

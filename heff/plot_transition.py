@@ -36,13 +36,19 @@ def heatmap(ax, t, *, log=True, floor=1e-6):
     return im
 
 
-def heatmap_grid(mats, *, title):
+def delta_mF(e1, e2, *, reading="raman"):
+    """Delta m_F reached by named polarizations: p1 - p2 (Raman) or p1 + p2 (ladder)."""
+    p = {"sigma+": 1, "sigma-": -1, "pi": 0}
+    return p[e1] - p[e2] if reading == "raman" else p[e1] + p[e2]
+
+
+def heatmap_grid(mats, *, title, reading="raman"):
     """mats: {(pol1, pol2): TransitionMatrix}. One panel per pair."""
     n = len(mats)
     fig, axes = plt.subplots(2, (n + 1) // 2, figsize=(5 * ((n + 1) // 2), 9), squeeze=False)
     for ax, ((e1, e2), t) in zip(axes.ravel(), mats.items()):
         im = heatmap(ax, t)
-        dm = int(round(sum({"sigma+": 1, "sigma-": -1, "pi": 0}[e] for e in (e1, e2))))
+        dm = delta_mF(e1, e2, reading=reading)
         ax.set_title(f"({e1}, {e2})  Delta m_F = {dm:+d}")
         fig.colorbar(im, ax=ax, label="log10 |M|^2 (alpha^2)")
     for ax in axes.ravel()[n:]:
