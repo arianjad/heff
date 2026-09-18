@@ -170,6 +170,18 @@ def test_sweep_is_continuous(sys232):
     assert np.max(np.abs(np.diff(S, axis=0))) < 0.05 * max(S.max(), 1e-12)
 
 
+def test_lines_enumerate_nonzero_entries_with_final_minus_initial_frequency(sys232):
+    kets, ctx, tm, pset, op, ch = sys232
+    eig = _eig(sys232)
+    rows, cols = select(eig, J=1), select(eig, J=(1, 2))
+    t = transition_matrix(op, eig, rows, cols, ctx, channels=ch, eps1="sigma+", eps2="sigma-")
+    L = t.lines()
+    assert {(r["i"], r["j"]) for r in L} == set(zip(*np.nonzero(t.strength > 1e-12)))
+    assert all(r["freq_MHz"] == pytest.approx(eig.evals[cols[r["j"]]] - eig.evals[rows[r["i"]]]) for r in L)
+    assert all(r["b_mF"] - r["a_mF"] == 2.0 for r in L)
+    assert [r["freq_MHz"] for r in L] == sorted(r["freq_MHz"] for r in L)
+
+
 def test_dipole_operator_selection_rule(sys232):
     kets, ctx, tm, pset, op, ch = sys232
     eig = _eig(sys232)

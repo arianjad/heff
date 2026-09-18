@@ -161,6 +161,24 @@ class TransitionMatrix:
     def strength(self):
         return np.abs(self.amp) ** 2
 
+    def lines(self, *, floor=1e-12):
+        """Enumerate the transitions in M_ij: one dict per (i, j) with |M_ij|^2 > floor.
+
+        Each dict carries ``i``, ``j`` (positions in rows/cols), ``freq_MHz``
+        (E_final - E_initial), ``strength``, and the initial/final labels as
+        ``a_<key>``/``b_<key>`` for J, F1, F, ef, mF, parity. Sorted by frequency.
+        """
+        S = self.strength
+        out = []
+        for i, j in zip(*np.nonzero(S > floor)):
+            la, lb = self.labels_a[i], self.labels_b[j]
+            rec = {"i": int(i), "j": int(j), "freq_MHz": float(self.freqs[i, j]),
+                   "strength": float(S[i, j])}
+            rec.update({f"a_{k}": la[k] for k in LABEL_KEYS + ("parity",)})
+            rec.update({f"b_{k}": lb[k] for k in LABEL_KEYS + ("parity",)})
+            out.append(rec)
+        return sorted(out, key=lambda r: r["freq_MHz"])
+
 
 def transition_matrix(op, eig, rows, cols, ctx, *, channels=None, **pol):
     """M_ij = <j|T|i>: row i is the initial eigenvector (``rows``), column j the final one (``cols``).
