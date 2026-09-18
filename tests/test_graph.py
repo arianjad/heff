@@ -66,6 +66,10 @@ def test_greedy_purifies_thermal_belief_within_cycle_budget(graph232):
     b0 = thermal_populations(eig, 4.0)[states]; b0 /= b0.sum()
     lib = pulse_library(G, states, bw=0.05)
     assert len(lib) > 10 and all(len(p.u) == len(set(p.u)) for p in lib)
+    Gd = transition_graph(eig, mats, keep_self=True)
+    full, closed = pulse_library(Gd, states, bw=0.05), pulse_library(Gd, states, bw=0.05, closed=True)
+    assert len(closed) < len(full)                                    # some diagonal or ladder pulses exist
+    assert all(not np.all(p.u == p.v) and not np.isin(p.v[p.v != p.u], p.u).any() for p in closed)
     rng = np.random.default_rng(0)
     hist, b, s = run(b0, lib, rng, target=0.99, max_cycles=40)
     assert b.max() >= 0.99 and b.argmax() == s
