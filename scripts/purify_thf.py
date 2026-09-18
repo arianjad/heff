@@ -1,0 +1,82 @@
+"""Greedy sideband-pulse purification of thermal 232ThF+ X3Delta1 from the two-photon graph.
+
+Run: conda run -n structure python scripts/purify_thf.py [--out DIR] [--ntraj N] [--bw MHz] [--eta x] [--dark x] [--no-self]
+
+Deck (see heff.purify for the model):
+  T = 4 K thermal over the full basis; manifold = J <= J_MANIFOLD (0.999 of population at 4 K).
+  Field points (E_z V/cm, B_z G) in FIELDS. Six polarization pairs, PLACEHOLDER alphas.
+  Pulse bandwidth BW (MHz, top-hat), readout efficiency ETA, false-click DARK.
+  Policy: greedy expected-information gain over the pulse library; stop at max belief >= TARGET.
+"""
+import argparse
+import sys
+from collections import Counter
+from pathlib import Path
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from heff.graph import thermal_populations, transition_graph
+from heff.plot_transition import level_panels
+from heff.purify import entropy, greedy, info_gain, pulse_library, run
+from heff.transition import TwoPhotonOperator, diagonalize, padded_thf, select, transition_matrix
+
+_p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+_p.add_argument("--out", default=str(ROOT / "results/thf-purify-2026-09-18"))
+_p.add_argument("--ntraj", type=int, default=100)
+_p.add_argument("--bw", type=float, default=0.05)
+_p.add_argument("--eta", type=float, default=1.0)
+_p.add_argument("--dark", type=float, default=0.0)
+_p.add_argument("--seed", type=int, default=0)
+_p.add_argument("--no-self", dest="self_loops", action="store_false",
+                help="drop diagonal (state-dependent light shift) sideband pulses; default keeps them")
+A = _p.parse_args()
+OUT = Path(A.out); OUT.mkdir(parents=True, exist_ok=True)
+ISO, J_MAX, J_MANIFOLD, T, TARGET = "232", 10, 8, 4.0, 0.99
+FIELDS = ((0.0, 1.0), (60.0, 1.0))
+PAIRS = [("sigma+", "sigma-"), ("sigma-", "sigma+"), ("sigma+", "sigma+"),
+         ("sigma+", "pi"), ("sigma-", "pi"), ("pi", "pi")]
+
+kets, ctx, tm, pset = padded_thf(ISO, J_max=J_MAX)
+op = TwoPhotonOperator()
+channels = op.channels(kets, kets, ctx)
+rng = np.random.default_rng(A.seed)
+report = [f"# Greedy purification, {ISO}ThF+ X3Delta1, T={T} K\n",
+          f"J_max={J_MAX}, manifold J<={J_MANIFOLD}, bw={A.bw} MHz, eta={A.eta}, dark={A.dark}, diagonal pulses {A.self_loops}, "
+          f"target max-belief {TARGET}, {A.ntraj} trajectories, seed {A.seed}. PLACEHOLDER alphas, K=2 only (no scalar K=0 shift).\n"]
+for E_z, B_z in FIELDS:
+    eig = diagonalize(kets, tm, pset, ctx, E_z=E_z, B_z=B_z)
+    sel = select(eig, J=tuple(range(1, J_MANIFOLD + 1)))
+    mats = {p: transition_matrix(op, eig, sel, sel, ctx, channels=channels, eps1=p[0], eps2=p[1]) for p in PAIRS}
+    G = transition_graph(eig, mats, keep_self=A.self_loops)
+    states = sorted(G.nodes)
+    b0 = thermal_populations(eig, T)[states]; cover = b0.sum(); b0 /= cover
+    lib = pulse_library(G, states, bw=A.bw)
+    tag = f"E{E_z:g}_B{B_z:g}"
+    print(f"{tag}: {len(states)} states cover {cover:.4f} of thermal population, H(b0)={entropy(b0):.3f} bits, "
+          f"{G.number_of_edges()} edges, {len(lib)} pulses")
+    first = greedy(b0, lib, eta=A.eta, dark=A.dark)
+    print(f"  first pulse: {first.pair} f0={first.f0:.3f} MHz, {len(first.u)} lines, gain {info_gain(b0, first, eta=A.eta, dark=A.dark):.3f} bits")
+    ncyc, used, Hs = [], Counter(), []
+    for _ in range(A.ntraj):
+        hist, b, s = run(b0, lib, rng, target=TARGET, eta=A.eta, dark=A.dark)
+        ncyc.append(len(hist))
+        used.update((p.pair, round(p.f0, 1)) for p, _ in hist)
+    ncyc = np.array(ncyc)
+    fig, ax = plt.subplots(figsize=(6, 4))
+    ax.hist(ncyc, bins=np.arange(ncyc.min() - 0.5, ncyc.max() + 1.5)); ax.axvline(entropy(b0), color="r", ls="--", label="H(b0) bits floor")
+    ax.set_xlabel("cycles to max belief >= 0.99"); ax.set_ylabel("trajectories"); ax.legend(); ax.set_title(tag)
+    fig.tight_layout(); fig.savefig(OUT / f"cycles_{tag}.png", dpi=150); plt.close(fig)
+    fig = level_panels(G, J=(1, 2), title=f"{ISO}ThF+ two-photon graph, E_z={E_z:g} V/cm, B_z={B_z:g} G, edges > 1e-2 Smax")
+    fig.savefig(OUT / f"graph_J12_{tag}.png", dpi=130); plt.close(fig)
+    report.append(f"\n## E_z={E_z:g} V/cm, B_z={B_z:g} G\n\n{len(states)} states, H(b0)={entropy(b0):.3f} bits, {G.number_of_edges()} edges, {len(lib)} candidate pulses.\n"
+                  f"Cycles: mean {ncyc.mean():.2f}, median {np.median(ncyc):.0f}, min {ncyc.min()}, max {ncyc.max()}, "
+                  f"hit budget {int((ncyc >= 60).sum())}/{A.ntraj}.\n\nMost used pulses (pair, f0 MHz): count\n")
+    report += [f"- {k[0][0]},{k[0][1]} @ {k[1]:+.1f}: {n}\n" for k, n in used.most_common(12)]
+    print(f"  cycles mean {ncyc.mean():.2f} median {np.median(ncyc):.0f} max {ncyc.max()}")
+(OUT / "README.md").write_text("".join(report) + "\nGenerated by scripts/purify_thf.py.\n")
+print("wrote", OUT)

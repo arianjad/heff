@@ -58,6 +58,46 @@ def heatmap_grid(mats, *, title, reading="raman"):
     return fig
 
 
+PAIR_COLORS = {("sigma+", "sigma-"): "C3", ("sigma-", "sigma+"): "C0", ("sigma+", "sigma+"): "C2",
+               ("sigma+", "pi"): "C1", ("sigma-", "pi"): "C4", ("pi", "pi"): "C7"}
+
+
+def level_panels(G, *, J, pairs=None, floor=1e-2, title=""):
+    """One panel per J (x = m_F, y = E - mean E_J) with the graph's edges drawn between them.
+
+    ``pairs`` restricts the polarization pairs; ``floor`` is relative to G.graph['Smax'].
+    Edge alpha and width follow log strength; color follows PAIR_COLORS.
+    """
+    from matplotlib.patches import ConnectionPatch
+    J = tuple(J)
+    fig, axes = plt.subplots(len(J), 1, figsize=(10, 4.5 * len(J)), sharex=True, squeeze=False)
+    axmap = dict(zip(J[::-1], axes[:, 0]))
+    Smax = G.graph["Smax"]
+    EJ = {j: np.mean([d["E"] for _, d in G.nodes(data=True) if d["J"] == j]) for j in J}
+    pos = {}
+    for k, d in G.nodes(data=True):
+        if d["J"] in axmap:
+            pos[k] = (d["mF"], d["E"] - EJ[d["J"]])
+            axmap[d["J"]].plot(*pos[k], "k_", ms=14, mew=2)
+            axmap[d["J"]].annotate(f"F{d['F']:g}{d['ef']}", pos[k], fontsize=6, xytext=(2, 2), textcoords="offset points")
+    for u, v, d in G.edges(data=True):
+        if u not in pos or v not in pos or d["S"] < floor * Smax or (pairs is not None and d["pair"] not in pairs):
+            continue
+        a = 0.2 + 0.8 * max(0.0, 1 + np.log10(d["S"] / Smax) / 2)
+        Ju, Jv = G.nodes[u]["J"], G.nodes[v]["J"]
+        kw = dict(color=PAIR_COLORS.get(d["pair"], "k"), alpha=a, lw=0.8 + 1.2 * a)
+        if Ju == Jv:
+            axmap[Ju].plot([pos[u][0], pos[v][0]], [pos[u][1], pos[v][1]], **kw)
+        else:
+            fig.add_artist(ConnectionPatch(pos[u], pos[v], "data", "data", axesA=axmap[Ju], axesB=axmap[Jv], **kw))
+    for j, ax in axmap.items():
+        ax.set_ylabel(f"J={j:g}: E - {EJ[j]:.1f} MHz"); ax.grid(alpha=0.2)
+    axes[-1, 0].set_xlabel("m_F")
+    axes[0, 0].set_title(title)
+    fig.tight_layout()
+    return fig
+
+
 def curves_vs_B(B, amps, labels_a, labels_b, rows, cols, picks, *, title):
     """picks: list of (i, j) index pairs into rows/cols. |M_ij|^2 vs B."""
     fig, ax = plt.subplots(figsize=(8, 5))

@@ -156,6 +156,8 @@ class TransitionMatrix:
     labels_b: tuple
     field: dict
     pol: dict
+    rows: np.ndarray = None   # eigensystem column index of each row (initial state)
+    cols: np.ndarray = None   # eigensystem column index of each column (final state)
 
     @property
     def strength(self):
@@ -196,7 +198,8 @@ def transition_matrix(op, eig, rows, cols, ctx, *, channels=None, **pol):
             amp += c * (Vb.conj().T @ M @ Va).T
     freqs = eig.evals[cols][None, :] - eig.evals[rows][:, None]
     return TransitionMatrix(amp, freqs, tuple(eig.labels[k] for k in rows),
-                            tuple(eig.labels[k] for k in cols), dict(eig.field), dict(pol))
+                            tuple(eig.labels[k] for k in cols), dict(eig.field), dict(pol),
+                            np.asarray(rows, dtype=int), np.asarray(cols, dtype=int))
 
 
 def sweep_transition_matrix(op, kets, tm, pset, ctx, *, E_z, B_values, rows_at, cols_at, **pol):
