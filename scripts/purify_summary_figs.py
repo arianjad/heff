@@ -167,4 +167,34 @@ axes[1].set_xlabel("initial state i (J-sorted; within J: F, e/f, m_F)")
 fig.tight_layout()
 fig.savefig(OUT / "summary_lines_dJ0.png", dpi=130)
 plt.close(fig)
-print("wrote", OUT / "summary_histograms.png", OUT / "summary_bsweep.png", OUT / "summary_strength_matrix.png", OUT / "summary_lines_3d.png", OUT / "summary_lines_dJ0.png")
+# --- 6. the Delta J = +1 and +2 shelves unfolded: f_ij minus the rotational shelf (block-mean E_J' - E_J) ---
+# (Delta J = -1, -2 are the same lines with f -> -f.)
+fig, axes = plt.subplots(2, 2, figsize=(16, 9), sharex=True)
+for c, E_z in enumerate((0.0, 60.0)):
+    eig = diagonalize(kets, tm, pset, ctx, E_z=E_z, B_z=1.0)
+    sel = select(eig, J=tuple(range(1, 9)))
+    mats = {p: transition_matrix(op, eig, sel, sel, ctx, channels=channels, eps1=p[0], eps2=p[1]) for p in SIX}
+    G = transition_graph(eig, mats, keep_self=False)
+    pos = {int(k): n for n, k in enumerate(sel)}
+    EJ = {J: np.mean([eig.evals[k] for k in sel if eig.labels[k]["J"] == J]) for J in range(1, 9)}
+    starts = [n for n, k in enumerate(sel) if n == 0 or eig.labels[k]["J"] != eig.labels[sel[n - 1]]["J"]]
+    for r, dJ in enumerate((1, 2)):
+        ax = axes[r, c]
+        e = np.array([(pos[u], d["f"] - (EJ[G.nodes[v]["J"]] - EJ[G.nodes[u]["J"]]), abs(G.nodes[u]["mF"] - G.nodes[v]["mF"]), d["S"] / G.graph["Smax"])
+                      for u, v, d in G.edges(data=True) if G.nodes[v]["J"] - G.nodes[u]["J"] == dJ])
+        for dm, col in ((0, "C0"), (1, "C1"), (2, "C3")):
+            m = e[:, 2] == dm
+            ax.scatter(e[m, 0], zt(e[m, 1]), s=1 + 12 * e[m, 3] ** 0.5, c=col, alpha=0.5, linewidths=0, label=f"|Delta m_F| = {dm}")
+        for s in starts[1:]:
+            ax.axvline(s - 0.5, color="k", lw=0.5, alpha=0.4)
+        ax.set_xticks(starts); ax.set_xticklabels([f"J={eig.labels[sel[n]]['J']:g}" for n in starts])
+        zticks = [-1e3, -100, -10, -1, -0.01, 0, 0.01, 1, 10, 100, 1e3]
+        ax.set_yticks([zt(t) for t in zticks]); ax.set_yticklabels([f"{t:g}" for t in zticks])
+        ax.set_ylabel(f"f_ij - (E_J+{dJ} - E_J) (MHz, symlog)"); ax.grid(alpha=0.3)
+        ax.set_title(f"Delta J = +{dJ} lines, {len(e)} of them, E_z={E_z:g} V/cm, B_z=1 G (marker size ~ sqrt S)", fontsize=10)
+        ax.legend(loc="upper right", fontsize=8, markerscale=3)
+    axes[1, c].set_xlabel("initial state i (J-sorted; within J: F, e/f, m_F)")
+fig.tight_layout()
+fig.savefig(OUT / "summary_lines_dJ12.png", dpi=130)
+plt.close(fig)
+print("wrote", OUT / "summary_histograms.png", OUT / "summary_bsweep.png", OUT / "summary_strength_matrix.png", OUT / "summary_lines_3d.png", OUT / "summary_lines_dJ0.png", OUT / "summary_lines_dJ12.png")
