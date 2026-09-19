@@ -1,0 +1,7 @@
+E0_B1 pi_closed: 320 states cover 0.9992 of thermal population, H(b0)=6.953 bits, 4180 edges, 3002 pulses
+  first pulse: ('sigma+', 'pi') f0=0.021 MHz, 4 lines, gain 0.264 bits
+  cycles mean 25.74 median 17 max 114
+E60_B1 pi_closed: 320 states cover 0.9992 of thermal population, H(b0)=6.953 bits, 8090 edges, 8060 pulses
+  first pulse: ('sigma+', 'pi') f0=8.973 MHz, 1 lines, gain 0.138 bits
+  cycles mean 50.12 median 42 max 200
+wrote results\thf-purify-2026-09-18-budget200 pi_closed

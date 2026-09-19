@@ -1,0 +1,5 @@
+  library built in 5 s, largest subspace 290 states, tables 30 MB
+E0_B3.6 six_prop: 320 states cover 0.9992 of thermal population, H(b0)=6.953 bits, 12421 edges, 10260 pulses
+  first pulse: ('sigma+', 'sigma+') f0=0.000 MHz, 290 lines, gain 0.216 bits
+  cycles mean 29.63 median 24 max 143
+wrote results\thf-purify-2026-09-18-prop\B3.6 six_prop

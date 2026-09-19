@@ -1,0 +1,4 @@
+E0_B100 six: 320 states cover 0.9992 of thermal population, H(b0)=6.953 bits, 12976 edges, 12188 pulses
+  first pulse: ('sigma+', 'sigma+') f0=0.000 MHz, 312 lines, gain 0.250 bits
+  cycles mean 29.75 median 20 max 118
+wrote results\thf-purify-2026-09-18-bsweep\B100 six

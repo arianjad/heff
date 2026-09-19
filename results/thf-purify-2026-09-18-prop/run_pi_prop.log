@@ -1,0 +1,9 @@
+  library built in 2 s, largest subspace 286 states, tables 17 MB
+E0_B1 pi_prop: 320 states cover 0.9992 of thermal population, H(b0)=6.953 bits, 4180 edges, 3060 pulses
+  first pulse: ('sigma+', 'pi') f0=0.005 MHz, 96 lines, gain 0.189 bits
+  cycles mean 38.50 median 25 max 200
+  library built in 2 s, largest subspace 49 states, tables 2 MB
+E60_B1 pi_prop: 320 states cover 0.9992 of thermal population, H(b0)=6.953 bits, 8090 edges, 8070 pulses
+  first pulse: ('sigma-', 'pi') f0=72813.019 MHz, 2 lines, gain 0.138 bits
+  cycles mean 50.35 median 34 max 200
+wrote results\thf-purify-2026-09-18-prop pi_prop
