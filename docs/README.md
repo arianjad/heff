@@ -27,6 +27,10 @@ the basis and Hamiltonian terms to the level structure and field shifts.
   `results/thf-mf-resolved-2026-09-09/`, and one panel per (J, F1) manifold,
   each carrying its energy offset and fitted g factors, in
   `results/thf-mf-resolved-zoom-2026-09-10/`.
+- [Quantum-logic purification study](thf-purify-study.md): which sideband-pulse
+  library purifies thermal 232ThF+ fastest (two-photon line graph, greedy
+  policy, pi-pulse vs propagator models, E and B dependence), with data in
+  `results/thf-purify-2026-09-18*/`.
 - [Synthetic amide model](../examples/models/amide_synthetic.toml): the
   equivalent-proton backend exercised with illustrative coefficients.
 
